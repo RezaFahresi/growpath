@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Clock, BookOpen, Zap, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, Clock, BookOpen, Zap, CheckCircle2, PlayCircle, ExternalLink, Sparkles } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import API from '../api/axios'; 
 
@@ -99,10 +99,12 @@ export default function RoadmapDetail() {
     }
   };
 
+  // --- TAMPILAN LOADING ---
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+      <div className="flex flex-col items-center justify-center min-h-[70vh] bg-slate-50/50">
+        <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+        <p className="font-bold text-slate-500 animate-pulse tracking-widest text-sm uppercase">Menyiapkan Modul...</p>
       </div>
     );
   }
@@ -110,103 +112,151 @@ export default function RoadmapDetail() {
   const currentPhaseChecklist = progress?.roadmapChecklist?.[id] || [];
 
   return (
-    <div className="max-w-5xl mx-auto p-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    // Margin diseragamkan dengan w-full max-w-7xl mx-auto agar fit in
+    <div className="w-full max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
-      {/* Back Button */}
+      {/* Tombol Kembali */}
       <button 
-        // PERBAIKAN: Menambahkan /dashboard agar path menjadi absolut
         onClick={() => navigate('/dashboard/roadmap')} 
-        className="flex items-center gap-2 text-slate-400 hover:text-indigo-600 mb-8 transition-all group"
+        className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 mb-8 transition-colors text-sm font-semibold group w-max"
       >
-        <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-        <span className="text-sm font-medium">[ Back to Roadmap ]</span>
+        <div className="p-1.5 bg-white border border-slate-200 rounded-lg group-hover:border-indigo-300 transition-colors">
+          <ChevronLeft size={16} />
+        </div>
+        Kembali ke Peta Belajar
       </button>
 
-      {/* Header Info Card */}
-      <div className="bg-white border-2 border-slate-50 rounded-[32px] p-10 shadow-sm relative overflow-hidden mb-10">
-        <div className="flex justify-between items-start mb-6">
-          <span className="bg-indigo-50 text-indigo-600 text-[10px] font-bold px-4 py-1.5 rounded-full uppercase tracking-wider">
-            {moduleData.phase}
-          </span>
-          <div className="bg-indigo-600 text-white text-[10px] font-bold px-6 py-2 rounded-xl shadow-lg shadow-indigo-200 uppercase tracking-widest">
-            {moduleData.phase}
-          </div>
+      {/* ================================================= */}
+      {/* HEADER INFO CARD (Premium Dark Mode) */}
+      {/* ================================================= */}
+      <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 rounded-[2.5rem] p-8 md:p-12 shadow-xl shadow-indigo-900/10 relative overflow-hidden mb-12 text-white">
+        <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4 pointer-events-none">
+          <BookOpen size={250} />
         </div>
 
-        <h1 className="text-4xl font-extrabold text-slate-800 mb-4">
-          {moduleData.title}
-        </h1>
-        
-        <p className="text-slate-400 max-w-3xl leading-relaxed text-base mb-8">
-          {moduleData.description}
-        </p>
-
-        <div className="flex flex-wrap gap-4">
-          <div className="flex items-center gap-2 bg-slate-50 px-5 py-2.5 rounded-full border border-slate-100 text-slate-600 text-sm font-medium">
-            <Clock size={18} className="text-indigo-500" />
-            <span>Est. Time: {moduleData.estTime}</span>
+        <div className="relative z-10">
+          <div className="flex flex-wrap items-center gap-3 mb-6">
+            <span className="bg-indigo-500/30 text-indigo-200 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest border border-indigo-400/30 backdrop-blur-sm">
+              {moduleData.phase}
+            </span>
+            <span className="bg-emerald-500/20 text-emerald-300 text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1.5 border border-emerald-400/20">
+              <Sparkles size={14} className="text-emerald-400 drop-shadow-[0_0_5px_rgba(52,211,153,0.8)]" /> Active Module
+            </span>
           </div>
-          <div className="flex items-center gap-2 bg-slate-50 px-5 py-2.5 rounded-full border border-slate-100 text-slate-600 text-sm font-medium">
-            <BookOpen size={18} className="text-indigo-500" />
-            <span>Topics: {moduleData.topicsCount}</span>
+
+          <h1 className="text-3xl md:text-5xl font-black mb-4 tracking-tight leading-tight">
+            {moduleData.title}
+          </h1>
+          
+          <p className="text-indigo-100/80 max-w-3xl leading-relaxed text-sm md:text-base mb-10">
+            {moduleData.description}
+          </p>
+
+          <div className="flex flex-wrap gap-4">
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 text-white text-sm font-semibold shadow-inner">
+              {/* IKON HIGHLIGHT ABU-TUA */}
+              <div className="p-1.5 bg-slate-800 rounded-lg shadow-md">
+                <Clock size={16} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]" />
+              </div>
+              <span>Estimasi: {moduleData.estTime}</span>
+            </div>
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 text-white text-sm font-semibold shadow-inner">
+              {/* IKON HIGHLIGHT ABU-TUA */}
+              <div className="p-1.5 bg-slate-800 rounded-lg shadow-md">
+                <BookOpen size={16} className="text-pink-400 drop-shadow-[0_0_5px_rgba(244,114,182,0.8)]" />
+              </div>
+              <span>{moduleData.topicsCount} Topik Pembelajaran</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Learning Items List */}
-      <div className="bg-slate-50/40 border border-slate-100 rounded-[40px] p-8 md:p-10">
-        <div className="flex items-center justify-between mb-8 px-2">
-           <h2 className="text-2xl font-bold text-slate-800">Learning Items</h2>
-           <div className="flex items-center gap-2 text-yellow-600 bg-yellow-50 px-3 py-1 rounded-lg text-xs font-bold border border-yellow-100">
-             <Zap size={14} fill="currentColor" />
-             <span>Earn 10 XP per Topic</span>
+      {/* ================================================= */}
+      {/* LEARNING ITEMS LIST */}
+      {/* ================================================= */}
+      <div className="bg-white border border-slate-100 rounded-[2.5rem] p-6 md:p-10 shadow-sm">
+        
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 px-2">
+           <h2 className="text-2xl font-extrabold text-slate-800">Daftar Materi</h2>
+           
+           {/* XP BADGE HIGHLIGHT */}
+           <div className="flex items-center gap-3 text-slate-700 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm w-max">
+             <div className="p-1.5 bg-slate-800 rounded-md shadow-md">
+               <Zap size={16} className="text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
+             </div>
+             <span>Dapatkan +10 XP per Topik</span>
            </div>
         </div>
         
         <div className="space-y-4">
-          {moduleData.items.map((item) => {
+          {moduleData.items.map((item, index) => {
             const isChecked = currentPhaseChecklist.includes(String(item.id));
 
             return (
               <div 
                 key={item.id} 
-                className={`bg-white p-6 rounded-[24px] border ${isChecked ? 'border-emerald-200 shadow-sm' : 'border-slate-100'} flex items-center justify-between shadow-sm hover:shadow-md hover:border-indigo-100 transition-all group`}
+                className={`group bg-white p-5 md:p-6 rounded-[1.5rem] border-2 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-300 ${
+                  isChecked 
+                    ? 'border-emerald-100 bg-emerald-50/30' 
+                    : 'border-slate-100 hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-100/50'
+                }`}
               >
-                <div className="flex items-center gap-6">
-                  
-                  {/* Lingkaran Centang yang bisa diklik */}
+                
+                {/* Bagian Kiri: Ceklis & Judul */}
+                <div className="flex items-start md:items-center gap-4 md:gap-6">
+                  {/* Lingkaran Centang */}
                   <div 
                     onClick={() => handleToggleTask(item.id)}
-                    className="cursor-pointer shrink-0"
+                    className="cursor-pointer shrink-0 mt-1 md:mt-0"
+                    title={isChecked ? "Batalkan Selesai" : "Tandai Selesai"}
                   >
                     {isChecked ? (
-                      <CheckCircle2 size={32} className="text-emerald-500 hover:text-slate-400 transition-colors" />
+                      <CheckCircle2 size={32} className="text-emerald-500 drop-shadow-[0_0_6px_rgba(52,211,153,0.5)] hover:text-emerald-600 transition-colors" />
                     ) : (
-                      <div className="w-8 h-8 rounded-full border-2 border-slate-300 flex items-center justify-center hover:border-indigo-400 transition-colors">
-                        <div className="w-3 h-3 rounded-full bg-transparent hover:bg-indigo-100 transition-colors" />
+                      <div className="w-8 h-8 rounded-full border-2 border-slate-300 flex items-center justify-center group-hover:border-indigo-400 transition-colors">
+                        <div className="w-3 h-3 rounded-full bg-transparent group-hover:bg-indigo-100 transition-colors" />
                       </div>
                     )}
                   </div>
                   
+                  {/* Teks Topik */}
                   <div>
-                    <h4 className={`font-bold text-lg transition-colors ${isChecked ? 'text-slate-400 line-through' : 'text-slate-800 group-hover:text-indigo-900'}`}>
-                      {item.title}
+                    <h4 className={`font-bold text-lg md:text-xl transition-colors mb-1 ${
+                      isChecked ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-800 group-hover:text-indigo-900'
+                    }`}>
+                      {index + 1}. {item.title}
                     </h4>
-                    <p className="text-sm text-slate-400 font-medium">{item.subtitle}</p>
+                    <p className={`text-sm font-medium ${isChecked ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {item.subtitle}
+                    </p>
                   </div>
                 </div>
 
-                <button 
-                  onClick={() => handleOpenMaterial(item.link)}
-                  className="bg-indigo-600 text-white px-8 py-3 rounded-2xl text-xs font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 hover:shadow-indigo-200 active:scale-95 transition-all"
-                >
-                  [ Open Material ]
-                </button>
+                {/* Bagian Kanan: Tombol Buka Materi */}
+                <div className="w-full md:w-auto pl-12 md:pl-0">
+                  <button 
+                    onClick={() => handleOpenMaterial(item.link)}
+                    className={`w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
+                      isChecked
+                        ? 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                        : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white hover:shadow-md'
+                    }`}
+                  >
+                    {item.link.includes('youtube.com') || item.link.includes('youtu.be') ? (
+                      <PlayCircle size={18} />
+                    ) : (
+                      <ExternalLink size={18} />
+                    )}
+                    Buka Materi
+                  </button>
+                </div>
+
               </div>
             );
           })}
         </div>
       </div>
+
     </div>
   );
 }
