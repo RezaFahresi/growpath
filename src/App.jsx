@@ -13,6 +13,10 @@ const LandingPage = lazy(() => import('./pages/LandingPage'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+
+// ---> TAMBAHAN: Import TestOverview
+const TestOverview = lazy(() => import('./pages/Assessments/TestOverview'));
+
 const AssessmentList = lazy(() => import('./pages/Assessments/AssessmentList'));
 const TakeAssessment = lazy(() => import('./pages/Assessments/TakeAssessment'));
 const AssessmentResult = lazy(() => import('./pages/Assessments/AssessmentResult'));
@@ -60,6 +64,10 @@ export default function App() {
             <Route path="/dashboard" element={<UserRoute><Layout /></UserRoute>}>
               <Route index element={<Dashboard />} />
               <Route path="assessments" element={<AssessmentList />} />
+              
+              {/* ---> TAMBAHAN: Route untuk Test Overview dimasukkan di sini */}
+              <Route path="assessments/overview/:id" element={<TestOverview />} />
+              
               <Route path="assessments/take/:id" element={<TakeAssessment />} />
               <Route path="assessments/result/:id" element={<AssessmentResult />} />
               <Route path="roadmap" element={<Roadmap />} />

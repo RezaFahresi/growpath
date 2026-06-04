@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Play, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, Play, CheckCircle2, PlayCircle, BookOpen, Award, Lock } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import API from '../../api/axios';
 
@@ -10,7 +10,7 @@ export default function CourseDetail() {
 
   const { courses, markCourseCompleted, progress } = useAppContext();
 
-  const course = courses.find(c => String(c.id) === String(id) || String(c._id) === String(id));
+  const course = courses?.find(c => String(c.id) === String(id) || String(c._id) === String(id));
 
   const courseVideoIds = {
     1: 'c9Wg6Cb_YlU', 
@@ -60,7 +60,7 @@ export default function CourseDetail() {
   };
 
   const onPlayerStateChange = (event) => {
-    if (event.data === 0) {
+    if (event.data === 0) { // Video selesai
       handleVideoCompletion();
     }
   };
@@ -88,34 +88,21 @@ export default function CourseDetail() {
 
       if (markCourseCompleted) markCourseCompleted(currentId);
       
-      alert("🎉 Selamat! Kursus berhasil diselesaikan.");
-      // PERBAIKAN 1: Tambahkan /dashboard agar navigasi benar
+      alert("🎉 Selamat! Kelas berhasil diselesaikan.");
       navigate('/dashboard/progress');
       
     } catch (error) {
-      console.error("Error completing course:", error);
+      console.error("Error menyelesaikan kelas:", error);
       alert(`Gagal: ${error.response?.data?.message || 'Terjadi kesalahan pada server.'}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!course) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full p-20">
-        <p className="text-slate-500 mb-4 font-medium">Course not found.</p>
-        <button
-          // PERBAIKAN 2: Tambahkan /dashboard agar navigasi benar
-          onClick={() => navigate('/dashboard/courses')}
-          className="px-6 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors"
-        >
-          Back to Courses
-        </button>
-      </div>
-    );
-  }
+  const toggleLesson = (lessonId, isLocked) => {
+    // Jika modul tergembok, cegah aksi klik
+    if (isLocked) return;
 
-  const toggleLesson = (lessonId) => {
     let newCompleted;
     if (completedLessons.includes(lessonId)) {
       newCompleted = completedLessons.filter(id => id !== lessonId);
@@ -125,168 +112,277 @@ export default function CourseDetail() {
     setCompletedLessons(newCompleted);
   };
 
-  return (
-    <div className="max-w-[1400px] mx-auto p-6 md:p-8 space-y-6 bg-[#F8FAFC] min-h-screen">
-      
-      <div className="flex items-center justify-between mb-2">
-        <button
-          // PERBAIKAN 3: Tambahkan /dashboard agar navigasi benar
-          onClick={() => navigate('/dashboard/courses')}
-          className="flex items-center gap-1 text-slate-500 hover:text-indigo-600 transition-colors text-sm font-medium"
-        >
-          <ChevronLeft size={18} />
-          [ Back to Courses ]
-        </button>
+  // --- TAMPILAN JIKA COURSE TIDAK DITEMUKAN ---
+  if (!course) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 w-full max-w-7xl mx-auto">
+        <div className="bg-white p-10 rounded-[2rem] border border-slate-100 shadow-sm text-center max-w-md">
+          {/* IKON HIGHLIGHT ABU-TUA */}
+          <div className="w-20 h-20 bg-slate-800 rounded-2xl shadow-lg flex items-center justify-center mx-auto mb-6">
+            <BookOpen size={32} className="text-pink-400 drop-shadow-[0_0_8px_rgba(244,114,182,0.6)]" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-800 mb-2">Kelas Tidak Ditemukan</h2>
+          <p className="text-slate-500 text-sm mb-8">Maaf, materi yang Anda cari tidak tersedia atau telah dipindahkan.</p>
+          <button
+            onClick={() => navigate('/dashboard/courses')}
+            className="px-8 py-3.5 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 w-full"
+          >
+            Kembali ke Pustaka
+          </button>
+        </div>
       </div>
+    );
+  }
+
+  // Kalkulasi total pelajaran untuk progress bar
+  const totalLessons = Array.isArray(course.lessons) ? course.lessons.length : (Number(course.lessons) || 1);
+  const progressPercentage = Math.round((completedLessons.length / totalLessons) * 100);
+
+  return (
+    // Margin diseragamkan: w-full max-w-7xl mx-auto
+    <div className="w-full max-w-7xl mx-auto p-4 md:p-8 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      
+      {/* --- TOMBOL KEMBALI --- */}
+      <button
+        onClick={() => navigate('/dashboard/courses')}
+        className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-colors text-sm font-semibold group w-max"
+      >
+        <div className="p-1.5 bg-white border border-slate-200 rounded-lg group-hover:border-indigo-300 transition-colors">
+          <ChevronLeft size={16} />
+        </div>
+        Kembali ke Daftar Kelas
+      </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
+        {/* ================================================= */}
+        {/* KOLOM KIRI: VIDEO PLAYER & DESKRIPSI */}
+        {/* ================================================= */}
         <div className="lg:col-span-8 space-y-6">
           
-          <div className="bg-[#1E293B] rounded-[24px] aspect-video relative overflow-hidden shadow-lg group">
+          {/* CONTAINER VIDEO */}
+          <div className="bg-slate-950 rounded-[2rem] aspect-video relative overflow-hidden shadow-xl shadow-slate-200/50 group border border-slate-200">
             {!isPlaying ? (
               <div className="absolute inset-0 flex items-center justify-center">
                 <img
-                  src={course.image || "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=1200"}
+                  src={course.image && course.image !== '[null]' ? course.image : "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=1200"}
                   alt="Thumbnail"
-                  className="absolute inset-0 w-full h-full object-cover opacity-40"
+                  className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent"></div>
+                
+                {/* Play Button Glassmorphism */}
                 <button
                   onClick={() => setIsPlaying(true)}
-                  className="w-20 h-20 bg-white text-indigo-600 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform z-10"
+                  className="w-20 h-20 bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(0,0,0,0.3)] border border-white/30 hover:bg-white hover:text-indigo-600 hover:scale-110 transition-all duration-300 z-10"
                 >
                   <Play size={32} fill="currentColor" className="ml-1" />
                 </button>
               </div>
             ) : (
-              <div id={`Youtubeer-${course.id}`} className="w-full h-full"></div>
+              <div id={`Youtubeer-${course.id || course._id}`} className="w-full h-full"></div>
             )}
           </div>
 
-          <div className="bg-white p-8 rounded-[24px] shadow-sm border border-slate-100">
-            <h1 className="text-2xl font-bold text-slate-800 mb-1">
+          {/* DESKRIPSI MATERI */}
+          <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+            <div className="flex flex-wrap items-center gap-4 mb-5">
+              <span className="px-3.5 py-1.5 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-full uppercase tracking-wider">
+                {course.category || 'Kelas IT'}
+              </span>
+              
+              {/* IKON HIGHLIGHT ABU-TUA */}
+              <span className="text-slate-500 text-sm font-bold flex items-center gap-2">
+                <div className="p-1.5 bg-slate-800 rounded-md shadow-sm">
+                  <BookOpen size={14} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)]" />
+                </div>
+                {totalLessons} Modul Tersedia
+              </span>
+            </div>
+
+            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 mb-3 leading-tight">
               {course.title}
             </h1>
-            <p className="text-sm text-slate-400 mb-6">
-              {course.author || 'GrowPath Expert'} • Last updated Oct 2023
+            <p className="text-sm text-slate-500 font-medium mb-8 flex items-center gap-2.5">
+              <span className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-amber-400 text-xs font-bold shadow-md">
+                {course.author ? course.author.charAt(0).toUpperCase() : 'G'}
+              </span>
+              Oleh <span className="text-slate-700">{course.author || 'Pakar GrowPath'}</span>
             </p>
 
-            <h3 className="text-lg font-bold text-slate-800 mb-3">Description</h3>
-            <div className="space-y-2">
-              <p className="text-slate-500 leading-relaxed">
-                {course.description && course.description !== '[null]' ? course.description : "Learn the principles from scratch."}
-              </p>
-            </div>
+            <h3 className="text-lg font-bold text-slate-800 mb-3 border-b border-slate-100 pb-2">Tentang Kelas Ini</h3>
+            <p className="text-slate-600 leading-relaxed text-sm md:text-base">
+              {course.description && course.description !== '[null]' ? course.description : "Pelajari konsep fundamental dan lanjutan melalui kelas ini. Kelas dirancang agar mudah dipahami, berorientasi pada studi kasus riil, dan mempersiapkan Anda untuk tantangan di dunia industri sebenarnya."}
+            </p>
           </div>
         </div>
 
+        {/* ================================================= */}
+        {/* KOLOM KANAN: SYLLABUS / COURSE CONTENT */}
+        {/* ================================================= */}
         <div className="lg:col-span-4">
-          <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 overflow-hidden sticky top-8">
-            <div className="p-6">
-              <h2 className="text-xl font-bold text-slate-800 mb-4">Course Content</h2>
+          <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden lg:sticky lg:top-8 flex flex-col max-h-[85vh]">
+            
+            <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50">
+              <h2 className="text-xl font-extrabold text-slate-800 mb-1">Kurikulum</h2>
+              <p className="text-sm text-slate-500 mb-5 font-medium">Lacak progres belajarmu di sini</p>
               
-              <div className="space-y-3">
-                {course.lessons && Array.isArray(course.lessons) ? (
-                  course.lessons.map((lesson, idx) => {
-                    const isChecked = completedLessons.includes(lesson.id);
-                    const isActive = idx === 0 && !isChecked; 
-
-                    return (
-                      <div
-                        key={lesson.id || idx}
-                        onClick={() => toggleLesson(lesson.id)}
-                        className={`group cursor-pointer p-4 rounded-2xl transition-all border ${
-                          isActive 
-                            ? 'bg-indigo-50/50 border-indigo-200' 
-                            : 'bg-transparent border-transparent hover:bg-slate-50'
-                        }`}
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="mt-1">
-                            {isChecked ? (
-                              <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
-                                 <div className="w-2 h-2 bg-white rounded-full"></div>
-                              </div>
-                            ) : (
-                              <div className="w-5 h-5 border-2 border-slate-200 rounded-full bg-white group-hover:border-indigo-300 transition-colors"></div>
-                            )}
-                          </div>
-                          
-                          <div className="flex-1">
-                            <p className={`text-sm font-semibold transition-colors ${
-                              isActive ? 'text-indigo-600' : isChecked ? 'text-emerald-600' : 'text-slate-700'
-                            }`}>
-                              Lesson {idx + 1}: {lesson.title}
-                            </p>
-                            <p className="text-xs text-slate-400 mt-1 font-medium">
-                              {lesson.duration}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : course.lessons && (!isNaN(course.lessons) || typeof course.lessons === 'number') ? (
-                  Array.from({ length: Number(course.lessons) || 0 }).map((_, idx) => {
-                    const isChecked = completedLessons.includes(idx);
-                    const isActive = idx === 0 && !isChecked;
-
-                    return (
-                      <div
-                        key={idx}
-                        onClick={() => toggleLesson(idx)}
-                        className={`group cursor-pointer p-4 rounded-2xl transition-all border ${
-                          isActive 
-                            ? 'bg-indigo-50/50 border-indigo-200' 
-                            : 'bg-transparent border-transparent hover:bg-slate-50'
-                        }`}
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="mt-1">
-                            {isChecked ? (
-                              <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
-                                 <div className="w-2 h-2 bg-white rounded-full"></div>
-                              </div>
-                            ) : (
-                              <div className="w-5 h-5 border-2 border-slate-200 rounded-full bg-white group-hover:border-indigo-300 transition-colors"></div>
-                            )}
-                          </div>
-                          
-                          <div className="flex-1">
-                            <p className={`text-sm font-semibold transition-colors ${
-                              isActive ? 'text-indigo-600' : isChecked ? 'text-emerald-600' : 'text-slate-700'
-                            }`}>
-                              Module {idx + 1}: Course Material
-                            </p>
-                            <p className="text-xs text-slate-400 mt-1 font-medium">
-                              Self-paced learning
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : null}
-
-                {(!course.lessons || Number(course.lessons) === 0) && (
-                  <p className="text-center py-10 text-slate-400 text-sm italic">
-                    No lessons available yet.
-                  </p>
-                )}
+              {/* Mini Progress Bar */}
+              <div className="flex items-center justify-between text-xs font-bold mb-2">
+                <span className="text-indigo-600">{progressPercentage}% Selesai</span>
+                <span className="text-slate-400">{completedLessons.length} / {totalLessons}</span>
               </div>
-
-              <div className="mt-8 pt-6 border-t border-slate-100">
-                <button
-                  onClick={handleFinishCourse}
-                  disabled={isSubmitting}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-xl font-bold hover:from-indigo-700 hover:to-indigo-600 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <CheckCircle2 size={20} />
-                  {isSubmitting ? 'Memproses...' : 'Tandai Selesai & Ambil Reward'}
-                </button>
+              <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden shadow-inner">
+                <div 
+                  className="h-full bg-emerald-500 rounded-full transition-all duration-700 ease-out shadow-[0_0_8px_rgba(52,211,153,0.5)]"
+                  style={{ width: `${progressPercentage}%` }}
+                ></div>
               </div>
-
             </div>
+            
+            <div className="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-2">
+              {/* RENDER LESSONS */}
+              {course.lessons && Array.isArray(course.lessons) ? (
+                course.lessons.map((lesson, idx) => {
+                  const isChecked = completedLessons.includes(lesson.id);
+                  
+                  // LOGIKA KUNCI: 
+                  // Modul pertama (idx === 0) selalu terbuka.
+                  // Modul lainnya terbuka JIKA modul sebelumnya (idx - 1) sudah selesai.
+                  const isLocked = idx > 0 && !completedLessons.includes(course.lessons[idx - 1].id);
+                  
+                  const isActive = !isLocked && !isChecked; 
+
+                  return (
+                    <div
+                      key={lesson.id || idx}
+                      onClick={() => toggleLesson(lesson.id, isLocked)}
+                      className={`group p-4 rounded-2xl transition-all border ${
+                        isLocked 
+                          ? 'bg-slate-50 border-slate-100 opacity-60 cursor-not-allowed'
+                          : isActive 
+                          ? 'bg-indigo-50 border-indigo-200 cursor-pointer' 
+                          : isChecked 
+                          ? 'bg-emerald-50/30 border-transparent hover:bg-emerald-50 cursor-pointer'
+                          : 'bg-transparent border-transparent hover:bg-slate-50 cursor-pointer'
+                      }`}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="mt-0.5 shrink-0">
+                          {isLocked ? (
+                            <Lock size={20} className="text-slate-300" />
+                          ) : isChecked ? (
+                            <CheckCircle2 size={20} className="text-emerald-500 drop-shadow-[0_0_5px_rgba(52,211,153,0.5)]" />
+                          ) : isActive ? (
+                            <PlayCircle size={20} className="text-indigo-500 drop-shadow-[0_0_5px_rgba(99,102,241,0.5)]" />
+                          ) : (
+                            <div className="w-5 h-5 border-2 border-slate-200 rounded-full bg-white group-hover:border-slate-300 transition-colors"></div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1">
+                          <p className={`text-sm font-bold transition-colors leading-snug ${
+                            isLocked ? 'text-slate-400' : isActive ? 'text-indigo-900' : isChecked ? 'text-emerald-800' : 'text-slate-600 group-hover:text-slate-800'
+                          }`}>
+                            {idx + 1}. {lesson.title}
+                          </p>
+                          <p className={`text-xs mt-1 font-medium ${isLocked ? 'text-slate-300' : 'text-slate-400'}`}>
+                            {lesson.duration || 'Video Materi'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : course.lessons && (!isNaN(course.lessons) || typeof course.lessons === 'number') ? (
+                Array.from({ length: Number(course.lessons) || 0 }).map((_, idx) => {
+                  const isChecked = completedLessons.includes(idx);
+                  
+                  // LOGIKA KUNCI UNTUK ARRAY DUMMY
+                  const isLocked = idx > 0 && !completedLessons.includes(idx - 1);
+                  const isActive = !isLocked && !isChecked;
+
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => toggleLesson(idx, isLocked)}
+                      className={`group p-4 rounded-2xl transition-all border ${
+                        isLocked 
+                          ? 'bg-slate-50 border-slate-100 opacity-60 cursor-not-allowed'
+                          : isActive 
+                          ? 'bg-indigo-50 border-indigo-200 cursor-pointer' 
+                          : isChecked 
+                          ? 'bg-emerald-50/30 border-transparent hover:bg-emerald-50 cursor-pointer'
+                          : 'bg-transparent border-transparent hover:bg-slate-50 cursor-pointer'
+                      }`}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="mt-0.5 shrink-0">
+                          {isLocked ? (
+                            <Lock size={20} className="text-slate-300" />
+                          ) : isChecked ? (
+                            <CheckCircle2 size={20} className="text-emerald-500 drop-shadow-[0_0_5px_rgba(52,211,153,0.5)]" />
+                          ) : isActive ? (
+                            <PlayCircle size={20} className="text-indigo-500 drop-shadow-[0_0_5px_rgba(99,102,241,0.5)]" />
+                          ) : (
+                            <div className="w-5 h-5 border-2 border-slate-200 rounded-full bg-white group-hover:border-slate-300 transition-colors"></div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1">
+                          <p className={`text-sm font-bold transition-colors leading-snug ${
+                            isLocked ? 'text-slate-400' : isActive ? 'text-indigo-900' : isChecked ? 'text-emerald-800' : 'text-slate-600 group-hover:text-slate-800'
+                          }`}>
+                            {idx + 1}. Pengenalan Modul Pembelajaran
+                          </p>
+                          <p className={`text-xs mt-1 font-medium ${isLocked ? 'text-slate-300' : 'text-slate-400'}`}>
+                            Belajar Mandiri
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : null}
+
+              {/* Tampilan jika tidak ada list */}
+              {(!course.lessons || Number(course.lessons) === 0) && (
+                <div className="text-center py-10 px-4">
+                  <div className="w-14 h-14 bg-slate-800 rounded-xl shadow-md flex items-center justify-center mx-auto mb-4">
+                    <BookOpen size={24} className="text-indigo-400 drop-shadow-[0_0_5px_rgba(129,140,248,0.6)]" />
+                  </div>
+                  <p className="text-slate-400 text-sm font-medium">Belum ada modul yang ditambahkan ke kelas ini.</p>
+                </div>
+              )}
+            </div>
+
+            {/* ACTION BUTTON (Tandai Selesai) */}
+            <div className="p-6 bg-slate-50 border-t border-slate-100 mt-auto">
+              <button
+                onClick={handleFinishCourse}
+                disabled={isSubmitting || completedLessons.length === 0}
+                className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold transition-all shadow-sm ${
+                  isSubmitting || completedLessons.length === 0
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    : 'bg-slate-900 text-white hover:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5'
+                }`}
+              >
+                {isSubmitting ? (
+                  <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <Award size={18} className="text-amber-400" />
+                    Selesaikan Kelas
+                  </>
+                )}
+              </button>
+              {completedLessons.length === 0 && (
+                <p className="text-[10px] text-center text-slate-400 mt-3 font-medium uppercase tracking-wider">
+                  Selesaikan materi untuk membuka modul selanjutnya
+                </p>
+              )}
+            </div>
+
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis } from 'recharts';
-import { Target, Zap, Award, Star, Clock, TrendingUp, BookOpen, Trophy } from 'lucide-react';
+import { Target, Zap, Award, Star, Clock, TrendingUp, BookOpen, Trophy, Activity, Hexagon } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import API from '../api/axios';
 
@@ -29,18 +29,12 @@ export default function Progress() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fungsi untuk menarik data berdasarkan ID user yang login
     const fetchProgressData = async () => {
-      // Pastikan user dan user.id benar-benar ada sebelum memanggil API
       if (!user?.id) return;
       
       try {
-        // PERBAIKAN: Menggunakan URL yang benar (/progress/user/${user.id})
         const response = await API.get(`/progress/user/${user.id}`);
-        
-        // Axios otomatis mengubahnya jadi JSON, tinggal ambil dari response.data
         setData(response.data);
-        
       } catch (error) {
         console.error("Gagal mengambil data progress:", error.response?.data?.message || error.message);
       } finally {
@@ -51,69 +45,190 @@ export default function Progress() {
     fetchProgressData();
   }, [user]);
 
-  if (loading) return <div className="text-center p-10 font-medium text-slate-500">Memuat data progress...</div>;
+  // --- TAMPILAN LOADING ---
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] bg-slate-50/50">
+        <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+        <p className="font-bold text-slate-500 animate-pulse tracking-widest text-sm uppercase">Menarik Data Analitik...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-      <h1 className="text-2xl font-bold text-slate-800">Learning Progress</h1>
-
-      {/* STATS CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Learning Hours" value={`${data.stats.totalHours}h`} icon={Clock} color="text-indigo-500" bg="bg-indigo-50" />
-        <StatCard label="Current Streak" value={`${data.stats.streak} Days`} icon={TrendingUp} color="text-cyan-500" bg="bg-cyan-50" />
-        <StatCard label="Completed Courses" value={data.stats.completed} icon={BookOpen} color="text-emerald-500" bg="bg-emerald-50" />
-        <StatCard label="Achievements" value={data.stats.achievements} icon={Trophy} color="text-amber-500" bg="bg-amber-50" />
+    // Margin diseragamkan: w-full max-w-7xl mx-auto agar fit in
+    <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 p-4 md:p-8">
+      
+      {/* ========================================= */}
+      {/* HEADER SECTION */}
+      {/* ========================================= */}
+      <div>
+        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard Progres</h1>
+        <p className="text-slate-500 mt-1 text-sm md:text-base">Pantau aktivitas belajarmu, analisis keahlian, dan pamerkan pencapaianmu.</p>
       </div>
 
+      {/* ========================================= */}
+      {/* STATS CARDS (DESAIN BARU: Ikon Background Abu-tua & Highlight) */}
+      {/* ========================================= */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <StatCard 
+          label="Total Jam Belajar" 
+          value={`${data.stats.totalHours}h`} 
+          icon={Clock} 
+          color="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" 
+          bg="bg-slate-800" 
+          border="border-slate-100" 
+        />
+        <StatCard 
+          label="Runtutan Belajar" 
+          value={`${data.stats.streak} Hari`} 
+          icon={TrendingUp} 
+          color="text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]" 
+          bg="bg-slate-800" 
+          border="border-slate-100" 
+        />
+        <StatCard 
+          label="Modul Selesai" 
+          value={data.stats.completed} 
+          icon={BookOpen} 
+          color="text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.6)]" 
+          bg="bg-slate-800" 
+          border="border-slate-100" 
+        />
+        <StatCard 
+          label="Pencapaian Diraih" 
+          value={data.stats.achievements} 
+          icon={Trophy} 
+          color="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" 
+          bg="bg-slate-800" 
+          border="border-slate-100" 
+        />
+      </div>
+
+      {/* ========================================= */}
       {/* CHARTS SECTION */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-          <ResponsiveContainer width="100%" height={256}>
-            <BarChart data={data.activityData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-              <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-              <Tooltip />
-              <Bar dataKey="hours" fill="#6366f1" radius={[4, 4, 4, 4]} barSize={40} />
-            </BarChart>
-          </ResponsiveContainer>
+      {/* ========================================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+        
+        {/* BAR CHART: Learning Activity */}
+        <div className="lg:col-span-2 bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
+                {/* IKON HIGHLIGHT ABU-TUA */}
+                <div className="p-2 bg-slate-800 rounded-xl shadow-md">
+                  <Activity size={18} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)]" />
+                </div>
+                Aktivitas Belajar
+              </h2>
+              <p className="text-xs font-medium text-slate-400 mt-2">Total jam belajar dalam 7 hari terakhir</p>
+            </div>
+          </div>
+          
+          <div className="flex-1 w-full min-h-[250px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data.activityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12, fontWeight: 500}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                <Tooltip 
+                  cursor={{fill: '#f8fafc'}}
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', fontWeight: 'bold', color: '#1e293b' }}
+                />
+                <Bar dataKey="hours" fill="url(#colorIndigo)" radius={[6, 6, 6, 6]} barSize={32} />
+                
+                {/* Custom Gradient untuk Bar Chart */}
+                <defs>
+                  <linearGradient id="colorIndigo" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#6366f1" stopOpacity={1}/>
+                    <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.8}/>
+                  </linearGradient>
+                </defs>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-          <ResponsiveContainer width="100%" height={256}>
-            <RadarChart data={data.skillData}>
-              <PolarGrid stroke="#e2e8f0" />
-              <PolarAngleAxis dataKey="subject" tick={{fill: '#64748b', fontSize: 10}} />
-              <Radar name="Skills" dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.5} />
-            </RadarChart>
-          </ResponsiveContainer>
+        {/* RADAR CHART: Skill Analysis */}
+        <div className="bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col">
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
+              {/* IKON HIGHLIGHT ABU-TUA */}
+              <div className="p-2 bg-slate-800 rounded-xl shadow-md">
+                <Hexagon size={18} className="text-pink-400 drop-shadow-[0_0_5px_rgba(244,114,182,0.6)]" />
+              </div>
+              Distribusi Keahlian
+            </h2>
+            <p className="text-xs font-medium text-slate-400 mt-2">Pemetaan area kompetensi</p>
+          </div>
+
+          <div className="flex-1 w-full min-h-[250px] flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data.skillData}>
+                <PolarGrid stroke="#e2e8f0" />
+                <PolarAngleAxis dataKey="subject" tick={{fill: '#475569', fontSize: 11, fontWeight: 600}} />
+                <Radar name="Keahlian" dataKey="A" stroke="#6366f1" strokeWidth={2} fill="#818cf8" fillOpacity={0.3} />
+                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
-      {/* RECENT ACHIEVEMENTS */}
-      <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm">
-        <div className="flex items-center gap-2 mb-8 text-indigo-600 font-bold">
-          <Award size={20} />
-          <h2>Recent Achievements</h2>
+      {/* ========================================= */}
+      {/* RECENT ACHIEVEMENTS (BADGES) */}
+      {/* ========================================= */}
+      <div className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-sm relative overflow-hidden">
+        {/* Dekorasi Background */}
+        <div className="absolute top-0 right-0 p-8 opacity-5 text-amber-500 pointer-events-none">
+          <Award size={150} />
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
+          <div>
+            <h2 className="text-2xl font-extrabold text-slate-800 flex items-center gap-3">
+              {/* IKON HIGHLIGHT ABU-TUA */}
+              <div className="p-2.5 bg-slate-800 rounded-xl shadow-md">
+                <Award size={24} className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
+              </div>
+              Koleksi Lencana
+            </h2>
+            <p className="text-slate-500 text-sm mt-2 font-medium">Prestasi dan pencapaian yang berhasil kamu raih selama belajar.</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 md:gap-8 relative z-10">
           {data.badges && data.badges.length > 0 ? (
             data.badges.map((badge, idx) => {
               const IconComponent = iconMap[badge.icon_name] || Award; 
               
               return (
-                <div key={idx} className="flex flex-col items-center">
-                  <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center shadow-lg mb-4 transform hover:scale-105 transition-transform cursor-pointer">
-                    <IconComponent size={40} className="text-white" />
+                <div key={idx} className="group flex flex-col items-center">
+                  <div className="relative mb-4">
+                    {/* Efek Glow saat Hover */}
+                    <div className="absolute inset-0 bg-indigo-500 blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300 rounded-full"></div>
+                    
+                    {/* Badge Container */}
+                    <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-[2rem] bg-gradient-to-br from-indigo-500 via-indigo-600 to-indigo-800 flex items-center justify-center shadow-lg shadow-indigo-200 border-4 border-white transform group-hover:-translate-y-2 group-hover:scale-105 transition-all duration-300 cursor-pointer">
+                      <IconComponent size={40} className="text-white drop-shadow-md" />
+                      
+                      {/* Bintang Kecil Dekorasi */}
+                      <Star size={12} className="absolute top-3 right-3 text-amber-300 fill-amber-300 opacity-80" />
+                    </div>
                   </div>
-                  <h3 className="font-bold text-slate-800 text-sm text-center">{badge.title}</h3>
+                  <h3 className="font-bold text-slate-800 text-sm text-center group-hover:text-indigo-600 transition-colors">{badge.title}</h3>
+                  <p className="text-[10px] text-slate-400 font-medium text-center mt-1 uppercase tracking-wider">Unlocked</p>
                 </div>
               );
             })
           ) : (
-            <div className="col-span-full text-center text-slate-400 text-sm py-4">
-              Belum ada pencapaian. Teruslah belajar!
+            <div className="col-span-full flex flex-col items-center justify-center py-12 text-center bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
+              {/* IKON HIGHLIGHT ABU-TUA (Empty State) */}
+              <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center shadow-lg mb-4">
+                <Trophy size={28} className="text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]" />
+              </div>
+              <h3 className="text-slate-700 font-bold mb-1">Belum Ada Pencapaian</h3>
+              <p className="text-slate-400 text-sm max-w-sm">Selesaikan modul dan ujian untuk mendapatkan lencana eksklusif pertamamu!</p>
             </div>
           )}
         </div>
@@ -123,16 +238,21 @@ export default function Progress() {
   );
 }
 
-// Komponen Pembantu
-function StatCard({ label, value, icon: Icon, color, bg }) {
+// =========================================
+// KOMPONEN PEMBANTU (STAT CARD) DIPERBARUI
+// =========================================
+function StatCard({ label, value, icon: Icon, color, bg, border }) {
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-2">
-      <div className={`w-10 h-10 rounded-xl ${bg} ${color} flex items-center justify-center`}>
-        <Icon size={20} />
+    <div className={`bg-white p-5 md:p-6 rounded-[1.5rem] border ${border} shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex items-center gap-4 group`}>
+      {/* Kotak Ikon di Kiri (Ditambah Shadow agar lebih elegan) */}
+      <div className={`w-14 h-14 shrink-0 rounded-2xl ${bg} ${color} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300`}>
+        <Icon size={26} strokeWidth={2.5} />
       </div>
-      <div>
-        <h3 className="text-2xl font-bold text-slate-800">{value}</h3>
-        <p className="text-xs text-slate-400 font-medium">{label}</p>
+      
+      {/* Detail Teks di Kanan */}
+      <div className="flex flex-col justify-center overflow-hidden">
+        <h3 className="text-2xl lg:text-3xl font-black text-slate-800 leading-none mb-1.5 truncate">{value}</h3>
+        <p className="text-[10px] sm:text-[11px] text-slate-500 font-bold uppercase tracking-wider leading-tight truncate">{label}</p>
       </div>
     </div>
   );

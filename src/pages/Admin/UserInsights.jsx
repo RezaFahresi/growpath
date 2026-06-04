@@ -1,47 +1,55 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Loader2, AlertCircle, MoreHorizontal, Shield } from 'lucide-react';
-import API from '../../api/axios'; // Pastikan path ini tepat menuju axios.js Anda
+import { Download, Loader2, AlertCircle, Shield, Mail, Calendar, User, Search, Edit2, Trash2, X, Save } from 'lucide-react';
+import API from '../../api/axios'; 
 
 export default function UserInsights() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // --- STATE UNTUK EDIT USER ---
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    role: 'user'
+  });
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        setSessionExpired(false);
-
-        const response = await API.get('/users');
-        const data = response.data;
-
-        setUsers(Array.isArray(data) ? data : (data.users || []));
-
-      } catch (err) {
-        if (err.response) {
-          // Tangkap error session (401 Unauthorized / 403 Forbidden)
-          if (err.response.status === 401 || err.response.status === 403) {
-            setSessionExpired(true);
-            setError(err.response.data?.message || 'Sesi Anda telah berakhir atau Anda bukan admin.');
-            setTimeout(() => {
-              window.location.href = '/login?session=expired';
-            }, 3000);
-          } else {
-            setError(err.response.data?.message || `Terjadi kesalahan (HTTP ${err.response.status})`);
-          }
-        } else {
-          setError(err.message || 'Terjadi kesalahan jaringan.');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUsers();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      setSessionExpired(false);
+
+      const response = await API.get('/users');
+      const data = response.data;
+      setUsers(Array.isArray(data) ? data : (data.users || []));
+    } catch (err) {
+      if (err.response) {
+        if (err.response.status === 401 || err.response.status === 403) {
+          setSessionExpired(true);
+          setError(err.response.data?.message || 'Sesi Anda telah berakhir atau Anda bukan admin.');
+          setTimeout(() => {
+            window.location.href = '/login?session=expired';
+          }, 3000);
+        } else {
+          setError(err.response.data?.message || `Terjadi kesalahan (HTTP ${err.response.status})`);
+        }
+      } else {
+        setError(err.message || 'Terjadi kesalahan jaringan.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -64,11 +72,11 @@ export default function UserInsights() {
     const csvContent = [
       ['ID', 'Nama', 'Email', 'Role', 'Created At'],
       ...users.map(user => [
-        user.id,
+        user.id || user._id,
         user.name || 'N/A',
         user.email || 'N/A',
         user.role || 'user',
-        user.created_at || 'N/A'
+        user.created_at || user.createdAt || 'N/A'
       ])
     ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
 
@@ -81,132 +89,324 @@ export default function UserInsights() {
     window.URL.revokeObjectURL(url);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-[400px] flex flex-col items-center justify-center p-10 text-slate-400">
-        <Loader2 className="animate-spin w-12 h-12 mb-4 text-blue-500" />
-        <p className="text-xl font-medium">Memuat data pengguna...</p>
-      </div>
-    );
-  }
+  // --- FUNGSI AKSI (EDIT & DELETE) ---
+  const openEditForm = (user) => {
+    setEditingUser(user);
+    setFormData({
+      name: user.name || '',
+      email: user.email || '',
+      role: user.role || 'user'
+    });
+    setIsEditOpen(true);
+  };
+
+  const closeEditForm = () => {
+    setIsEditOpen(false);
+    setEditingUser(null);
+  };
+
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    if (!editingUser) return;
+
+    try {
+      setIsSaving(true);
+      const userId = editingUser.id || editingUser._id;
+      
+      // Request ke Backend untuk Update User
+      await API.put(`/users/${userId}`, formData);
+      
+      // Update state lokal agar tabel langsung berubah tanpa harus reload halaman
+      setUsers(users.map(u => 
+        (u.id === userId || u._id === userId) ? { ...u, ...formData } : u
+      ));
+      
+      closeEditForm();
+    } catch (error) {
+      console.error("Update Error:", error);
+      alert(error.response?.data?.message || 'Gagal memperbarui data pengguna. Pastikan Backend sudah memiliki Route PUT /api/users/:id');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteUser = async (id) => {
+    if (!window.confirm("Peringatan: Apakah Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.")) return;
+    
+    try {
+      // Request ke Backend untuk Delete User
+      await API.delete(`/users/${id}`);
+      
+      // Update state lokal agar baris di tabel langsung hilang
+      setUsers(users.filter(u => u.id !== id && u._id !== id));
+    } catch (error) {
+      console.error("Delete Error:", error);
+      alert(error.response?.data?.message || 'Gagal menghapus pengguna. Pastikan Backend sudah memiliki Route DELETE /api/users/:id');
+    }
+  };
+
+  // Logika Filter Pencarian
+  const filteredUsers = users.filter(user => 
+    (user.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (user.email || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className="p-4 md:p-10 space-y-8 w-full mx-auto">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 px-2">
-        <div className="flex items-center gap-5">
-          <div className="p-4 bg-blue-500/20 rounded-2xl shadow-inner">
-            <Shield className="w-10 h-10 text-blue-400" />
-          </div>
-          <div>
-            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight">
-              User Insights
-            </h2>
-            <p className="text-slate-400 text-lg mt-1">
-              Menampilkan <span className="text-blue-400 font-bold">{users.length}</span> data pengguna terdaftar
-            </p>
-          </div>
+    // Margin diseragamkan dengan menambahkan w-full max-w-7xl mx-auto agar fit in
+    <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10 p-4 md:p-8">
+      
+      {/* ========================================= */}
+      {/* HEADER SECTION */}
+      {/* ========================================= */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">User Insights</h1>
+          <p className="text-slate-400 text-sm mt-1">
+            Menampilkan total <span className="text-blue-400 font-bold px-1.5 py-0.5 bg-blue-500/10 rounded-md">{users.length}</span> pengguna terdaftar
+          </p>
         </div>
-
-        <button 
-          onClick={handleExportCSV}
-          disabled={users.length === 0}
-          className="w-full lg:w-auto bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-2xl flex items-center justify-center gap-3 font-black text-lg shadow-xl shadow-blue-900/20 transition-all active:scale-95 disabled:opacity-50"
-        >
-          <Download size={24} />
-          DOWNLOAD CSV
-        </button>
+        
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+            <input 
+              type="text" 
+              placeholder="Cari nama atau email..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2.5 bg-[#0B172E] border border-[#1E2A45] rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all w-full"
+            />
+          </div>
+          <button 
+            onClick={handleExportCSV}
+            disabled={users.length === 0 || loading}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+          >
+            <Download size={16} strokeWidth={2.5} />
+            <span className="inline">Export CSV</span>
+          </button>
+        </div>
       </div>
 
+      {/* ========================================= */}
+      {/* ERROR / EXPIRED STATE */}
+      {/* ========================================= */}
       {error && (
-        <div className="bg-red-500/10 border-2 border-red-500/20 p-10 rounded-[2.5rem]">
-          <div className="flex items-start gap-6">
-            <AlertCircle className="w-10 h-10 text-red-500" />
+        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            {/* Ikon Error Diperbarui dengan background & highlight */}
+            <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center shrink-0 border border-red-500/30">
+              <AlertCircle className="text-red-400 drop-shadow-[0_0_8px_rgba(248,113,113,0.6)]" size={24} />
+            </div>
             <div>
-              <h3 className="font-black text-red-400 text-2xl mb-2">Terjadi Kesalahan</h3>
-              <p className="text-red-200/70 text-xl mb-8">{error}</p>
-              {sessionExpired && (
-                <button onClick={handleLogout} className="bg-red-600 text-white px-8 py-3 rounded-xl font-bold text-lg">
-                  Logout Sekarang
-                </button>
-              )}
+              <h3 className="font-bold text-red-400 text-base mb-1">Gagal memuat data</h3>
+              <p className="text-red-300/80 text-sm">{error}</p>
             </div>
           </div>
+          {sessionExpired && (
+            <button onClick={handleLogout} className="whitespace-nowrap px-6 py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-colors shadow-lg shadow-red-600/20">
+              Logout Sekarang
+            </button>
+          )}
         </div>
       )}
 
-      {!error && (
-        <div className="bg-[#0F172A] border border-slate-800 rounded-[3rem] overflow-hidden shadow-2xl">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[1200px]">
-              <thead>
-                <tr className="bg-slate-800/50 text-slate-300">
-                  <th className="py-8 px-10 text-base font-black uppercase tracking-widest">ID</th>
-                  <th className="py-8 px-10 text-base font-black uppercase tracking-widest">Nama Lengkap</th>
-                  <th className="py-8 px-10 text-base font-black uppercase tracking-widest">Email</th>
-                  <th className="py-8 px-10 text-base font-black uppercase tracking-widest">Role</th>
-                  <th className="py-8 px-10 text-base font-black uppercase tracking-widest">Tgl Daftar</th>
-                  <th className="py-8 px-10 text-base font-black uppercase tracking-widest text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800">
-                {users.length > 0 ? (
-                  users.map((user, index) => (
-                    <tr key={user.id || index} className="hover:bg-blue-600/[0.03] transition-colors group">
-                      <td className="py-8 px-10">
-                        <span className="text-blue-500 font-black font-mono text-lg">
-                          #{user.id || index + 1}
-                        </span>
-                      </td>
-                      
-                      <td className="py-8 px-10">
-                        <div className="flex items-center gap-5">
-                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white text-xl font-black shadow-lg">
-                            {(user.name || 'U').charAt(0).toUpperCase()}
-                          </div>
-                          <span className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
-                            {user.name || 'No Name'}
-                          </span>
+      {/* ========================================= */}
+      {/* FORM EDIT MODAL */}
+      {/* ========================================= */}
+      {isEditOpen && editingUser && (
+        <div className="bg-[#0B172E] p-8 rounded-[2rem] border border-[#1E2A45] shadow-2xl relative overflow-hidden animate-in slide-in-from-top-4 mb-6">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-400"></div>
+          
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-xl font-bold text-white flex items-center gap-3">
+              {/* Ikon Header Edit Modal Diperbarui dengan background & highlight */}
+              <div className="p-2.5 bg-[#071226] border border-[#1E2A45] rounded-xl shadow-md">
+                <User className="text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)]" size={20} />
+              </div>
+              Edit Data Pengguna
+            </h2>
+            <button onClick={closeEditForm} className="p-2.5 text-slate-400 hover:text-white bg-[#0F1B33] rounded-xl transition-colors border border-[#1E2A45]">
+              <X size={18} />
+            </button>
+          </div>
+
+          <form onSubmit={handleUpdateUser} className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Nama Lengkap</label>
+              <input 
+                type="text" 
+                required
+                className="w-full border border-[#1E2A45] bg-[#071226] text-white px-5 py-3.5 rounded-xl focus:outline-none focus:border-blue-500 transition-colors" 
+                value={formData.name} 
+                onChange={e => setFormData({...formData, name: e.target.value})} 
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
+              <input 
+                type="email" 
+                required
+                className="w-full border border-[#1E2A45] bg-[#071226] text-white px-5 py-3.5 rounded-xl focus:outline-none focus:border-blue-500 transition-colors" 
+                value={formData.email} 
+                onChange={e => setFormData({...formData, email: e.target.value})} 
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Hak Akses (Role)</label>
+              <select 
+                className="w-full border border-[#1E2A45] bg-[#071226] text-white px-5 py-3.5 rounded-xl focus:outline-none focus:border-blue-500 transition-colors appearance-none cursor-pointer"
+                value={formData.role}
+                onChange={e => setFormData({...formData, role: e.target.value})}
+              >
+                <option value="user">User (Student)</option>
+                <option value="admin">Administrator</option>
+              </select>
+            </div>
+
+            <div className="col-span-1 md:col-span-3 flex justify-end gap-3 border-t border-[#1E2A45] pt-6 mt-2">
+              <button type="button" onClick={closeEditForm} className="px-6 py-3 bg-[#0F1B33] hover:bg-[#1E2A45] text-slate-300 font-bold rounded-xl transition-colors border border-[#1E2A45]">
+                Batal
+              </button>
+              <button type="submit" disabled={isSaving} className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2">
+                {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                {isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ========================================= */}
+      {/* MAIN DATA TABLE */}
+      {/* ========================================= */}
+      <div className="bg-[#0B172E] rounded-[2rem] border border-[#1E2A45] shadow-xl overflow-hidden relative min-h-[400px]">
+        
+        {loading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0B172E]/80 backdrop-blur-sm z-20">
+            <Loader2 className="animate-spin w-12 h-12 text-blue-500 mb-4" />
+            <p className="text-sm font-bold tracking-wider uppercase text-slate-400">Memuat Data...</p>
+          </div>
+        )}
+
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left text-sm whitespace-nowrap border-collapse min-w-[900px]">
+            <thead className="bg-[#0F1B33]">
+              <tr>
+                <th className="px-8 py-5 font-bold text-slate-400 text-xs uppercase tracking-wider border-b border-[#1E2A45] w-24">ID</th>
+                <th className="px-6 py-5 font-bold text-slate-400 text-xs uppercase tracking-wider border-b border-[#1E2A45]">Pengguna</th>
+                <th className="px-6 py-5 font-bold text-slate-400 text-xs uppercase tracking-wider border-b border-[#1E2A45]">Informasi Kontak</th>
+                <th className="px-6 py-5 font-bold text-slate-400 text-xs uppercase tracking-wider border-b border-[#1E2A45]">Role</th>
+                <th className="px-6 py-5 font-bold text-slate-400 text-xs uppercase tracking-wider border-b border-[#1E2A45]">Tgl Daftar</th>
+                <th className="px-8 py-5 font-bold text-slate-400 text-xs uppercase tracking-wider text-right border-b border-[#1E2A45]">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#1E2A45]">
+              {!loading && filteredUsers.length > 0 ? (
+                filteredUsers.map((user, index) => (
+                  <tr key={user.id || user._id || index} className="hover:bg-[#0F1B33] transition-colors group">
+                    {/* ID */}
+                    <td className="px-8 py-5">
+                      <span className="text-slate-500 font-mono text-xs font-bold">
+                        #{String(index + 1).padStart(4, '0')}
+                      </span>
+                    </td>
+                    
+                    {/* Name & Avatar */}
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-[#071226] border border-[#1E2A45] flex items-center justify-center text-blue-400 font-bold text-sm shadow-inner shrink-0">
+                          {(user.name || 'U').charAt(0).toUpperCase()}
                         </div>
-                      </td>
+                        <div className="font-bold text-white group-hover:text-blue-400 transition-colors">
+                          {user.name || 'No Name'}
+                        </div>
+                      </div>
+                    </td>
 
-                      <td className="py-8 px-10 text-slate-300 text-lg font-medium">
+                    {/* Email */}
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2 text-slate-400 font-medium">
+                        <Mail size={14} className="text-slate-500" />
                         {user.email || '—'}
-                      </td>
+                      </div>
+                    </td>
 
-                      <td className="py-8 px-10">
-                        <span className={`px-6 py-2.5 rounded-2xl text-sm font-black uppercase tracking-tighter border-2 ${
-                          user.role === 'admin' 
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                            : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                        }`}>
-                          {user.role || 'user'}
-                        </span>
-                      </td>
+                    {/* Role */}
+                    <td className="px-6 py-5">
+                      <span className={`px-3 py-1.5 rounded-lg text-xs font-bold border inline-flex items-center gap-1.5 ${
+                        user.role?.toLowerCase() === 'admin' 
+                          ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
+                          : 'bg-[#071226] text-slate-300 border-[#1E2A45]'
+                      }`}>
+                        {user.role?.toLowerCase() === 'admin' ? <Shield size={12} /> : <User size={12} />}
+                        {user.role || 'user'}
+                      </span>
+                    </td>
 
-                      <td className="py-8 px-10 text-slate-400 text-lg">
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
-                      </td>
+                    {/* Date */}
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
+                        <Calendar size={14} className="text-slate-500" />
+                        {user.created_at || user.createdAt ? new Date(user.created_at || user.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                      </div>
+                    </td>
 
-                      <td className="py-8 px-10 text-center">
-                        <button className="text-slate-500 hover:text-white p-4 rounded-2xl hover:bg-slate-800 transition-all transform hover:scale-125">
-                          <MoreHorizontal size={28} />
+                    {/* ACTIONS (Edit & Delete) */}
+                    <td className="px-8 py-5">
+                      <div className="flex items-center justify-end gap-2">
+                        <button 
+                          onClick={() => openEditForm(user)} 
+                          className="p-2.5 bg-[#0F1B33] text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-all border border-[#1E2A45] hover:border-blue-500/30"
+                          title="Edit Pengguna"
+                        >
+                          <Edit2 size={16} />
                         </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="py-40 text-center text-slate-500">
-                      <Shield className="w-20 h-20 mx-auto mb-4 opacity-20" />
-                      <p className="text-2xl font-bold">Data tidak ditemukan</p>
+                        <button 
+                          onClick={() => handleDeleteUser(user.id || user._id)} 
+                          className="p-2.5 bg-[#0F1B33] text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all border border-[#1E2A45] hover:border-red-500/30"
+                          title="Hapus Pengguna"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              ) : !loading && filteredUsers.length === 0 ? (
+                // Empty State
+                <tr>
+                  <td colSpan="6" className="px-6 py-20 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      {/* Ikon Empty State Diperbarui dengan background & highlight */}
+                      <div className="w-20 h-20 bg-[#071226] rounded-2xl flex items-center justify-center mb-5 border border-[#1E2A45] shadow-lg">
+                        <Search size={32} className="text-slate-400 drop-shadow-[0_0_8px_rgba(148,163,184,0.4)]" />
+                      </div>
+                      <p className="text-slate-300 font-bold text-lg mb-1">Tidak ada data pengguna</p>
+                      {searchQuery && (
+                        <p className="text-slate-500 text-sm">Pencarian "{searchQuery}" tidak membuahkan hasil.</p>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
         </div>
-      )}
+
+        {/* Footer info */}
+        {!loading && (
+          <div className="px-8 py-5 border-t border-[#1E2A45] bg-[#0F1B33] flex items-center justify-between text-xs font-bold text-slate-500">
+            <div>Menampilkan {filteredUsers.length} data</div>
+            {users.length > 0 && searchQuery && (
+              <div>Difilter dari total {users.length} pengguna</div>
+            )}
+          </div>
+        )}
+      </div>
+      
     </div>
   );
 }
