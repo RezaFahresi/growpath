@@ -4,7 +4,8 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-
+require('./config/db.js'); 
+const app = express();
 // ==========================================
 // 1. PENGATURAN PROXY & CORS (SANGAT PENTING)
 // ==========================================
