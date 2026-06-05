@@ -11,5 +11,15 @@
       "entrypoint": "server.js",
       "builder": "@vercel/node"
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ]
 }
