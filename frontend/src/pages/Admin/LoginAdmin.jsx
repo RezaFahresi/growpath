@@ -7,7 +7,6 @@ import API from '../../api/axios';
 import LogoGrowPath from '../../assets/logo-growpath.png'; 
 
 export default function LoginAdmin() {
-  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -27,18 +26,18 @@ export default function LoginAdmin() {
     setLoading(true);
 
     try {
-      // 🌟 PERBAIKAN: Gunakan sistem JWT (Token + User)
       const response = await API.post('/auth/login-admin', formData);
       const { token, user } = response.data;
 
-      localStorage.setItem('token', token); // Gunakan 'token' agar konsisten
+      // Simpan kredensial
+      localStorage.setItem('token', token);
       localStorage.setItem('growpath_user', JSON.stringify(user));
 
-      // Redirect ke dashboard admin
+      // Hard reload agar AppContext membaca localStorage yang baru
       window.location.href = '/admin/dashboard';
     } catch (err) {
       console.error('Login Error:', err);
-      setError(err.response?.data?.message || 'Akses ditolak.');
+      setError(err.response?.data?.message || 'Akses ditolak. Periksa kembali email dan password Anda.');
     } finally {
       setLoading(false);
     }
