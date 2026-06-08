@@ -24,6 +24,7 @@ export default function Login() {
       const response = await API.post('/auth/login-user', { email, password });
       const data = response.data;
 
+      // SIMPAN TOKEN KE BROWSER
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       login(data.user);
@@ -57,7 +58,11 @@ export default function Login() {
         });
         
         const data = res.data;
+        
+        // 🌟 PERBAIKAN: SIMPAN TOKEN GOOGLE KE BROWSER
+        localStorage.setItem('token', data.token); 
         localStorage.setItem('user', JSON.stringify(data.user));
+        
         login(data.user); 
         
         const role = (data.user.role || '').toLowerCase();

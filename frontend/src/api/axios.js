@@ -1,12 +1,24 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api', 
-  // withCredentials: true ADALAH KUNCI UTAMA AGAR BROWSER MENGIRIM COOKIE
-  withCredentials: true, 
+  baseURL: '/api', // Menyesuaikan dengan proxy Vite Anda
 });
 
-// Tidak perlu interceptor apa pun di sini!
-// Browser akan otomatis mengirim Session Cookie ke rute /api
+// Interceptor otomatis untuk menempelkan Token JWT
+api.interceptors.request.use(
+  (config) => {
+    // Ambil token dari Local Storage browser
+    const token = localStorage.getItem('token'); 
+    
+    if (token) {
+      // Sisipkan ke Header Authorization dengan format Bearer
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 export default api;

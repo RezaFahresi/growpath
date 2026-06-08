@@ -3,10 +3,14 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const crypto = require('crypto'); 
 const nodemailer = require('nodemailer'); 
-const axios = require('axios'); // <-- TAMBAHAN UNTUK GOOGLE OAUTH
+const axios = require('axios'); 
+const jwt = require('jsonwebtoken'); // <-- TAMBAHAN WAJIB
 const db = require('../config/db'); 
 
-// 1. ENDPOINT REGISTRASI (/register)
+// Import authMiddleware (Pastikan path folder ini sesuai dengan proyek Anda)
+const authMiddleware = require('../middleware/authMiddleware');
+
+// 1. ENDPOINT REGISTRASI (/register) - TETAP
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -35,7 +39,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// 2. ENDPOINT KHUSUS USER BIASA (/login-user)
+// 2. ENDPOINT KHUSUS USER BIASA (/login-user) - DIUBAH KE JWT
 router.post('/login-user', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -59,20 +63,19 @@ router.post('/login-user', async (req, res) => {
       });
     }
 
-    req.session.userId = user.id; 
-    req.session.userRole = safeRole;
-    req.session.userEmail = user.email;
-    req.session.userName = user.name; 
+    // 🔥 BUAT TOKEN JWT
+    const token = jwt.sign(
+      { id: user.id, role: safeRole, email: user.email }, 
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' } // Berlaku 1 Hari
+    );
 
-    console.log(`\n👨‍🎓 [USER LOGIN SUKSES] Session ID: ${req.sessionID} | Email: ${user.email}`);
+    console.log(`\n👨‍🎓 [USER LOGIN SUKSES] Email: ${user.email}`);
 
-    req.session.save((err) => {
-      if (err) return res.status(500).json({ message: 'Gagal menyimpan sesi.' });
-      
-      res.json({ 
-        message: 'Login berhasil', 
-        user: { id: user.id, name: user.name, email: user.email, role: safeRole }
-      });
+    res.json({ 
+      message: 'Login berhasil', 
+      token: token, // <-- Kirim token ke React
+      user: { id: user.id, name: user.name, email: user.email, role: safeRole }
     });
 
   } catch (error) {
@@ -82,13 +85,12 @@ router.post('/login-user', async (req, res) => {
 });
 
 // ==========================================
-// ENDPOINT BARU: GOOGLE AUTH (/google)
+// ENDPOINT BARU: GOOGLE AUTH (/google) - DIUBAH KE JWT
 // ==========================================
 router.post('/google', async (req, res) => {
   const { access_token } = req.body;
 
   try {
-    // 1. Minta data profil user dari Google
     const googleResponse = await axios.get(
       'https://www.googleapis.com/oauth2/v3/userinfo',
       { headers: { Authorization: `Bearer ${access_token}` } }
@@ -96,13 +98,10 @@ router.post('/google', async (req, res) => {
     
     const { email, name } = googleResponse.data;
 
-    // 2. Cek apakah user sudah ada di database kita
     let userResult = await db.query('SELECT * FROM users WHERE email = $1', [email]);
     let user = userResult.rows[0];
 
-    // 3. Jika belum ada (Artinya dia Register via Google)
     if (!user) {
-      // Buat password acak karena login google tidak pakai password
       const salt = await bcrypt.genSalt(10);
       const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-10), salt);
       
@@ -115,26 +114,19 @@ router.post('/google', async (req, res) => {
 
     const safeRole = user.role ? user.role.toLowerCase() : 'user';
 
-    // 4. Buat sesi (Session Cookie) persis seperti login manual
-    if (safeRole === 'admin' || safeRole === 'superadmin') {
-      req.session.adminId = user.id;
-    } else {
-      req.session.userId = user.id; 
-    }
-    
-    req.session.userRole = safeRole;
-    req.session.userEmail = user.email;
-    req.session.userName = user.name; 
+    // 🔥 BUAT TOKEN JWT
+    const token = jwt.sign(
+      { id: user.id, role: safeRole, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
 
-    console.log(`\n🌍 [GOOGLE AUTH SUKSES] Session ID: ${req.sessionID} | Email: ${user.email}`);
+    console.log(`\n🌍 [GOOGLE AUTH SUKSES] Email: ${user.email}`);
 
-    req.session.save((err) => {
-      if (err) return res.status(500).json({ message: 'Gagal menyimpan sesi.' });
-      
-      res.json({ 
-        message: 'Login Google berhasil', 
-        user: { id: user.id, name: user.name, email: user.email, role: safeRole }
-      });
+    res.json({ 
+      message: 'Login Google berhasil', 
+      token: token, // <-- Kirim token ke React
+      user: { id: user.id, name: user.name, email: user.email, role: safeRole }
     });
 
   } catch (error) {
@@ -143,7 +135,7 @@ router.post('/google', async (req, res) => {
   }
 });
 
-// 3. ENDPOINT KHUSUS ADMIN (/login-admin)
+// 3. ENDPOINT KHUSUS ADMIN (/login-admin) - DIUBAH KE JWT
 router.post('/login-admin', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -167,19 +159,19 @@ router.post('/login-admin', async (req, res) => {
       });
     }
 
-    req.session.adminId = user.id;
-    req.session.userRole = safeRole;
-    req.session.userEmail = user.email;
-    req.session.userName = user.name;
+    // 🔥 BUAT TOKEN JWT KHUSUS ADMIN
+    const token = jwt.sign(
+      { id: user.id, role: safeRole, adminId: user.id, email: user.email }, 
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
 
-    console.log(`\n🛡️ [ADMIN LOGIN SUKSES] Session ID: ${req.sessionID} | Admin: ${user.email}`);
+    console.log(`\n🛡️ [ADMIN LOGIN SUKSES] Admin: ${user.email}`);
 
-    req.session.save((err) => {
-      if (err) return res.status(500).json({ message: 'Gagal menyimpan sesi.' });
-      res.json({ 
-        message: 'Login Admin berhasil', 
-        user: { id: user.id, name: user.name, email: user.email, role: safeRole }
-      });
+    res.json({ 
+      message: 'Login Admin berhasil', 
+      token: token, // <-- Kirim token ke React
+      user: { id: user.id, name: user.name, email: user.email, role: safeRole }
     });
 
   } catch (error) {
@@ -188,43 +180,27 @@ router.post('/login-admin', async (req, res) => {
   }
 });
 
-// 4. ENDPOINT LOGOUT (ANTI-BUG)
+// 4. ENDPOINT LOGOUT - DIUBAH KE JWT (LEBIH SEDERHANA)
 router.post('/logout', (req, res) => {
-  const sessionID = req.sessionID;
-  req.session.destroy((err) => {
-    if (err) {
-      console.error("Gagal hancurkan sesi:", err);
-      return res.status(500).json({ message: 'Logout gagal' });
-    }
-    
-    res.clearCookie('growpath_sid', { path: '/' }); 
-    
-    console.log(`\n🚪 [LOGOUT BERHASIL] Session ${sessionID} telah dihapus.`);
-    res.json({ message: 'Logout berhasil' });
-  });
+  // Dengan JWT, backend tidak perlu menghapus memori apa-apa.
+  console.log(`\n🚪 [LOGOUT BERHASIL] Frontend akan menghapus token.`);
+  res.json({ message: 'Logout berhasil, silakan hapus token di Frontend' });
 });
 
-// 5. ENDPOINT CEK STATUS AUTH (DIPERKUAT)
-router.get('/check-auth', async (req, res) => {
+// 5. ENDPOINT CEK STATUS AUTH - DIUBAH KE JWT
+// 🔥 PERHATIKAN: Route ini disisipkan authMiddleware!
+router.get('/check-auth', authMiddleware, async (req, res) => {
   try {
-    const activeId = req.session.userId || req.session.adminId;
+    // Jika lolos authMiddleware, artinya token valid dan datanya ada di req.user
+    const userId = req.user.id;
 
-    if (!activeId) {
-      return res.status(200).json({ 
-        authenticated: false, 
-        user: null, 
-        message: 'Tidak ada sesi aktif.' 
-      });
-    }
-
+    // Opsional: Cek ke database untuk memastikan akun belum dihapus
     const result = await db.query(
       'SELECT id, name, email, role FROM users WHERE id = $1', 
-      [activeId]
+      [userId]
     );
 
     if (result.rows.length === 0) {
-      req.session.destroy();
-      res.clearCookie('growpath_sid', { path: '/' });
       return res.status(200).json({ 
         authenticated: false, 
         user: null, 
@@ -271,7 +247,9 @@ router.post('/forgot-password', async (req, res) => {
       },
     });
 
-    const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
+    // Sesuaikan link ini dengan URL Vercel Frontend Anda jika sudah di-deploy
+    const frontendURL = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetLink = `${frontendURL}/reset-password?token=${resetToken}`;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
