@@ -1,23 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/db'); 
-const userModel = require('../models/userModel'); // Pastikan path file model ini benar
+const userModel = require('../models/userModel'); 
+const authMiddleware = require('../middleware/authMiddleware'); // Wajib impor ini
 
-// Endpoint: GET /api/users
-router.get('/', async (req, res) => {
+// 1. Endpoint: GET /api/users
+// Kita pasang authMiddleware agar hanya user dengan token valid yang bisa akses
+router.get('/', authMiddleware, async (req, res) => {
     try {
-        console.log(`\n📡 [REQUEST MASUK] Session ID: ${req.sessionID}`);
-        console.log(`📦 Isi req.session.adminId:`, req.session.adminId);
-
-        if (!req.session || !req.session.adminId) {
-            return res.status(401).json({ message: "Akses ditolak. Silakan login." });
-        }
-
-        const result = await db.query(
-            'SELECT id, name, email, role, created_at FROM users ORDER BY id DESC'
-        );
-
-        res.json(result.rows); 
+        // Karena sekarang pakai JWT, kita tidak butuh session.
+        // authMiddleware sudah memastikan token valid.
+        
+        const result = await userModel.getAllUsers();
+        res.json(result); 
 
     } catch (error) {
         console.error("Database Error di UserRoutes:", error.message);
@@ -25,14 +19,13 @@ router.get('/', async (req, res) => {
     }
 });
 
-// ==========================================
-// KODE BARU: Endpoint EDIT (PUT) User
-// ==========================================
-router.put('/:id', async (req, res) => {
+// 2. Endpoint: PUT /api/users/:id
+router.put('/:id', authMiddleware, async (req, res) => {
     try {
-        // Proteksi Session: Hanya Admin yang bisa edit
-        if (!req.session || !req.session.adminId) {
-            return res.status(401).json({ message: "Akses ditolak. Sesi Anda telah berakhir." });
+        // authMiddleware sudah memverifikasi user, 
+        // Anda bisa cek role di sini jika perlu (opsional)
+        if (req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+            return res.status(403).json({ message: "Akses ditolak. Anda bukan Admin." });
         }
 
         const userId = req.params.id;
@@ -42,7 +35,6 @@ router.put('/:id', async (req, res) => {
             return res.status(400).json({ message: "Nama, Email, dan Role wajib diisi." });
         }
 
-        // Panggil fungsi updateUser dari model
         const updatedUser = await userModel.updateUser(userId, name, email, role);
 
         if (!updatedUser) {
@@ -57,19 +49,15 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// ==========================================
-// KODE BARU: Endpoint HAPUS (DELETE) User
-// ==========================================
-router.delete('/:id', async (req, res) => {
+// 3. Endpoint: DELETE /api/users/:id
+router.delete('/:id', authMiddleware, async (req, res) => {
     try {
-        // Proteksi Session: Hanya Admin yang bisa hapus
-        if (!req.session || !req.session.adminId) {
-            return res.status(401).json({ message: "Akses ditolak. Sesi Anda telah berakhir." });
+        // Proteksi Role
+        if (req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+            return res.status(403).json({ message: "Akses ditolak. Anda bukan Admin." });
         }
 
         const userId = req.params.id;
-
-        // Panggil fungsi deleteUser dari model
         const deletedUser = await userModel.deleteUser(userId);
 
         if (!deletedUser) {

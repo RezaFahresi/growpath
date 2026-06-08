@@ -1,5 +1,7 @@
-// backend/controllers/assessmentController.js
 const AssessmentModel = require('../models/assessmentModel');
+
+// Helper untuk validasi role sederhana dari payload JWT
+const isAdmin = (user) => user && (user.role === 'admin' || user.role === 'superadmin');
 
 exports.getAssessments = async (req, res) => {
   try {
@@ -13,7 +15,9 @@ exports.getAssessments = async (req, res) => {
 
 exports.createAssessment = async (req, res) => {
   try {
-    if (!req.session.adminId) return res.status(403).json({ message: 'Akses ditolak. Hanya Admin yang bisa membuat soal.' });
+    // 1. Cek dari req.user (hasil dari authMiddleware)
+    if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak. Hanya Admin.' });
+    
     const { title, category, duration, description } = req.body;
     if (!title || !category || !duration) return res.status(400).json({ message: 'Semua field wajib diisi.' });
 
@@ -27,7 +31,8 @@ exports.createAssessment = async (req, res) => {
 
 exports.updateAssessment = async (req, res) => {
   try {
-    if (!req.session.adminId) return res.status(403).json({ message: 'Akses ditolak. Hanya Admin yang bisa mengedit soal.' });
+    if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak.' });
+    
     const id = parseInt(req.params.id, 10);
     const { title, category, duration, description } = req.body;
     if (!title || !category || !duration) return res.status(400).json({ message: 'Field wajib diisi.' });
@@ -43,7 +48,7 @@ exports.updateAssessment = async (req, res) => {
 
 exports.deleteAssessment = async (req, res) => {
   try {
-    if (!req.session.adminId) return res.status(403).json({ message: 'Akses ditolak.' });
+    if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak.' });
     const id = parseInt(req.params.id, 10);
     await AssessmentModel.deleteAssessment(id);
     res.json({ message: 'Assessment template berhasil dihapus.' });
@@ -55,29 +60,30 @@ exports.deleteAssessment = async (req, res) => {
 
 exports.submitAssessment = async (req, res) => {
   try {
-    if (req.session.adminId) return res.status(403).json({ message: 'Admin tidak boleh mengerjakan kuis.' });
-    if (!req.session.userId) return res.status(401).json({ message: 'Silakan login.' });
+    // Gunakan req.user.id (user biasa)
+    if (!req.user) return res.status(401).json({ message: 'Silakan login.' });
+    if (isAdmin(req.user)) return res.status(403).json({ message: 'Admin tidak boleh mengerjakan kuis.' });
 
-    const userId = parseInt(req.session.userId, 10);
+    const userId = parseInt(req.user.id, 10);
     const { assessment_id, score, timeSpentHours } = req.body;
     const hours = timeSpentHours || 0.5;
 
     const skillCategory = await AssessmentModel.getAssessmentCategory(assessment_id);
     const result = await AssessmentModel.submitAssessmentResult(userId, assessment_id, score, hours, skillCategory);
     
-    res.json({ message: 'Hasil berhasil disimpan dan Progress diperbarui!', data: result });
+    res.json({ message: 'Hasil berhasil disimpan!', data: result });
   } catch (error) {
     console.error("Error submitAssessment:", error);
-    res.status(500).json({ message: 'Gagal menyimpan hasil dan progress.' });
+    res.status(500).json({ message: 'Gagal menyimpan hasil.' });
   }
 };
 
 exports.getUserResults = async (req, res) => {
   try {
-    if (req.session.adminId) return res.json([]); 
-    if (!req.session.userId) return res.status(401).json({ message: 'Silakan login.' });
+    if (!req.user) return res.status(401).json({ message: 'Silakan login.' });
+    if (isAdmin(req.user)) return res.json([]); 
 
-    const data = await AssessmentModel.getUserResultsHistory(req.session.userId);
+    const data = await AssessmentModel.getUserResultsHistory(req.user.id);
     res.json(data);
   } catch (error) {
     console.error("Error getUserResults:", error);
@@ -90,12 +96,14 @@ exports.getResultDetail = async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(400).json({ message: 'ID tidak valid.' });
 
-    const userId = req.session.userId;
-    const adminId = req.session.adminId;
-    if (!userId && !adminId) return res.status(401).json({ message: 'Sesi tidak ditemukan.' });
+    if (!req.user) return res.status(401).json({ message: 'Sesi tidak ditemukan.' });
+
+    // Kita berikan userId atau adminId berdasarkan req.user
+    const userId = isAdmin(req.user) ? null : req.user.id;
+    const adminId = isAdmin(req.user) ? req.user.id : null;
 
     const rows = await AssessmentModel.getResultDetail(id, userId, adminId);
-    if (rows.length === 0) return res.status(404).json({ message: 'Data tidak ditemukan di database.' });
+    if (rows.length === 0) return res.status(404).json({ message: 'Data tidak ditemukan.' });
     
     res.json(rows[0]);
   } catch (error) {
@@ -106,7 +114,7 @@ exports.getResultDetail = async (req, res) => {
 
 exports.deleteResult = async (req, res) => {
   try {
-    if (!req.session.adminId) return res.status(403).json({ message: 'Akses ditolak!' });
+    if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak!' });
     const id = parseInt(req.params.id, 10);
     
     const rowCount = await AssessmentModel.deleteResult(id);

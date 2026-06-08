@@ -1,5 +1,7 @@
-// backend/controllers/courseController.js
 const CourseModel = require('../models/courseModel');
+
+// Helper untuk validasi admin
+const isAdmin = (user) => user && (user.role === 'admin' || user.role === 'superadmin');
 
 exports.getCourses = async (req, res) => {
   try {
@@ -13,7 +15,9 @@ exports.getCourses = async (req, res) => {
 
 exports.createCourse = async (req, res) => {
   try {
-    if (!req.session.adminId) return res.status(403).json({ message: 'Akses ditolak. Hanya Admin yang diizinkan.' });
+    // Gunakan req.user dari authMiddleware
+    if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak. Hanya Admin.' });
+    
     const { title, description, image, category, duration, lessons } = req.body;
     if (!title) return res.status(400).json({ message: 'Course Title wajib diisi.' });
 
@@ -27,7 +31,8 @@ exports.createCourse = async (req, res) => {
 
 exports.updateCourse = async (req, res) => {
   try {
-    if (!req.session.adminId) return res.status(403).json({ message: 'Akses ditolak.' });
+    if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak.' });
+    
     const id = parseInt(req.params.id, 10);
     const { title, description, image, category, duration, lessons } = req.body;
 
@@ -43,7 +48,8 @@ exports.updateCourse = async (req, res) => {
 
 exports.deleteCourse = async (req, res) => {
   try {
-    if (!req.session.adminId) return res.status(403).json({ message: 'Akses ditolak.' });
+    if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak.' });
+    
     const id = parseInt(req.params.id, 10);
     const rowCount = await CourseModel.deleteCourse(id);
     
@@ -57,9 +63,10 @@ exports.deleteCourse = async (req, res) => {
 
 exports.completeCourse = async (req, res) => {
   try {
-    if (!req.session.userId) return res.status(401).json({ message: 'Silakan login untuk menyelesaikan kursus.' });
+    // Pastikan user sudah login lewat token
+    if (!req.user) return res.status(401).json({ message: 'Silakan login.' });
     
-    const userId = parseInt(req.session.userId, 10);
+    const userId = parseInt(req.user.id, 10);
     const courseId = parseInt(req.params.id, 10);
 
     const exists = await CourseModel.checkProgressExists(userId, courseId);
@@ -70,7 +77,7 @@ exports.completeCourse = async (req, res) => {
     }
 
     await CourseModel.addActivityHours(userId, 2.0);
-    res.json({ message: 'Selamat! Kursus berhasil diselesaikan dan progress telah diperbarui.' });
+    res.json({ message: 'Selamat! Kursus berhasil diselesaikan.' });
   } catch (error) {
     console.error("Error completeCourse:", error);
     res.status(500).json({ message: 'Gagal menyelesaikan kursus.' });
