@@ -4,20 +4,41 @@ import { useAppContext } from '../../context/AppContext';
 import { Navigate } from 'react-router-dom';
 
 export default function ManageUsers() {
-  const { user } = useAppContext();
+  const { user, loading: authLoading } = useAppContext();
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Double check RBAC - only SuperAdmin should access this
-  if (user?.role !== 'SuperAdmin') {
+  // 1. Fetch data dari API /users
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        // API ini secara otomatis menyertakan JWT token lewat axios interceptor
+        const response = await API.get('/users');
+        setUsers(response.data);
+      } catch (err) {
+        console.error("Gagal mengambil data user:", err);
+        setError("Tidak dapat memuat data pengguna.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) fetchUsers();
+  }, [user]);
+
+  // 2. Proteksi RBAC: Redirect jika bukan Admin/SuperAdmin
+  if (!authLoading && (!user || (user.role !== 'admin' && user.role !== 'superadmin'))) {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  // Mengubah 'interest' menjadi 'access' agar sesuai dengan header kolom
-  const users = [
-    { id: 1, name: 'Alex Johnson', email: 'alex@example.com', role: 'Learner', joined: 'Oct 24, 2023', access: 'Restricted' },
-    { id: 2, name: 'Admin Frontend', email: 'frontend@growpath.com', role: 'Admin', joined: 'Sep 12, 2023', access: 'Frontend Dept' },
-    { id: 3, name: 'Super Admin', email: 'admin@growpath.com', role: 'SuperAdmin', joined: 'Aug 01, 2023', access: 'Full System' },
-    { id: 4, name: 'Sarah Connor', email: 'sarah@example.com', role: 'Learner', joined: 'Nov 05, 2023', access: 'Restricted' },
-  ];
+  // Filter berdasarkan pencarian
+  const filteredUsers = users.filter(u => 
+    u.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    u.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     // Margin diseragamkan dengan menambahkan w-full max-w-7xl mx-auto p-4 md:p-8 agar fit in

@@ -39,9 +39,10 @@ export default function Roadmap() {
 
   const handleToggleTask = async (phaseId, itemId) => {
     toggleRoadmapItem(phaseId, itemId);
-    if (user?.id) {
+    if (user) {
       try {
-        await API.post('/roadmaps/progress', { userId: user.id, phaseId, taskId: itemId });
+        // 🔥 PERBAIKAN: Hapus userId dari payload. Backend membacanya dari JWT!
+        await API.post('/roadmaps/progress', { phaseId, taskId: itemId });
       } catch (error) {
         console.error("Gagal sinkronisasi:", error);
       }
@@ -75,7 +76,6 @@ export default function Roadmap() {
   if (isLoading) return <div className="flex justify-center p-20"><div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div></div>;
 
   return (
-    // Margin diseragamkan dengan w-full max-w-7xl mx-auto agar fit in
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 space-y-12 animate-in fade-in duration-700">
       
       {/* HEADER */}
@@ -83,7 +83,6 @@ export default function Roadmap() {
         <h1 className="text-4xl font-black mb-4">Your Learning Roadmap</h1>
         <p className="text-indigo-200/80 mb-6 max-w-lg mx-auto">Ikuti jalur pembelajaran khusus untuk menguasai keterampilan secara bertahap.</p>
         
-        {/* Ikon progress dengan background warna (slate-800) dan highlight Amber */}
         <div className="inline-flex items-center gap-3 bg-white/10 px-6 py-3 rounded-2xl border border-white/10">
           <div className="p-2 bg-slate-800 rounded-lg shadow-lg">
             <Trophy size={20} className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
@@ -139,7 +138,6 @@ export default function Roadmap() {
                           ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-100 hover:border-indigo-200'
                         }`}
                       >
-                        {/* Ikon di-bold/di-highlight */}
                         {(progress?.roadmapChecklist?.[phase.id] || []).includes(item.id) 
                           ? <CheckCircle className="text-emerald-500" size={20} /> 
                           : <Circle className="text-indigo-400 font-bold" size={20} />}
@@ -164,7 +162,6 @@ export default function Roadmap() {
                       <ChevronRight size={18} />
                     </button>
                     
-                    {/* Ikon pembelajaran diberi warna highlight */}
                     <button 
                       onClick={() => navigate('/dashboard/courses')}
                       className="w-full md:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-bold transition-all text-sm uppercase tracking-wider bg-white text-indigo-600 border-2 border-indigo-100 hover:border-indigo-300 hover:bg-indigo-50 shadow-sm hover:-translate-y-0.5"

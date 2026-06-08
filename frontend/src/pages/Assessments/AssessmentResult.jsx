@@ -10,7 +10,6 @@ export default function AssessmentResult() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // STATE: Untuk menyimpan pilihan roadmap/karir user
   const [selectedPath, setSelectedPath] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -22,6 +21,7 @@ export default function AssessmentResult() {
         setLoading(true);
         setError(null);
 
+        // JWT Token otomatis disertakan oleh axios interceptor
         const response = await API.get(`/assessments/results/${id}`, {
           signal: controller.signal
         });
@@ -79,7 +79,6 @@ export default function AssessmentResult() {
     };
   }, [id]);
 
-  // FUNGSI: Menangani pilihan karir & submit
   const handleSelectPath = (pathId) => {
     setSelectedPath(pathId);
   };
@@ -88,14 +87,12 @@ export default function AssessmentResult() {
     if (!selectedPath) return;
     
     setIsSubmitting(true);
-    // TODO: Tambahkan API POST di sini
     
     setTimeout(() => {
       navigate(`/dashboard/roadmap/${selectedPath}`);
     }, 1200);
   };
 
-  // --- TAMPILAN ERROR ---
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] space-y-6 px-4">
@@ -116,7 +113,6 @@ export default function AssessmentResult() {
     );
   }
 
-  // --- TAMPILAN LOADING ---
   if (loading || !assessment) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh]">
@@ -140,16 +136,13 @@ export default function AssessmentResult() {
   const statusTitle = isHigh ? 'Luar Biasa!' : isLow ? 'Perlu Ditingkatkan' : 'Kerja Bagus!';
   const badgeColor = isHigh ? 'bg-emerald-500' : isLow ? 'bg-amber-500' : 'bg-indigo-500';
   
-  // Kalkulasi SVG Lingkaran
   const radius = 50;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (circumference * score) / 100;
 
   return (
-    // Margin diseragamkan dengan w-full max-w-7xl mx-auto agar fit in ke frame
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
-      {/* Header Halaman */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <button
@@ -165,10 +158,8 @@ export default function AssessmentResult() {
         </div>
       </div>
 
-      {/* GRID 2 KOLOM: SCORE & BREAKDOWN */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* KOLOM KIRI: Kartu Skor */}
         <div className="lg:col-span-1 bg-gradient-to-b from-indigo-600 to-indigo-900 rounded-[2rem] p-8 shadow-xl shadow-indigo-200 flex flex-col items-center justify-center text-center text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
           
@@ -212,10 +203,8 @@ export default function AssessmentResult() {
           </p>
         </div>
 
-        {/* KOLOM KANAN: Skill Breakdown */}
         <div className="lg:col-span-2 bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm flex flex-col justify-center">
           <div className="flex items-center gap-3 mb-8">
-            {/* IKON HIGHLIGHT ABU-TUA */}
             <div className="p-2.5 bg-slate-800 shadow-md rounded-xl">
               <TrendingUp size={20} className="text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]" />
             </div>
@@ -247,13 +236,11 @@ export default function AssessmentResult() {
         </div>
       </div>
 
-      {/* SECTION BARU: RECOMMENDED NEXT STEPS (DIPERBAGUS) */}
       <div className="bg-indigo-50 border border-indigo-100 rounded-[2rem] p-8 shadow-sm flex flex-col md:flex-row items-start gap-6 relative overflow-hidden">
         <div className="absolute right-0 bottom-0 opacity-10 text-indigo-500 -mb-6 -mr-6">
           <Lightbulb size={160} />
         </div>
         
-        {/* IKON HIGHLIGHT ABU-TUA */}
         <div className="p-4 bg-slate-800 rounded-2xl shadow-md shrink-0 relative z-10">
           <Target size={32} className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
         </div>
@@ -265,9 +252,6 @@ export default function AssessmentResult() {
         </div>
       </div>
 
-      {/* ========================================================= */}
-      {/* SECTION: PEMILIHAN ROADMAP / KARIR (TALENT MAPPING)   */}
-      {/* ========================================================= */}
       <div className="bg-white p-8 md:p-10 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-[0.03] text-indigo-900 pointer-events-none">
           <Sparkles size={200} />
@@ -283,7 +267,6 @@ export default function AssessmentResult() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-10">
             
-            {/* Opsi 1: Web Dev */}
             <div 
               onClick={() => handleSelectPath('web-dev-101')}
               className={`cursor-pointer rounded-3xl border-2 p-8 transition-all duration-300 flex flex-col h-full ${
@@ -293,7 +276,6 @@ export default function AssessmentResult() {
               }`}
             >
               <div className="flex items-center gap-4 mb-4">
-                {/* IKON HIGHLIGHT ABU-TUA */}
                 <div className="p-4 rounded-2xl bg-slate-800 shadow-md">
                   <Code size={28} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
                 </div>
@@ -307,7 +289,6 @@ export default function AssessmentResult() {
               </div>
             </div>
 
-            {/* Opsi 2: UI/UX */}
             <div 
               onClick={() => handleSelectPath('ui-ux-101')}
               className={`cursor-pointer rounded-3xl border-2 p-8 transition-all duration-300 flex flex-col h-full ${
@@ -317,7 +298,6 @@ export default function AssessmentResult() {
               }`}
             >
               <div className="flex items-center gap-4 mb-4">
-                {/* IKON HIGHLIGHT ABU-TUA */}
                 <div className="p-4 rounded-2xl bg-slate-800 shadow-md">
                   <PenTool size={28} className="text-pink-400 drop-shadow-[0_0_8px_rgba(244,114,182,0.6)]" />
                 </div>
@@ -333,7 +313,6 @@ export default function AssessmentResult() {
 
           </div>
 
-          {/* Action Button */}
           <div className="flex justify-center border-t border-slate-100 pt-10">
             <button 
               onClick={handleConfirmSelection}

@@ -24,10 +24,11 @@ export default function Login() {
       const response = await API.post('/auth/login-user', { email, password });
       const data = response.data;
 
-      // SIMPAN TOKEN KE BROWSER
+      // 🌟 PERBAIKAN: Gunakan key 'growpath_user' agar sinkron dengan AppContext
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      login(data.user);
+      localStorage.setItem('growpath_user', JSON.stringify(data.user));
+      
+      await login(data.user);
 
       const role = (data.user.role || '').toLowerCase();
       
@@ -59,11 +60,11 @@ export default function Login() {
         
         const data = res.data;
         
-        // 🌟 PERBAIKAN: SIMPAN TOKEN GOOGLE KE BROWSER
+        // 🌟 PERBAIKAN: Gunakan key 'growpath_user'
         localStorage.setItem('token', data.token); 
-        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('growpath_user', JSON.stringify(data.user));
         
-        login(data.user); 
+        await login(data.user); 
         
         const role = (data.user.role || '').toLowerCase();
         

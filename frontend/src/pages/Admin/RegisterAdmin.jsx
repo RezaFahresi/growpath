@@ -19,10 +19,7 @@ export default function RegisterAdmin() {
   });
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -31,6 +28,7 @@ export default function RegisterAdmin() {
     setError('');
 
     try {
+      // Menambahkan role: 'admin' agar backend tahu ini akun admin
       await API.post('/auth/register', { 
         ...formData, 
         role: 'admin' 

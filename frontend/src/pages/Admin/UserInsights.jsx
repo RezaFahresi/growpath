@@ -6,7 +6,6 @@ export default function UserInsights() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sessionExpired, setSessionExpired] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   // --- STATE UNTUK EDIT USER ---
@@ -19,55 +18,45 @@ export default function UserInsights() {
     role: 'user'
   });
 
-  useEffect(() => {
+useEffect(() => {
     fetchUsers();
   }, []);
-
-  const fetchUsers = async () => {
+  
+ const fetchUsers = async () => {
     try {
       setLoading(true);
       setError(null);
-      setSessionExpired(false);
 
+      // Backend akan membaca Token JWT dari Header secara otomatis melalui axios interceptor
       const response = await API.get('/users');
       const data = response.data;
       setUsers(Array.isArray(data) ? data : (data.users || []));
     } catch (err) {
-      if (err.response) {
-        if (err.response.status === 401 || err.response.status === 403) {
-          setSessionExpired(true);
-          setError(err.response.data?.message || 'Sesi Anda telah berakhir atau Anda bukan admin.');
-          setTimeout(() => {
-            window.location.href = '/login?session=expired';
-          }, 3000);
-        } else {
-          setError(err.response.data?.message || `Terjadi kesalahan (HTTP ${err.response.status})`);
-        }
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        setError('Sesi Anda telah berakhir atau akses ditolak.');
+        setTimeout(() => {
+          // Bersihkan storage dan lempar ke login admin
+          localStorage.removeItem('token');
+          localStorage.removeItem('growpath_user');
+          window.location.href = '/login-admin';
+        }, 2000);
       } else {
-        setError(err.message || 'Terjadi kesalahan jaringan.');
+        setError(err.response?.data?.message || 'Terjadi kesalahan saat memuat data.');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await API.post('/auth/logout');
-    } catch (err) {
-      console.error('Logout error:', err);
-    } finally {
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.href = '/login-admin';
-    }
+  // 🔥 PERBAIKAN: Logout JWT (Tidak perlu hit API backend)
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('growpath_user');
+    window.location.href = '/login-admin';
   };
 
   const handleExportCSV = () => {
-    if (users.length === 0) {
-      alert('Tidak ada data untuk diexport');
-      return;
-    }
+    if (users.length === 0) return;
 
     const csvContent = [
       ['ID', 'Nama', 'Email', 'Role', 'Created At'],
@@ -89,7 +78,6 @@ export default function UserInsights() {
     window.URL.revokeObjectURL(url);
   };
 
-  // --- FUNGSI AKSI (EDIT & DELETE) ---
   const openEditForm = (user) => {
     setEditingUser(user);
     setFormData({
@@ -113,39 +101,31 @@ export default function UserInsights() {
       setIsSaving(true);
       const userId = editingUser.id || editingUser._id;
       
-      // Request ke Backend untuk Update User
       await API.put(`/users/${userId}`, formData);
       
-      // Update state lokal agar tabel langsung berubah tanpa harus reload halaman
       setUsers(users.map(u => 
-        (u.id === userId || u._id === userId) ? { ...u, ...formData } : u
+        (String(u.id || u._id) === String(userId)) ? { ...u, ...formData } : u
       ));
       
       closeEditForm();
     } catch (error) {
-      console.error("Update Error:", error);
-      alert(error.response?.data?.message || 'Gagal memperbarui data pengguna. Pastikan Backend sudah memiliki Route PUT /api/users/:id');
+      alert(error.response?.data?.message || 'Gagal memperbarui data.');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleDeleteUser = async (id) => {
-    if (!window.confirm("Peringatan: Apakah Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.")) return;
+    if (!window.confirm("Yakin ingin menghapus pengguna ini?")) return;
     
     try {
-      // Request ke Backend untuk Delete User
       await API.delete(`/users/${id}`);
-      
-      // Update state lokal agar baris di tabel langsung hilang
-      setUsers(users.filter(u => u.id !== id && u._id !== id));
+      setUsers(users.filter(u => String(u.id || u._id) !== String(id)));
     } catch (error) {
-      console.error("Delete Error:", error);
-      alert(error.response?.data?.message || 'Gagal menghapus pengguna. Pastikan Backend sudah memiliki Route DELETE /api/users/:id');
+      alert(error.response?.data?.message || 'Gagal menghapus pengguna.');
     }
   };
 
-  // Logika Filter Pencarian
   const filteredUsers = users.filter(user => 
     (user.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (user.email || '').toLowerCase().includes(searchQuery.toLowerCase())

@@ -18,11 +18,9 @@ export default function AdminDashboard() {
     }, 
     recentActivities: [] 
   });
-
-  // State untuk mencegah error "negative width" dari ApexCharts
+  const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
-  // Data Cadangan (Fallback) jika API belum siap
   const defaultTalentData = [
     { subject: 'Web Dev', score: 85 }, 
     { subject: 'UI/UX', score: 65 },
@@ -32,7 +30,6 @@ export default function AdminDashboard() {
     { subject: 'DevOps', score: 55 }
   ];
 
-  // Data Dummy untuk grafik lainnya
   const recentEnrollments = [20, 35, 40, 55, 60, 80, 110];
   const recentDates = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
   
@@ -40,13 +37,17 @@ export default function AdminDashboard() {
   const recentCategories = ['HTML/CSS', 'JS Basic', 'React', 'UI/UX'];
 
   useEffect(() => {
-    setMounted(true); // Tandai bahwa komponen sudah ter-mount
+    setMounted(true);
     const fetchData = async () => {
       try {
+        setLoading(true);
+        // Backend akan memvalidasi Token JWT dari Header
         const response = await API.get('/admin/stats');
         setData(response.data);
       } catch (err) {
         console.error("Error loading dashboard:", err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -56,13 +57,14 @@ export default function AdminDashboard() {
     ? data.stats.talentDistribution 
     : defaultTalentData;
 
-  // Konfigurasi Stat Cards agar lebih rapi saat di-map
   const statCards = [
     { title: 'Total Users', val: data.stats?.totalUsers || 0, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
     { title: 'Assessments', val: data.stats?.activeAssessments || 0, icon: ClipboardCheck, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
     { title: 'Career Matches', val: data.stats?.matches || 0, icon: Network, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
     { title: 'Avg. Progress', val: `${data.stats?.progress || 0}%`, icon: Zap, color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' }
   ];
+
+  if (!mounted) return null;
 
   // Jangan render konten jika belum mounted (mencegah bug chart)
   if (!mounted) {

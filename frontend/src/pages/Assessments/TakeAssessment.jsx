@@ -13,7 +13,6 @@ export default function TakeAssessment() {
     (a) => String(a.id) === String(id)
   );
 
-  // BANK SOAL IT KOMPREHENSIF (TALENT MAPPING DASAR)
   const questions = [
     {
       id: 1,
@@ -111,6 +110,7 @@ export default function TakeAssessment() {
     try {
       setIsSubmitting(true);
       
+      // Request akan menggunakan JWT Authorization Header
       const response = await API.post('/assessments/submit', {
         assessment_id: id,
         score
@@ -138,14 +138,11 @@ export default function TakeAssessment() {
   const optionLetters = ['A', 'B', 'C', 'D'];
 
   return (
-    // Margin diseragamkan: max-w-4xl, w-full, p-4 md:p-8 agar fit in
     <div className="max-w-4xl w-full mx-auto p-4 md:p-8 flex flex-col justify-center min-h-[calc(100vh-4rem)] animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="bg-white rounded-[2rem] p-6 md:p-10 shadow-xl shadow-slate-150/30 border border-slate-100">
 
-        {/* Top Header Card */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-6 mb-6 gap-4">
           <div className="flex items-center gap-3">
-            {/* Ikon di-highlight dengan background abu tua dan glow */}
             <div className="p-2.5 bg-slate-800 rounded-xl shadow-md flex items-center justify-center shrink-0">
               <HelpCircle size={22} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
             </div>
@@ -159,7 +156,6 @@ export default function TakeAssessment() {
           </span>
         </div>
 
-        {/* Progress Bar Area */}
         <div className="space-y-2 mb-10">
           <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
             <div
@@ -173,9 +169,7 @@ export default function TakeAssessment() {
           </div>
         </div>
 
-        {/* Soal Kuis */}
         <div className="mb-8">
-          {/* Badge Kategori dengan warna solid */}
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-800 text-xs font-black text-amber-400 uppercase tracking-widest rounded-lg mb-4 shadow-sm border border-slate-700">
             <Sparkles size={14} className="text-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.8)]" /> Kompetensi IT Dasar
           </span>
@@ -184,7 +178,6 @@ export default function TakeAssessment() {
           </h3>
         </div>
 
-        {/* Pilihan Ganda */}
         <div className="space-y-4">
           {questions[currentQuestion].options.map((option, index) => {
             const isSelected = selectedAnswer === index;
@@ -199,7 +192,6 @@ export default function TakeAssessment() {
                     : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50/50 text-slate-600'
                 }`}
               >
-                {/* Badge Abjad (A, B, C, D) */}
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold border-2 transition-colors text-sm shrink-0 ${
                   isSelected
                     ? 'bg-indigo-600 border-indigo-600 text-white'
@@ -216,7 +208,6 @@ export default function TakeAssessment() {
           })}
         </div>
 
-        {/* Footer Navigation Bar */}
         <div className="flex justify-end mt-10 border-t border-slate-100 pt-6">
           <button
             onClick={handleNext}

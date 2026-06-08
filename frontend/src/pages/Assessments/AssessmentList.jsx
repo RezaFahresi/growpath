@@ -45,7 +45,6 @@ export default function AssessmentList() {
         <section className="relative overflow-hidden bg-gradient-to-r from-indigo-50/80 to-white rounded-3xl p-6 md:p-8 border border-indigo-100 shadow-sm flex flex-col md:flex-row items-center justify-between group">
           <div className="relative z-10 mb-6 md:mb-0">
             <h2 className="text-xl font-bold text-indigo-950 flex items-center gap-3 mb-1.5">
-              {/* IKON SPARKLES DIPERBARUI (Abu Tua + Amber) */}
               <div className="p-2 bg-slate-800 rounded-xl shadow-md flex items-center justify-center">
                 <Sparkles className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" size={20} />
               </div>
@@ -65,7 +64,6 @@ export default function AssessmentList() {
       {/* Past Results Section */}
       <section>
         <div className="flex items-center gap-3 mb-6">
-          {/* IKON HISTORY HEADER DIPERBARUI (Abu Tua + Cyan) */}
           <div className="p-2.5 bg-slate-800 rounded-xl shadow-md flex items-center justify-center shrink-0">
             <History className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" size={22} />
           </div>
@@ -74,7 +72,6 @@ export default function AssessmentList() {
 
         {!hasCompletedAssessments ? (
           <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-16 flex flex-col items-center justify-center text-center">
-            {/* IKON EMPTY STATE DIPERBARUI (Abu Tua + Indigo Highlight) */}
             <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-5 shadow-lg border border-slate-700">
               <History className="text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]" size={32} />
             </div>
@@ -87,7 +84,6 @@ export default function AssessmentList() {
               const isExcellent = item.score >= 80;
               const badgeColor = isExcellent ? 'text-emerald-600 bg-emerald-50 border-emerald-100' : 'text-indigo-600 bg-indigo-50 border-indigo-100';
               
-              // Warna highlight dinamis untuk ikon Check (Emerald / Cyan)
               const checkHighlightClass = isExcellent 
                 ? 'text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.8)]' 
                 : 'text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.8)]';
@@ -97,7 +93,6 @@ export default function AssessmentList() {
                   key={item.attemptId} 
                   className="bg-white rounded-3xl p-7 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1.5 hover:border-indigo-200 transition-all duration-300 flex flex-col relative group overflow-hidden"
                 >
-                  {/* Dekorasi Garis Atas saat Hover */}
                   <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 to-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   
                   <div className="flex justify-between items-start mb-8">
@@ -114,7 +109,6 @@ export default function AssessmentList() {
                       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 shadow-inner ${badgeColor}`}>
                         <span className="text-lg font-black">{item.score}</span>
                       </div>
-                      {/* IKON CHECK DIPERBARUI (Dibalut Latar Abu Tua) */}
                       <div className="absolute -bottom-2 -right-2 bg-slate-800 rounded-full p-1 border-2 border-white shadow-sm">
                         <CheckCircle2 size={16} className={checkHighlightClass} />
                       </div>

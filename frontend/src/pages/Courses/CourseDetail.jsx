@@ -8,7 +8,7 @@ export default function CourseDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { courses, markCourseCompleted, progress } = useAppContext();
+  const { courses, markCourseCompleted } = useAppContext();
 
   const course = courses?.find(c => String(c.id) === String(id) || String(c._id) === String(id));
 
@@ -25,7 +25,7 @@ export default function CourseDetail() {
   const playerRef = useRef(null);
 
   useEffect(() => {
-    if (isPlaying && (courseVideoIds[course?.id] || courseVideoIds[course?._id])) {
+    if (isPlaying && course && (courseVideoIds[course.id] || courseVideoIds[course._id])) {
       if (!window.YT) {
         const tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
@@ -43,10 +43,12 @@ export default function CourseDetail() {
         playerRef.current.destroy();
       }
     };
-  }, [isPlaying, course?.id]);
+  }, [isPlaying, course]);
 
   const initializePlayer = () => {
+    if (!course) return;
     const currentId = course.id || course._id;
+    
     playerRef.current = new window.YT.Player(`Youtubeer-${currentId}`, {
       videoId: courseVideoIds[String(currentId)] || 'c9Wg6Cb_YlU',
       playerVars: {
@@ -60,7 +62,7 @@ export default function CourseDetail() {
   };
 
   const onPlayerStateChange = (event) => {
-    if (event.data === 0) { // Video selesai
+    if (event.data === 0) { // Video selesai (state 0)
       handleVideoCompletion();
     }
   };
@@ -84,8 +86,11 @@ export default function CourseDetail() {
     try {
       setIsSubmitting(true);
       
+      // Request ini akan otomatis menggunakan header Authorization dengan Token JWT.
+      // Backend (req.user.id) akan mendeteksi user mana yang menyelesaikan kursus ini.
       await API.post(`/courses/${currentId}/complete`);
 
+      // Mengupdate state lokal di AppContext agar UI langsung berubah selesai
       if (markCourseCompleted) markCourseCompleted(currentId);
       
       alert("🎉 Selamat! Kelas berhasil diselesaikan.");
@@ -100,7 +105,6 @@ export default function CourseDetail() {
   };
 
   const toggleLesson = (lessonId, isLocked) => {
-    // Jika modul tergembok, cegah aksi klik
     if (isLocked) return;
 
     let newCompleted;
@@ -117,7 +121,6 @@ export default function CourseDetail() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 w-full max-w-7xl mx-auto">
         <div className="bg-white p-10 rounded-[2rem] border border-slate-100 shadow-sm text-center max-w-md">
-          {/* IKON HIGHLIGHT ABU-TUA */}
           <div className="w-20 h-20 bg-slate-800 rounded-2xl shadow-lg flex items-center justify-center mx-auto mb-6">
             <BookOpen size={32} className="text-pink-400 drop-shadow-[0_0_8px_rgba(244,114,182,0.6)]" />
           </div>
@@ -134,12 +137,10 @@ export default function CourseDetail() {
     );
   }
 
-  // Kalkulasi total pelajaran untuk progress bar
   const totalLessons = Array.isArray(course.lessons) ? course.lessons.length : (Number(course.lessons) || 1);
   const progressPercentage = Math.round((completedLessons.length / totalLessons) * 100);
 
   return (
-    // Margin diseragamkan: w-full max-w-7xl mx-auto
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       {/* --- TOMBOL KEMBALI --- */}
@@ -155,9 +156,7 @@ export default function CourseDetail() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* ================================================= */}
         {/* KOLOM KIRI: VIDEO PLAYER & DESKRIPSI */}
-        {/* ================================================= */}
         <div className="lg:col-span-8 space-y-6">
           
           {/* CONTAINER VIDEO */}
@@ -171,7 +170,6 @@ export default function CourseDetail() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent"></div>
                 
-                {/* Play Button Glassmorphism */}
                 <button
                   onClick={() => setIsPlaying(true)}
                   className="w-20 h-20 bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(0,0,0,0.3)] border border-white/30 hover:bg-white hover:text-indigo-600 hover:scale-110 transition-all duration-300 z-10"
@@ -191,7 +189,6 @@ export default function CourseDetail() {
                 {course.category || 'Kelas IT'}
               </span>
               
-              {/* IKON HIGHLIGHT ABU-TUA */}
               <span className="text-slate-500 text-sm font-bold flex items-center gap-2">
                 <div className="p-1.5 bg-slate-800 rounded-md shadow-sm">
                   <BookOpen size={14} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)]" />
@@ -217,9 +214,7 @@ export default function CourseDetail() {
           </div>
         </div>
 
-        {/* ================================================= */}
         {/* KOLOM KANAN: SYLLABUS / COURSE CONTENT */}
-        {/* ================================================= */}
         <div className="lg:col-span-4">
           <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden lg:sticky lg:top-8 flex flex-col max-h-[85vh]">
             
@@ -227,7 +222,6 @@ export default function CourseDetail() {
               <h2 className="text-xl font-extrabold text-slate-800 mb-1">Kurikulum</h2>
               <p className="text-sm text-slate-500 mb-5 font-medium">Lacak progres belajarmu di sini</p>
               
-              {/* Mini Progress Bar */}
               <div className="flex items-center justify-between text-xs font-bold mb-2">
                 <span className="text-indigo-600">{progressPercentage}% Selesai</span>
                 <span className="text-slate-400">{completedLessons.length} / {totalLessons}</span>
@@ -241,16 +235,10 @@ export default function CourseDetail() {
             </div>
             
             <div className="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-2">
-              {/* RENDER LESSONS */}
               {course.lessons && Array.isArray(course.lessons) ? (
                 course.lessons.map((lesson, idx) => {
                   const isChecked = completedLessons.includes(lesson.id);
-                  
-                  // LOGIKA KUNCI: 
-                  // Modul pertama (idx === 0) selalu terbuka.
-                  // Modul lainnya terbuka JIKA modul sebelumnya (idx - 1) sudah selesai.
                   const isLocked = idx > 0 && !completedLessons.includes(course.lessons[idx - 1].id);
-                  
                   const isActive = !isLocked && !isChecked; 
 
                   return (
@@ -297,8 +285,6 @@ export default function CourseDetail() {
               ) : course.lessons && (!isNaN(course.lessons) || typeof course.lessons === 'number') ? (
                 Array.from({ length: Number(course.lessons) || 0 }).map((_, idx) => {
                   const isChecked = completedLessons.includes(idx);
-                  
-                  // LOGIKA KUNCI UNTUK ARRAY DUMMY
                   const isLocked = idx > 0 && !completedLessons.includes(idx - 1);
                   const isActive = !isLocked && !isChecked;
 
@@ -345,7 +331,6 @@ export default function CourseDetail() {
                 })
               ) : null}
 
-              {/* Tampilan jika tidak ada list */}
               {(!course.lessons || Number(course.lessons) === 0) && (
                 <div className="text-center py-10 px-4">
                   <div className="w-14 h-14 bg-slate-800 rounded-xl shadow-md flex items-center justify-center mx-auto mb-4">
@@ -356,7 +341,6 @@ export default function CourseDetail() {
               )}
             </div>
 
-            {/* ACTION BUTTON (Tandai Selesai) */}
             <div className="p-6 bg-slate-50 border-t border-slate-100 mt-auto">
               <button
                 onClick={handleFinishCourse}

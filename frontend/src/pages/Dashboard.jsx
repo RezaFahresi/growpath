@@ -23,8 +23,9 @@ export default function Dashboard() {
       if (!user?.id) return;
       setLoading(true);
       try {
+        // 🔥 PERBAIKAN: Hapus /user/${user.id}. Cukup panggil /progress
         const [progressRes, rmRes] = await Promise.all([
-          API.get(`/progress/user/${user.id}`), 
+          API.get('/progress'), 
           API.get('/roadmaps')
         ]);
 
@@ -105,14 +106,10 @@ export default function Dashboard() {
   }
 
   return (
-    // Margin diseragamkan: w-full max-w-7xl mx-auto agar fit in
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
-      {/* ========================================= */}
       {/* HERO BANNER */}
-      {/* ========================================= */}
       <div className="relative bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 rounded-[2.5rem] p-8 md:p-12 text-white shadow-xl shadow-indigo-900/10 overflow-hidden">
-        {/* Dekorasi Latar Belakang */}
         <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4 pointer-events-none">
           <Target size={300} />
         </div>
@@ -120,7 +117,6 @@ export default function Dashboard() {
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div className="space-y-4 max-w-xl">
-            {/* Teks dikembalikan, hanya ikon petir yang dihapus */}
             <span className="px-4 py-1.5 bg-indigo-500/30 text-indigo-200 text-xs font-bold rounded-full border border-indigo-400/30 backdrop-blur-md uppercase tracking-wider inline-block mb-1">
               Dashboard Pembelajaran
             </span>
@@ -143,9 +139,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ========================================= */}
       {/* STATS CARDS */}
-      {/* ========================================= */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {stats.map((stat, index) => (
           <div key={index} className={`bg-white p-6 rounded-[1.5rem] border ${stat.border} shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col gap-4 group`}>
@@ -160,9 +154,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* ========================================= */}
-      {/* MAIN GRID (COURSES & ROADMAP) */}
-      {/* ========================================= */}
+      {/* MAIN GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Continue Learning Section */}
@@ -188,7 +180,6 @@ export default function Dashboard() {
                       {course.image && course.image !== '[null]' ? (
                         <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                       ) : (
-                        // Ikon placeholder course diperbarui (Latar Abu Tua)
                         <div className="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center shadow-md">
                           <BookOpen size={28} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
                         </div>
@@ -222,7 +213,6 @@ export default function Dashboard() {
                 );
               })
             ) : (
-              // Empty State dengan latar abu tua dan ikon menonjol
               <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] p-10 flex flex-col items-center justify-center text-center">
                 <div className="w-16 h-16 bg-slate-800 rounded-2xl shadow-lg flex items-center justify-center mb-4">
                   <BookOpen size={28} className="text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]" />
@@ -244,7 +234,6 @@ export default function Dashboard() {
         <div className="lg:col-span-1">
           <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm sticky top-8">
             <div className="flex items-center gap-3 mb-8 border-b border-slate-100 pb-4">
-              {/* Ikon header Roadmap Tracker diperbarui */}
               <div className="p-2.5 bg-slate-800 rounded-xl shadow-md">
                 <Map size={20} className="text-pink-400 drop-shadow-[0_0_8px_rgba(244,114,182,0.6)]" />
               </div>
@@ -252,7 +241,6 @@ export default function Dashboard() {
             </div>
             
             <div className="space-y-0 relative ml-2">
-              {/* Garis Konektor Latar */}
               <div className="absolute left-[13px] top-4 bottom-4 w-[2px] bg-slate-100 -z-10"></div>
 
               {roadmapSteps.length > 0 ? roadmapSteps.map((step, index) => (

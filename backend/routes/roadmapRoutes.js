@@ -1,11 +1,13 @@
 const express = require('express');
-
 const router = express.Router();
+const roadmapController = require('../controllers/roadmapController');
+const authMiddleware = require('../middleware/authMiddleware'); // Wajib Import
 
-const roadmapController =
-  require('../controllers/roadmapController');
+// 🌟 PERBAIKAN: Gunakan authMiddleware
+router.get('/', authMiddleware, roadmapController.getRoadmaps);
 
-router.get('/', roadmapController.getRoadmaps);
-router.post('/progress', roadmapController.toggleProgress);
+// Menyediakan 2 rute untuk mencegah error typo dari frontend
+router.post('/progress', authMiddleware, roadmapController.toggleProgress);
+router.post('/toggle-progress', authMiddleware, roadmapController.toggleProgress);
 
 module.exports = router;

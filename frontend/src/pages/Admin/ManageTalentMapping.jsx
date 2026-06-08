@@ -3,7 +3,7 @@ import { useAppContext } from '../../context/AppContext';
 import { Trash2, Plus, Edit2, X, Upload, Network, Search, Users, Shield, TrendingUp } from 'lucide-react';
 
 export default function ManageTalentMapping() {
-  const { talentMappings, addTalentMapping, deleteTalentMapping } = useAppContext();
+  const { talentMappings, addTalentMapping, deleteTalentMapping, user } = useAppContext();
   const [isAdding, setIsAdding] = useState(false);
   const fileInputRef = useRef(null);
   
@@ -18,8 +18,10 @@ export default function ManageTalentMapping() {
 
   const handleAdd = () => {
     if (newTalent.name && newTalent.role) {
+      // Menambahkan talent ke context
       addTalentMapping({ 
         ...newTalent, 
+        id: Date.now(), // ID sementara
         image: newTalent.image || 'https://via.placeholder.com/150' 
       });
       setIsAdding(false);
@@ -30,6 +32,7 @@ export default function ManageTalentMapping() {
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Catatan: Jika ingin upload ke server, gunakan FormData di sini
       const imageUrl = URL.createObjectURL(file);
       setNewTalent({ ...newTalent, image: imageUrl });
     }
