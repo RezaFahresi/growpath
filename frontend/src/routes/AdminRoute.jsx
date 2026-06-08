@@ -24,7 +24,7 @@ export default function AdminRoute({ children }) {
   // RBAC: Hanya admin atau superadmin yang boleh masuk
   const role = user.role?.toLowerCase();
   if (role !== 'admin' && role !== 'superadmin') {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/admin/dashboard" replace />;
   }
 
   return children;
