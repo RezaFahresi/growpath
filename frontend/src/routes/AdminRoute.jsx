@@ -1,34 +1,31 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAppContext } from '../context/AppContext'; // Import context kita
+import { useAppContext } from '../context/AppContext';
 
 export default function AdminRoute({ children }) {
   const { user, loading } = useAppContext();
   const location = useLocation();
-  const adminToken = localStorage.getItem('token'); // SEMUA auth sekarang pakai token
+  const token = localStorage.getItem('token');
 
-  // 1. Tunggu proses verifikasi selesai
+  // Menunggu AppContext memvalidasi token dan memuat data user
   if (loading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-[#0F172A]">
-        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="h-screen w-screen flex items-center justify-center bg-[#090E17] text-white">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
-  // 2. Cek apakah ada sesi login (Token & User)
-  if (!adminToken || !user) {
-    console.warn("Tidak ada sesi login. Lempar ke /login-admin");
+  // Cek apakah user sudah login dan memiliki token
+  if (!token || !user) {
     return <Navigate to="/login-admin" state={{ from: location }} replace />;
   }
 
-  // 3. PROTEKSI KEAMANAN EKSTRA: Pastikan rolenya benar-benar Admin
-  // Mencegah User biasa yang nakal mengetik URL /admin di browser
-  if (user.role !== 'admin' && user.role !== 'superadmin') {
-    console.error("Akses Ditolak: Anda bukan Admin! Melempar ke dashboard user.");
+  // RBAC: Hanya admin atau superadmin yang boleh masuk
+  const role = user.role?.toLowerCase();
+  if (role !== 'admin' && role !== 'superadmin') {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Jika token valid dan role-nya admin, izinkan masuk
   return children;
 }
