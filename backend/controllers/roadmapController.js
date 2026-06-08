@@ -1,4 +1,3 @@
-// backend/controllers/roadmapController.js
 const RoadmapModel = require('../models/roadmapModel');
 
 exports.getRoadmaps = async (req, res) => {
@@ -13,11 +12,17 @@ exports.getRoadmaps = async (req, res) => {
 
 exports.toggleProgress = async (req, res) => {
   try {
-    const { userId, phaseId, taskId } = req.body;
-    const currentUserId = req.session?.userId || userId;
-    if (!currentUserId) return res.status(401).json({ message: 'Silakan login terlebih dahulu.' });
+    // 1. Pastikan user login via JWT
+    if (!req.user) {
+      return res.status(401).json({ message: 'Silakan login terlebih dahulu.' });
+    }
 
-    const result = await RoadmapModel.toggleRoadmapProgress(currentUserId, phaseId, taskId);
+    // 2. Ambil userId dari token JWT (req.user.id)
+    const userId = req.user.id;
+    const { phaseId, taskId } = req.body;
+
+    // 3. Simpan progress
+    const result = await RoadmapModel.toggleRoadmapProgress(userId, phaseId, taskId);
     
     if (result.status === 'removed') {
       return res.json({ message: 'Task berhasil di-uncheck dan jam belajar dikurangi', status: 'removed' });
