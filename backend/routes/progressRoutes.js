@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const progressController = require('../controllers/progressController');
+const authMiddleware = require('../middleware/authMiddleware'); // Wajib Import
 
-// Kita akan menggunakan rute ini agar seragam dengan AppContext
-router.get('/user/:userId', progressController.getUserProgress);
+// 🌟 PERBAIKAN: Hapus /user/:userId dan gunakan authMiddleware
+router.get('/', authMiddleware, progressController.getUserProgress);
 
 module.exports = router;

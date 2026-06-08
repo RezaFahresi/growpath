@@ -68,24 +68,18 @@ export default function ManageAssessments() {
       let response;
 
       if (isEditing) {
+        // Backend sudah memiliki rute PUT /api/assessments/:id
         response = await API.put(`/assessments/${editId}`, assessmentData);
+        if (updateAssessment) updateAssessment(response.data);
       } else {
         response = await API.post('/assessments', assessmentData);
-      }
-
-      const data = response.data;
-      
-      if (isEditing) {
-        const updatedPayload = { ...data, id: data.id || editId };
-        if (updateAssessment) updateAssessment(updatedPayload); 
-      } else {
-        addAssessment(data);
+        addAssessment(response.data);
       }
 
       closeForm();
     } catch (error) {
-      console.error(`Failed to ${isEditing ? 'update' : 'add'} assessment:`, error);
-      alert(error.response?.data?.message || `Failed to save assessment.`);
+      console.error(`Failed to save:`, error);
+      alert(error.response?.data?.message || 'Gagal menyimpan assessment. Pastikan Anda memiliki akses admin.');
     } finally {
       setLoading(false);
     }
@@ -93,14 +87,17 @@ export default function ManageAssessments() {
 
   const handleDelete = async (id) => {
     if (!id) return;
-    if (!window.confirm("Are you sure you want to delete this assessment?")) return;
+    if (!window.confirm("Yakin ingin menghapus assessment ini?")) return;
 
     try {
+      setLoading(true);
       await API.delete(`/assessments/${id}`);
       deleteAssessment(id);
     } catch (error) {
       console.error('Delete Error:', error);
-      alert('Failed to delete assessment.');
+      alert('Gagal menghapus assessment.');
+    } finally {
+      setLoading(false);
     }
   };
 

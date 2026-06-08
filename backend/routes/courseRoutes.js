@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const courseController = require('../controllers/courseController');
+const authMiddleware = require('../middleware/authMiddleware'); // Wajib Import
 
-router.get('/', courseController.getCourses);
-router.post('/', courseController.createCourse);
-router.put('/:id', courseController.updateCourse);
-router.delete('/:id', courseController.deleteCourse);
-router.post('/:id/complete', courseController.completeCourse);
+// 🌟 PERBAIKAN: Gunakan authMiddleware pada seluruh rute
+router.get('/', authMiddleware, courseController.getCourses);
+router.post('/', authMiddleware, courseController.createCourse);
+router.put('/:id', authMiddleware, courseController.updateCourse);
+router.delete('/:id', authMiddleware, courseController.deleteCourse);
+router.post('/:id/complete', authMiddleware, courseController.completeCourse);
 
 module.exports = router;

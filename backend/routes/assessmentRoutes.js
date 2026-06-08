@@ -1,8 +1,6 @@
 const express = require('express');
-
 const router = express.Router();
-
-const assessmentController = require('../controllers/assessmentController');
+const authMiddleware = require('../middleware/authMiddleware'); // Wajib Import
 
 const {
   getAssessments,
@@ -11,51 +9,20 @@ const {
   submitAssessment,
   getUserResults,
   getResultDetail,
-  updateAssessment // [DITAMBAHKAN]: Destructure fungsi updateAssessment dari controller
+  updateAssessment,
+  deleteResult
 } = require('../controllers/assessmentController');
 
-// =========================
-// GET ALL ASSESSMENTS
-// =========================
-router.get('/', getAssessments);
+// 🌟 PERBAIKAN: Semua rute disisipkan authMiddleware
 
-// =========================
-// CREATE ASSESSMENT
-// =========================
-router.post('/', createAssessment);
+router.get('/', authMiddleware, getAssessments);
+router.post('/', authMiddleware, createAssessment);
+router.put('/:id', authMiddleware, updateAssessment);
+router.delete('/:id', authMiddleware, deleteAssessment);
 
-// ==========================================
-// UPDATE ASSESSMENT (KHUSUS ADMIN) [DITAMBAHKAN]
-// ==========================================
-// Menggunakan rute PUT /:id agar menangani request edit dari frontend tanpa merusak kode lama
-router.put('/:id', updateAssessment);
-
-// =========================
-// DELETE ASSESSMENT
-// =========================
-router.delete('/:id', deleteAssessment);
-
-// =========================
-// SUBMIT RESULT
-// =========================
-router.post('/submit', submitAssessment);
-
-// =========================
-// GET DETAIL RESULT BY ID
-// =========================
-router.get('/results/:id', getResultDetail);
-
-// =========================
-// GET ALL USER RESULTS
-// =========================
-router.get('/results', getUserResults);
-
-// =========================
-// DELETE RESULT
-// =========================
-router.delete(
-  '/results/:id',
-  assessmentController.deleteResult
-);
+router.post('/submit', authMiddleware, submitAssessment);
+router.get('/results', authMiddleware, getUserResults);
+router.get('/results/:id', authMiddleware, getResultDetail);
+router.delete('/results/:id', authMiddleware, deleteResult);
 
 module.exports = router;

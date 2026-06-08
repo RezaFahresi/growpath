@@ -29,7 +29,6 @@ export default function CourseList() {
   const filteredCourses = uniqueCourses.filter(course => {
     if (activeTab === 'Semua') return true;
     
-    // Mapping agar filter sesuai dengan kategori di database
     const tabMap = {
       'Desain': 'design',
       'Frontend': 'frontend',
@@ -44,12 +43,9 @@ export default function CourseList() {
   });
 
   return (
-    // Margin diseragamkan dengan w-full max-w-7xl mx-auto agar fit in
     <div className="w-full max-w-7xl mx-auto space-y-10 animate-in fade-in duration-500 p-4 md:p-8">
       
-      {/* ========================================= */}
       {/* HEADER SECTION */}
-      {/* ========================================= */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Pustaka Kelas</h1>
@@ -72,9 +68,7 @@ export default function CourseList() {
         </div>
       </div>
 
-      {/* ========================================= */}
       {/* FILTER TABS */}
-      {/* ========================================= */}
       <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none border-b border-slate-100">
         {['Semua', 'Desain', 'Frontend', 'Backend'].map(tab => (
           <button
@@ -91,27 +85,19 @@ export default function CourseList() {
         ))}
       </div>
 
-      {/* ========================================= */}
       {/* COURSE GRID (DENGAN LOGIKA GEMBOK) */}
-      {/* ========================================= */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 md:gap-10">
         {filteredCourses.map((course) => {
           const courseId = String(course.id || course._id);
           const fallbackImage = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600';
           const courseImage = course.image && course.image !== '[null]' ? course.image : fallbackImage;
 
-          // ===============================================
-          // LOGIKA KUNCI:
-          // 1. Cari urutan asli course ini di daftar keseluruhan
-          // 2. Cek apakah course SEBELUMNYA sudah diselesaikan
-          // ===============================================
+          // LOGIKA KUNCI
           const originalIndex = uniqueCourses.findIndex(c => String(c.id || c._id) === courseId);
-          
           const prevCourseId = originalIndex > 0 
             ? String(uniqueCourses[originalIndex - 1].id || uniqueCourses[originalIndex - 1]._id) 
             : null;
 
-          // Terkunci JIKA ini bukan course pertama DAN course sebelumnya BELUM ada di daftar selesai
           const isLocked = originalIndex > 0 && !completedCourses.includes(prevCourseId);
 
           return (
@@ -121,7 +107,6 @@ export default function CourseList() {
                 isLocked ? 'opacity-80 grayscale-[0.2]' : 'shadow-sm hover:shadow-xl hover:-translate-y-1.5 group'
               }`}
             >
-              {/* Garis Aksen Hover Top (Hanya jika terbuka) */}
               {!isLocked && (
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 to-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity z-20"></div>
               )}
@@ -136,7 +121,6 @@ export default function CourseList() {
                   }`} 
                 />
                 
-                {/* Overlay Kunci atau Play */}
                 {isLocked ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm z-10">
                     <div className="w-16 h-16 bg-slate-800/80 rounded-full flex items-center justify-center shadow-lg border border-slate-600/50 mb-3">
@@ -177,7 +161,6 @@ export default function CourseList() {
                   {course.description && course.description !== '[null]' ? course.description : 'Pelajari keahlian esensial dan studi kasus mendalam pada kelas akselerasi kompetensi ini.'}
                 </p>
                 
-                {/* Meta Data (IKON DIPERBARUI: Background Abu Tua & Highlight) */}
                 <div className="flex items-center gap-4 text-xs font-bold text-slate-400 border-t border-slate-100 pt-5 mb-6 mt-auto">
                   <span className="flex items-center gap-2 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-100">
                     <div className="p-1 bg-slate-800 rounded-md">

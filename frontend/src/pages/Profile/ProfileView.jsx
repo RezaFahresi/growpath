@@ -19,10 +19,12 @@ export default function ProfileView() {
 
   useEffect(() => {
     const fetchProfileStats = async () => {
-      if (!user?.id) return;
+      // Pastikan user exist sebelum melakukan request
+      if (!user) return; 
       
       try {
-        const response = await API.get(`/progress/user/${user.id}`);
+        // 🔥 PERBAIKAN: Hapus /user/${user.id} karena backend sudah ambil ID dari Token JWT
+        const response = await API.get('/progress');
         const result = response.data;
         
         if (result && result.stats) {
@@ -85,7 +87,7 @@ export default function ProfileView() {
               <div className="pb-2">
                 <div className="flex items-center justify-center lg:justify-start mb-1 gap-2">
                   <h2 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight">
-                    {user?.name || 'Reza Fahresi'}
+                    {user?.name || 'Learner'}
                   </h2>
                 </div>
                 <p className="text-indigo-600 font-bold tracking-wide uppercase text-sm bg-indigo-50 px-3 py-1 rounded-full inline-block mt-1">
@@ -94,7 +96,7 @@ export default function ProfileView() {
               </div>
             </div>
 
-            {/* Tombol Edit (Warna background disamakan dengan warna gelap dashboard) */}
+            {/* Tombol Edit */}
             <button 
               onClick={() => navigate('/dashboard/profile/edit')}
               className="w-full lg:w-auto px-8 py-3.5 bg-[#071226] text-white rounded-2xl font-bold hover:bg-slate-800 hover:scale-105 transition-all flex items-center justify-center gap-2 shadow-xl shadow-[#071226]/20"
@@ -105,8 +107,8 @@ export default function ProfileView() {
 
           {/* Info Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-12 pt-8 border-t border-slate-100">
-            <InfoCard icon={Mail} title="Email Address" value={user?.email || 'fahrezireza26@gmail.com'} color="text-indigo-600" bg="bg-indigo-50" />
-            <InfoCard icon={MapPin} title="Location" value={user?.location || 'East Java, Indonesia'} color="text-emerald-600" bg="bg-emerald-50" />
+            <InfoCard icon={Mail} title="Email Address" value={user?.email || 'N/A'} color="text-indigo-600" bg="bg-indigo-50" />
+            <InfoCard icon={MapPin} title="Location" value={user?.location || 'Indonesia'} color="text-emerald-600" bg="bg-emerald-50" />
             <InfoCard icon={Calendar} title="Member Since" value={formatJoinDate(user?.created_at || user?.createdAt)} color="text-cyan-600" bg="bg-cyan-50" />
             <InfoCard icon={ShieldCheck} title="Account Status" value="Verified Account" color="text-purple-600" bg="bg-purple-50" />
           </div>

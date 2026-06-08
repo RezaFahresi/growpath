@@ -8,7 +8,6 @@ export default function RoadmapDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   
-  // AMBIL context progress, user, dan fungsi toggle
   const { user, progress, toggleRoadmapItem } = useAppContext();
   
   const [loading, setLoading] = useState(true);
@@ -18,7 +17,6 @@ export default function RoadmapDetail() {
     const fetchData = async () => {
       setLoading(true);
       
-      // DATA KONTEN
       const allRoadmaps = {
         phase1: {
           phase: "PHASE 1",
@@ -86,10 +84,10 @@ export default function RoadmapDetail() {
     toggleRoadmapItem(id, stringItemId);
 
     // Update ke Database Backend
-    if (user?.id) {
+    if (user) {
       try {
+        // 🔥 PERBAIKAN: Hapus userId dari payload
         await API.post('/roadmaps/progress', {
-          userId: user.id,
           phaseId: id,
           taskId: stringItemId
         });
@@ -99,7 +97,6 @@ export default function RoadmapDetail() {
     }
   };
 
-  // --- TAMPILAN LOADING ---
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] bg-slate-50/50">
@@ -112,7 +109,6 @@ export default function RoadmapDetail() {
   const currentPhaseChecklist = progress?.roadmapChecklist?.[id] || [];
 
   return (
-    // Margin diseragamkan dengan w-full max-w-7xl mx-auto agar fit in
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
       {/* Tombol Kembali */}
@@ -126,9 +122,7 @@ export default function RoadmapDetail() {
         Kembali ke Peta Belajar
       </button>
 
-      {/* ================================================= */}
-      {/* HEADER INFO CARD (Premium Dark Mode) */}
-      {/* ================================================= */}
+      {/* HEADER INFO CARD */}
       <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 rounded-[2.5rem] p-8 md:p-12 shadow-xl shadow-indigo-900/10 relative overflow-hidden mb-12 text-white">
         <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4 pointer-events-none">
           <BookOpen size={250} />
@@ -154,14 +148,12 @@ export default function RoadmapDetail() {
 
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 text-white text-sm font-semibold shadow-inner">
-              {/* IKON HIGHLIGHT ABU-TUA */}
               <div className="p-1.5 bg-slate-800 rounded-lg shadow-md">
                 <Clock size={16} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]" />
               </div>
               <span>Estimasi: {moduleData.estTime}</span>
             </div>
             <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 text-white text-sm font-semibold shadow-inner">
-              {/* IKON HIGHLIGHT ABU-TUA */}
               <div className="p-1.5 bg-slate-800 rounded-lg shadow-md">
                 <BookOpen size={16} className="text-pink-400 drop-shadow-[0_0_5px_rgba(244,114,182,0.8)]" />
               </div>
@@ -171,15 +163,11 @@ export default function RoadmapDetail() {
         </div>
       </div>
 
-      {/* ================================================= */}
       {/* LEARNING ITEMS LIST */}
-      {/* ================================================= */}
       <div className="bg-white border border-slate-100 rounded-[2.5rem] p-6 md:p-10 shadow-sm">
         
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 px-2">
            <h2 className="text-2xl font-extrabold text-slate-800">Daftar Materi</h2>
-           
-           {/* XP BADGE HIGHLIGHT */}
            <div className="flex items-center gap-3 text-slate-700 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm w-max">
              <div className="p-1.5 bg-slate-800 rounded-md shadow-md">
                <Zap size={16} className="text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
@@ -204,7 +192,6 @@ export default function RoadmapDetail() {
                 
                 {/* Bagian Kiri: Ceklis & Judul */}
                 <div className="flex items-start md:items-center gap-4 md:gap-6">
-                  {/* Lingkaran Centang */}
                   <div 
                     onClick={() => handleToggleTask(item.id)}
                     className="cursor-pointer shrink-0 mt-1 md:mt-0"
@@ -219,7 +206,6 @@ export default function RoadmapDetail() {
                     )}
                   </div>
                   
-                  {/* Teks Topik */}
                   <div>
                     <h4 className={`font-bold text-lg md:text-xl transition-colors mb-1 ${
                       isChecked ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-800 group-hover:text-indigo-900'

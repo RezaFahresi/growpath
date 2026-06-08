@@ -30,10 +30,13 @@ export default function Progress() {
 
   useEffect(() => {
     const fetchProgressData = async () => {
-      if (!user?.id) return;
+      // Kita tetap cek apakah user sudah ada dari context, 
+      // tetapi kita TIDAK PERLU mengirimkan id tersebut ke backend.
+      if (!user) return; 
       
       try {
-        const response = await API.get(`/progress/user/${user.id}`);
+        // 🔥 PERBAIKAN: Hapus /user/${user.id} dari path API
+        const response = await API.get('/progress');
         setData(response.data);
       } catch (error) {
         console.error("Gagal mengambil data progress:", error.response?.data?.message || error.message);

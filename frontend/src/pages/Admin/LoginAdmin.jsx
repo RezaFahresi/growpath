@@ -17,18 +17,8 @@ export default function LoginAdmin() {
     password: ''
   });
 
-  useEffect(() => {
-    const adminData = localStorage.getItem('adminData');
-    if (adminData) {
-      navigate('/admin/dashboard');
-    }
-  }, [navigate]);
-
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -37,18 +27,18 @@ export default function LoginAdmin() {
     setLoading(true);
 
     try {
+      // 🌟 PERBAIKAN: Gunakan sistem JWT (Token + User)
       const response = await API.post('/auth/login-admin', formData);
-      const data = response.data;
+      const { token, user } = response.data;
 
-      localStorage.removeItem('adminToken'); 
-      localStorage.removeItem('adminData');
+      localStorage.setItem('token', token); // Gunakan 'token' agar konsisten
+      localStorage.setItem('growpath_user', JSON.stringify(user));
 
-      localStorage.setItem('adminData', JSON.stringify(data.admin || data.user));
+      // Redirect ke dashboard admin
       window.location.href = '/admin/dashboard';
-
     } catch (err) {
       console.error('Login Error:', err);
-      setError(err.response?.data?.message || 'Akses ditolak. Periksa kembali email dan password Anda.');
+      setError(err.response?.data?.message || 'Akses ditolak.');
     } finally {
       setLoading(false);
     }

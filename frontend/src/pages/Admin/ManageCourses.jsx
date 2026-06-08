@@ -4,14 +4,13 @@ import { Trash2, Plus, Edit2, X, BookOpen, Clock, Layers, Search } from 'lucide-
 import API from '../../api/axios';
 
 export default function ManageCourses() {
-  const { courses, addCourse, deleteCourse, updateCourse, user } = useAppContext();
+  const { courses, addCourse, deleteCourse, updateCourse } = useAppContext();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Inisialisasi state sesuai kolom database
   const [courseData, setCourseData] = useState({
     title: '',
     description: '',
@@ -57,18 +56,28 @@ export default function ManageCourses() {
 
     try {
       setLoading(true);
-      const response = isEditing 
-        ? await API.put(`/courses/${editId}`, courseData)
-        : await API.post('/courses', courseData);
-
-      if (isEditing) updateCourse(response.data);
-      else addCourse(response.data);
-
+      if (isEditing) {
+        const response = await API.put(`/courses/${editId}`, courseData);
+        updateCourse(response.data);
+      } else {
+        const response = await API.post('/courses', courseData);
+        addCourse(response.data);
+      }
       closeForm();
     } catch (error) {
       alert(error.response?.data?.message || 'Failed to save course.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Yakin ingin menghapus kelas ini?")) return;
+    try {
+      await API.delete(`/courses/${id}`);
+      deleteCourse(id);
+    } catch (error) {
+      alert('Failed to delete course.');
     }
   };
 
