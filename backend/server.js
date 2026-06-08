@@ -1,5 +1,4 @@
 const express = require('express');
-const session = require('express-session');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -23,7 +22,7 @@ const corsOptions = {
     callback(null, origin || '*');
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true, // Wajib true untuk session/cookie
+  credentials: true, 
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 
@@ -55,21 +54,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ==========================================
-// 4. KONFIGURASI SESSION
+// 4. (DIHAPUS) KONFIGURASI SESSION
+// Blok express-session dihapus sepenuhnya karena pindah ke JWT
 // ==========================================
-app.use(session({
-  name: 'growpath_sid', 
-  secret: process.env.SESSION_SECRET || 'growpath-super-secret-key', 
-  resave: false, 
-  saveUninitialized: false,
-  cookie: {
-    // Di Vercel (production) harus true agar cookie HTTPS berjalan
-    secure: process.env.NODE_ENV === 'production', 
-    httpOnly: true, 
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', 
-    maxAge: 24 * 60 * 60 * 1000 // 24 Jam
-  }
-}));
 
 // ==========================================
 // 5. ROUTES
@@ -86,7 +73,7 @@ app.use('/api/admin', require('./routes/adminRoutes'));
 app.get('/api', (req, res) => {
   res.json({ 
     status: 'Running',
-    message: 'GrowPath API Service is Active on Vercel',
+    message: 'GrowPath API Service is Active on Vercel (Secured with JWT)',
     timestamp: new Date().toISOString()
   });
 });
@@ -105,5 +92,4 @@ app.use((err, req, res, next) => {
 // ==========================================
 // 7. EXPORT UNTUK VERCEL SERVERLESS
 // ==========================================
-// HAPUS app.listen(), kita ganti dengan module.exports agar Vercel bisa membacanya
 module.exports = app;
