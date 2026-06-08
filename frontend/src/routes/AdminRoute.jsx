@@ -7,7 +7,7 @@ export default function AdminRoute({ children }) {
   const location = useLocation();
   const token = localStorage.getItem('token');
 
-  // Menunggu AppContext memvalidasi token dan memuat data user
+  // 1. Tunggu AppContext selesai memuat data
   if (loading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-[#090E17] text-white">
@@ -16,16 +16,20 @@ export default function AdminRoute({ children }) {
     );
   }
 
-  // Cek apakah user sudah login dan memiliki token
+  // 2. CEK SESI: Jika tidak ada token atau tidak ada data user, lempar ke login admin
   if (!token || !user) {
+    console.warn("User belum login atau token hilang. Redirect ke /login-admin");
     return <Navigate to="/login-admin" state={{ from: location }} replace />;
   }
 
-  // RBAC: Hanya admin atau superadmin yang boleh masuk
+  // 3. CEK ROLE: Pastikan role-nya adalah admin atau superadmin
   const role = user.role?.toLowerCase();
   if (role !== 'admin' && role !== 'superadmin') {
-    return <Navigate to="/admin/dashboard" replace />;
+    console.error("Akses Ditolak: Anda tidak memiliki wewenang admin.");
+    // Lempar ke dashboard umum agar tidak terjadi loop redirect
+    return <Navigate to="/dashboard" replace />;
   }
 
+  // Jika semua lolos, berikan akses ke children (dashboard admin)
   return children;
 }
