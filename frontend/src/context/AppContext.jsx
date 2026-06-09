@@ -12,133 +12,88 @@ const defaultProgress = {
 
 export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('growpath_user');
-    return savedUser && savedUser !== "null" ? JSON.parse(savedUser) : null;
+    const savedUserStr = localStorage.getItem('growpath_user');
+    return savedUserStr && savedUserStr !== "null" ? JSON.parse(savedUserStr) : null;
   });
 
   const [loading, setLoading] = useState(true);
-  
-  // PERBAIKAN LOGIKA 1: Ambil state awal dari localStorage BERDASARKAN ID USER
-  const [progress, setProgress] = useState(() => {
-    try {
-      const savedUserStr = localStorage.getItem('growpath_user');
-      const savedUser = savedUserStr && savedUserStr !== "null" ? JSON.parse(savedUserStr) : null;
-      
-      if (savedUser) {
-        const userId = savedUser.id || savedUser._id;
-        const saved = localStorage.getItem(`growpath_progress_${userId}`);
-        return saved ? JSON.parse(saved) : defaultProgress;
-      }
-      return defaultProgress;
-    } catch (e) {
-      return defaultProgress;
-    }
-  });
-
+  const [progress, setProgress] = useState(defaultProgress);
   const [courses, setCourses] = useState([]);
   const [availableAssessments, setAvailableAssessments] = useState([]);
-  const [talentMappings, setTalentMappings] = useState(() => {
-    const saved = localStorage.getItem('growpath_talent_mappings');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [talentMappings, setTalentMappings] = useState([]);
 
   // ==========================================
-  // 🔥 PERBAIKAN UTAMA 1: REFRESH PROGRESS (JWT)
-  // Tidak perlu lagi pakai parameter userId di URL!
+  // 1. FUNGSI REFRESH PROGRESS
   // ==========================================
   const refreshProgress = useCallback(async () => {
     try {
-      // Backend akan otomatis membaca User ID dari Token JWT di Header
       const res = await API.get('/progress'); 
-      
-      setProgress(prev => {
-        const dbCompleted = res.data.completedCourses || res.data.completed_courses || [];
-        const formattedCompleted = dbCompleted.map(id => String(id));
-
-        return {
-          ...prev, 
-          ...res.data, 
-          activeCourses: res.data.activeCourses || prev.activeCourses,
-          completedCourses: formattedCompleted.length > 0 ? formattedCompleted : prev.completedCourses
-        };
-      });
+      setProgress(prev => ({
+        ...prev, 
+        ...res.data,
+        completedCourses: (res.data.completedCourses || res.data.completed_courses || []).map(String)
+      }));
     } catch (err) {
-      console.error("Gagal refresh progress dari DB:", err);
+      console.error("Gagal refresh progress:", err);
     }
   }, []);
 
   // ==========================================
-  // 🔥 PERBAIKAN UTAMA 2: CHECK AUTH (JWT)
-  // Cek token di LocalStorage dulu sebelum memanggil API
+  // 2. CHECK AUTH DAN FETCH DATA
   // ==========================================
   useEffect(() => {
-    const checkAuth = async () => {
+    const initApp = async () => {
       const token = localStorage.getItem('token');
       
-      // Jika tidak ada token, langsung hentikan loading (jangan panggil API)
       if (!token) {
         setLoading(false);
         return;
       }
 
       try {
-        const response = await API.get('/auth/check-auth');
-        if (response.data?.user) {
-          const userData = response.data.user;
-          setUser(userData);
-          await refreshProgress(); // Panggil tanpa parameter
-        } else {
-          setUser(null);
-          setProgress(defaultProgress); 
+        // Ambil data pendukung
+        const [authRes, assessRes, courseRes] = await Promise.all([
+          API.get('/auth/check-auth'),
+          API.get('/assessments'),
+          API.get('/courses')
+        ]);
+
+        if (authRes.data?.user) {
+          setUser(authRes.data.user);
+          setAvailableAssessments(Array.isArray(assessRes.data) ? assessRes.data : (assessRes.data.assessments || []));
+          setCourses(Array.isArray(courseRes.data) ? courseRes.data : (courseRes.data.courses || []));
+          await refreshProgress();
         }
       } catch (err) {
-        // Jika token tidak valid / expired, hapus tokennya
-        localStorage.removeItem('token');
-        setUser(null);
-        setProgress(defaultProgress); 
+        console.error("DEBUG: check-auth atau fetch data gagal!", err);
+        // 🔥 PERBAIKAN: JANGAN langsung hapus token. Jika error 401 baru hapus.
+        if (err.response && err.response.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('growpath_user');
+          setUser(null);
+        }
       } finally {
         setLoading(false);
       }
     };
-    checkAuth();
+    initApp();
   }, [refreshProgress]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!user) return;
-      try {
-        const [assessRes, courseRes] = await Promise.all([
-          API.get('/assessments'),
-          API.get('/courses')
-        ]);
-        setAvailableAssessments(Array.isArray(assessRes.data) ? assessRes.data : (assessRes.data.assessments || []));
-        setCourses(Array.isArray(courseRes.data) ? courseRes.data : (courseRes.data.courses || []));
-      } catch (error) {
-        console.error("Gagal mengambil data pendukung:", error);
-      }
-    };
-    fetchData();
-  }, [user]);
-
-  // Simpan progress ke localStorage SPESIFIK UNTUK USER INI
+  // ==========================================
+  // 3. SINKRONISASI LOCALSTORAGE
+  // ==========================================
   useEffect(() => {
     if (user) {
-      const userId = user.id || user._id;
-      localStorage.setItem(`growpath_progress_${userId}`, JSON.stringify(progress));
+      localStorage.setItem('growpath_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('growpath_user');
     }
-  }, [progress, user]);
-
-  useEffect(() => {
-    if (user) localStorage.setItem('growpath_user', JSON.stringify(user));
-    else localStorage.removeItem('growpath_user');
   }, [user]);
 
-  useEffect(() => {
-    localStorage.setItem('growpath_talent_mappings', JSON.stringify(talentMappings));
-  }, [talentMappings]);
 
-
-  // --- Definisi Fungsi ---
+  // ==========================================
+  // 4. FUNGSI-FUNGSI LAINNYA
+  // ==========================================
   const saveAssessment = (assessmentResult) => {
     const attemptId = assessmentResult.attemptId || Date.now().toString();
     const newAssessment = { ...assessmentResult, attemptId };
@@ -167,11 +122,7 @@ export const AppProvider = ({ children }) => {
   const updateCourse = (data) => {
     const updatedData = data.course || data.data || data;
     const targetId = String(updatedData.id || updatedData._id);
-
-    setCourses(prev => prev.map(c => {
-      const currentId = String(c.id || c._id);
-      return currentId === targetId ? { ...c, ...updatedData } : c;
-    }));
+    setCourses(prev => prev.map(c => String(c.id || c._id) === targetId ? { ...c, ...updatedData } : c));
   };
 
   const deleteCourse = (id) => {
@@ -183,36 +134,17 @@ export const AppProvider = ({ children }) => {
   const updateAssessment = (updatedData) => setAvailableAssessments(prev => prev.map(a => (String(a.id || a._id) === String(updatedData.id || updatedData._id)) ? { ...a, ...updatedData } : a));
   const deleteAssessment = (id) => setAvailableAssessments(prev => prev.filter(a => String(a.id || a._id) !== String(id)));
 
-  const addTalentMapping = (t) => setTalentMappings(prev => [...prev, { ...t, id: Date.now() }]);
-  const updateTalentMapping = (id, data) => setTalentMappings(prev => prev.map(t => String(t.id) === String(id) ? { ...t, ...data } : t));
-  const deleteTalentMapping = (id) => setTalentMappings(prev => prev.filter(t => String(t.id) !== String(id)));
-
-  // Saat Login
   const login = async (userData) => {
-    const userId = userData.id || userData._id;
     setUser(userData);
-    
-    const savedProgress = localStorage.getItem(`growpath_progress_${userId}`);
-    if (savedProgress) {
-      setProgress(JSON.parse(savedProgress)); 
-    } else {
-      setProgress(defaultProgress); 
-    }
-
-    await refreshProgress(); // Panggil tanpa parameter
+    localStorage.setItem('growpath_user', JSON.stringify(userData));
+    await refreshProgress();
   };
 
-  // ==========================================
-  // 🔥 PERBAIKAN UTAMA 3: LOGOUT (JWT)
-  // Tidak perlu API post ke backend lagi!
-  // ==========================================
   const logout = () => {
-    localStorage.removeItem('token'); // Hapus JWT Token
+    localStorage.removeItem('token');
     localStorage.removeItem('growpath_user');
     setUser(null);
     setProgress(defaultProgress); 
-    
-    // Opsional, tapi disarankan untuk membersihkan cache browser:
     window.location.href = '/login'; 
   };
 
@@ -234,7 +166,7 @@ export const AppProvider = ({ children }) => {
         progress, setProgress, toggleRoadmapItem, saveAssessment, deleteAssessmentHistory, markCourseCompleted,
         courses, addCourse, updateCourse, deleteCourse,
         availableAssessments, addAssessment, updateAssessment, deleteAssessment,
-        talentMappings, addTalentMapping, updateTalentMapping, deleteTalentMapping
+        talentMappings
       }}
     >
       {!loading ? children : (
