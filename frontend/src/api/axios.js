@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api', 
+  baseURL: '/api', // Pastikan ini sesuai dengan setup proxy/Vercel Anda
 });
 
 // 1. Interceptor Request: Menempelkan Token
@@ -16,21 +16,27 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 2. Interceptor Response: Menangani Token Expired
+// 2. Interceptor Response: Menangani Token Expired dengan Lebih Pintar
 api.interceptors.response.use(
-  (response) => response, // Jika sukses, biarkan lewat
+  (response) => response, 
   (error) => {
-    // Jika backend membalas 401 (Unauthorized / Token Expired)
     if (error.response && error.response.status === 401) {
-      console.warn("Sesi telah berakhir. Mengalihkan ke halaman login...");
+      // Dapatkan URL API mana yang menyebabkan error 401
+      const failedUrl = error.config.url;
+      console.error(`🚨 DEBUG: Request ke ${failedUrl} mengembalikan 401 Unauthorized!`);
       
-      // Hapus data lokal agar bersih
-      localStorage.removeItem('token');
-      localStorage.removeItem('growpath_user');
-      
-      // Cegah infinite loop jika sudah berada di halaman login/register
-      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-        window.location.href = '/login'; 
+      // 🔥 HANYA hapus token dan log out jika yang gagal adalah check-auth
+      if (failedUrl.includes('/auth/check-auth')) {
+        console.warn("Sesi benar-benar tidak valid. Mengalihkan ke login...");
+        localStorage.removeItem('token');
+        localStorage.removeItem('growpath_user');
+        
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/login-admin') {
+          window.location.href = '/login-admin'; // Arahkan admin ke login-admin
+        }
+      } else {
+        console.warn(`Token valid, tetapi Anda tidak memiliki akses ke ${failedUrl}`);
+        // Jangan hapus token! Biarkan user tetap di dashboard.
       }
     }
     return Promise.reject(error);

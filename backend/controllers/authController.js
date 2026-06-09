@@ -1,9 +1,9 @@
 const bcrypt = require('bcrypt');
 const UserModel = require('../models/userModel');
 const axios = require('axios');
-const jwt = require('jsonwebtoken'); // <-- TAMBAHAN WAJIB
+const jwt = require('jsonwebtoken'); 
 
-// 1. REGISTER USER (Tetap sama)
+// 1. REGISTER USER
 exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -23,7 +23,7 @@ exports.register = async (req, res) => {
   }
 };
 
-// 2. LOGIN USER BIASA (Diubah ke JWT)
+// 2. LOGIN USER BIASA 
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -34,16 +34,15 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (isMatch) {
-      // BIKIN TOKEN JWT
       const token = jwt.sign(
-        { id: user.id, role: user.role, adminId: user.id }, // Sesuaikan payload dengan middleware Anda
+        { id: user.id, role: user.role, adminId: user.id }, 
         process.env.JWT_SECRET,
-        { expiresIn: '1d' } // Token hangus dalam 24 jam
+        { expiresIn: '1d' } 
       );
 
       return res.json({ 
         message: 'Login Berhasil', 
-        token: token, // <--- Kirim token ke Frontend
+        token: token, 
         user: { id: user.id, name: user.name, role: user.role } 
       });
     } else {
@@ -55,14 +54,11 @@ exports.login = async (req, res) => {
   }
 };
 
-// ==========================================
-// FUNGSI BARU: GOOGLE AUTH (Diubah ke JWT)
-// ==========================================
+// 3. GOOGLE AUTH 
 exports.googleLogin = async (req, res) => {
   const { access_token } = req.body;
 
   try {
-    // 1. Verifikasi token ke Google
     const googleResponse = await axios.get(
       'https://www.googleapis.com/oauth2/v3/userinfo',
       { headers: { Authorization: `Bearer ${access_token}` } }
@@ -70,16 +66,13 @@ exports.googleLogin = async (req, res) => {
     
     const { email, name } = googleResponse.data;
 
-    // 2. Cek apakah user sudah terdaftar
     let user = await UserModel.findUserByEmail(email);
 
-    // 3. Jika belum terdaftar, buat akun baru
     if (!user) {
       const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-10), 10);
       user = await UserModel.createUser(name, email, randomPassword);
     }
 
-    // 4. BIKIN TOKEN JWT
     const token = jwt.sign(
       { id: user.id, role: user.role, adminId: user.id },
       process.env.JWT_SECRET,
@@ -89,7 +82,7 @@ exports.googleLogin = async (req, res) => {
     console.log(`🌍 [GOOGLE AUTH SUKSES] Email: ${user.email}`);
     return res.json({
       message: 'Login Google berhasil',
-      token: token, // <--- Kirim token ke Frontend
+      token: token, 
       user: { id: user.id, name: user.name, role: user.role }
     });
 
@@ -99,18 +92,17 @@ exports.googleLogin = async (req, res) => {
   }
 };
 
-// 3. LOGIN ADMIN (Diubah ke JWT)
+// 4. LOGIN ADMIN 
 exports.loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const admin = await UserModel.findUserByEmailAndRoleCondition(email, true); // Asumsi true = role admin
+    const admin = await UserModel.findUserByEmailAndRoleCondition(email, true); 
 
     if (!admin) return res.status(404).json({ message: 'Akun admin tidak ditemukan.' });
 
     const isMatch = await bcrypt.compare(password, admin.password);
 
     if (isMatch) {
-      // BIKIN TOKEN JWT KHUSUS ADMIN
       const token = jwt.sign(
         { id: admin.id, role: admin.role, adminId: admin.id },
         process.env.JWT_SECRET,
@@ -120,7 +112,8 @@ exports.loginAdmin = async (req, res) => {
       return res.json({ 
         message: 'Login Admin Berhasil', 
         token: token, 
-        admin: { id: admin.id, name: admin.name, role: admin.role } 
+        // 🔥 PERBAIKAN UTAMA: Ubah key 'admin' menjadi 'user' agar sinkron dengan Frontend
+        user: { id: admin.id, name: admin.name, role: admin.role } 
       });
     } else {
       return res.status(401).json({ message: 'Password salah.' });
@@ -131,12 +124,8 @@ exports.loginAdmin = async (req, res) => {
   }
 };
 
-// 4. CHECK AUTH (Disesuaikan untuk JWT)
+// 5. CHECK AUTH 
 exports.checkAuth = async (req, res) => {
-  // Karena sekarang pakai JWT, Frontend akan mengirim token di Header Authorization.
-  // Pastikan rute '/api/auth/check-auth' di file routes Anda SUDAH dipasangkan dengan authMiddleware!
-  // Jika authMiddleware lolos, req.user akan berisi data user dari token.
-  
   if (req.user) {
     return res.json({ isAuthenticated: true, user: req.user });
   } else {
@@ -144,10 +133,7 @@ exports.checkAuth = async (req, res) => {
   }
 };
 
-// 5. LOGOUT (Diubah ke JWT)
+// 6. LOGOUT 
 exports.logout = (req, res) => {
-  // Karena JWT tersimpan di browser Frontend (LocalStorage), 
-  // Backend tidak perlu menghapus sesi atau cookie apa pun.
-  // Frontend yang bertugas melakukan: localStorage.removeItem('token')
   return res.json({ message: 'Logout berhasil. Silakan hapus token di Frontend.' });
 };
