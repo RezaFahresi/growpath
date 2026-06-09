@@ -28,7 +28,7 @@ app.use(cors(corsOptions));
 
 // 🔥 PERBAIKAN: Tangkap semua Preflight (OPTIONS) menggunakan package cors bawaan
 // JANGAN gunakan middleware manual "if (req.method === 'OPTIONS')" lagi!
-app.options('*', cors(corsOptions)); 
+app.options(/(.*)/, cors(corsOptions));
 
 // Tambahan: Header Keamanan
 app.use((req, res, next) => {
