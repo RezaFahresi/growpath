@@ -27,7 +27,7 @@ export default function AdminRoute({ children }) {
   if (role !== 'admin' && role !== 'superadmin') {
     console.error("Akses Ditolak: Anda tidak memiliki wewenang admin.");
     // Lempar ke dashboard umum agar tidak terjadi loop redirect
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/admin/dashboard" replace />;
   }
 
   // Jika semua lolos, berikan akses ke children (dashboard admin)
