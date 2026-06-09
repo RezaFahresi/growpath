@@ -7,38 +7,28 @@ require('dotenv').config();
 // ==========================================
 require('./config/db.js'); 
 
-// Inisialisasi Express (Hanya boleh dipanggil SATU KALI)
 const app = express();
 
 // ==========================================
 // 2. PENGATURAN PROXY & CORS (VERCEL DYNAMIC)
 // ==========================================
-// Wajib ditambahkan agar Express percaya pada proxy Vercel
 app.set('trust proxy', 1);
 
+// 🔥 PERBAIKAN: Konfigurasi CORS yang lebih spesifik dan aman
 const corsOptions = {
-  // Izinkan otomatis dari URL Preview Vercel manapun
-  origin: function (origin, callback) {
-    callback(null, origin || '*');
-  },
+  // Izinkan localhost untuk testing, dan domain Vercel untuk live
+  origin: ['http://localhost:5173', 'https://growpath-delta.vercel.app'], 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true, 
-  allowedHeaders: ['Content-Type', 'Authorization']
+  optionsSuccessStatus: 200 // Membantu menghindari masalah di beberapa browser lama
 };
 
 app.use(cors(corsOptions));
 
-// Middleware manual untuk menangani Preflight Request (OPTIONS)
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    return res.status(200).send();
-  }
-  next();
-});
+// 🔥 PERBAIKAN: Tangkap semua Preflight (OPTIONS) menggunakan package cors bawaan
+// JANGAN gunakan middleware manual "if (req.method === 'OPTIONS')" lagi!
+app.options('*', cors(corsOptions)); 
 
 // Tambahan: Header Keamanan
 app.use((req, res, next) => {
@@ -53,13 +43,9 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ==========================================
-// 4. (DIHAPUS) KONFIGURASI SESSION
-// Blok express-session dihapus sepenuhnya karena pindah ke JWT
-// ==========================================
 
 // ==========================================
-// 5. ROUTES
+// 4. ROUTES
 // ==========================================
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
@@ -79,7 +65,7 @@ app.get('/api', (req, res) => {
 });
 
 // ==========================================
-// 6. GLOBAL ERROR HANDLER
+// 5. GLOBAL ERROR HANDLER
 // ==========================================
 app.use((err, req, res, next) => {
   console.error("🚨 BACKEND ERROR LOG:", err.stack);
@@ -90,6 +76,6 @@ app.use((err, req, res, next) => {
 });
 
 // ==========================================
-// 7. EXPORT UNTUK VERCEL SERVERLESS
+// 6. EXPORT UNTUK VERCEL SERVERLESS
 // ==========================================
 module.exports = app;
