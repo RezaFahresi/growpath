@@ -5,25 +5,121 @@ exports.getAllAssessments = async () => {
   return result.rows;
 };
 
-exports.createAssessment = async (title, category, duration, description) => {
-  const result = await db.query(
-    `INSERT INTO assessments (title, category, duration, description) VALUES ($1, $2, $3, $4) RETURNING *`,
-    [title, category, duration, description]
+// 🔥 TAMBAHAN BARU: Mengambil detail 1 paket ujian beserta lembar soalnya
+exports.getAssessmentById = async (id) => {
+  // 1. Ambil data informasi utama kuis
+  const assessmentResult = await db.query(`SELECT * FROM assessments WHERE id = $1`, [id]);
+  if (assessmentResult.rows.length === 0) return null;
+
+  const assessment = assessmentResult.rows[0];
+
+  // 2. Ambil seluruh lembar soal yang terikat dengan kuis ini
+  const questionsResult = await db.query(
+    `SELECT id, question_text, option_a, option_b, option_c, option_d, correct_answer 
+     FROM questions 
+     WHERE assessment_id = $1 
+     ORDER BY id ASC`,
+    [id]
   );
-  return result.rows[0];
+
+  // 3. Gabungkan lembar soal ke dalam objek kuis
+  assessment.questions = questionsResult.rows;
+  return assessment;
 };
 
-exports.updateAssessment = async (id, title, category, duration, description) => {
-  const result = await db.query(
-    `UPDATE assessments 
-     SET title = $1, category = $2, duration = $3, description = $4 
-     WHERE id = $5 RETURNING *`,
-    [title, category, duration, description, id]
-  );
-  return result.rows;
+// 🔥 PERBAIKAN: Mendukung penyimpanan judul kuis DAN array pertanyaan sekaligus
+exports.createAssessment = async (title, category, duration, description, questions = []) => {
+  await db.query('BEGIN'); // Mulai Transaksi Database
+  try {
+    // 1. Simpan bungkus kuisnya terlebih dahulu
+    const assessmentResult = await db.query(
+      `INSERT INTO assessments (title, category, duration, description) VALUES ($1, $2, $3, $4) RETURNING *`,
+      [title, category, duration, description]
+    );
+    const newAssessment = assessmentResult.rows[0];
+    const assessmentId = newAssessment.id;
+
+    // 2. Jika ada soal yang dikirim, simpan semuanya satu per satu secara bergantian
+    if (questions && questions.length > 0) {
+      for (const q of questions) {
+        await db.query(
+          `INSERT INTO questions (assessment_id, question_text, option_a, option_b, option_c, option_d, correct_answer) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [
+            assessmentId,
+            q.question_text,
+            q.option_a,
+            q.option_b,
+            q.option_c,
+            q.option_d,
+            q.correct_answer || 'A'
+          ]
+        );
+      }
+    }
+
+    await db.query('COMMIT'); // Simpan permanen jika semua proses sukses
+    newAssessment.questions = questions;
+    return newAssessment;
+  } catch (error) {
+    await db.query('ROLLBACK'); // Batalkan semua jika ada satu saja soal yang gagal insert
+    throw error;
+  }
+};
+
+// 🔥 PERBAIKAN: Mendukung edit informasi kuis dan update daftar pertanyaan
+exports.updateAssessment = async (id, title, category, duration, description, questions = []) => {
+  await db.query('BEGIN'); // Mulai Transaksi Database
+  try {
+    // 1. Update informasi utama kuis
+    const assessmentResult = await db.query(
+      `UPDATE assessments 
+       SET title = $1, category = $2, duration = $3, description = $4 
+       WHERE id = $5 RETURNING *`,
+      [title, category, duration, description, id]
+    );
+
+    if (assessmentResult.rows.length === 0) {
+      await db.query('ROLLBACK');
+      return null;
+    }
+
+    const updatedAssessment = assessmentResult.rows[0];
+
+    // 2. Strategi update paling aman: Hapus semua soal lama, lalu pasang soal yang baru
+    await db.query(`DELETE FROM questions WHERE assessment_id = $1`, [id]);
+
+    // 3. Masukkan kembali daftar soal hasil edit dari admin
+    if (questions && questions.length > 0) {
+      for (const q of questions) {
+        await db.query(
+          `INSERT INTO questions (assessment_id, question_text, option_a, option_b, option_c, option_d, correct_answer) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [
+            id,
+            q.question_text,
+            q.option_a,
+            q.option_b,
+            q.option_c,
+            q.option_d,
+            q.correct_answer || 'A'
+          ]
+        );
+      }
+    }
+
+    await db.query('COMMIT'); // Eksekusi perubahan ke database
+    updatedAssessment.questions = questions;
+    return updatedAssessment;
+  } catch (error) {
+    await db.query('ROLLBACK'); // Batalkan jika terjadi error tengah jalan
+    throw error;
+  }
 };
 
 exports.deleteAssessment = async (id) => {
+  // Catatan: Karena di tabel questions sudah dipasang 'ON DELETE CASCADE', 
+  // Menghapus kuis di sini otomatis akan menghapus seluruh soal terkait di database Supabase Anda.
   await db.query(`DELETE FROM assessments WHERE id = $1`, [id]);
 };
 

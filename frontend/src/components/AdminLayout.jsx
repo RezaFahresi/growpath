@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, ClipboardCheck, BarChart,
-  Settings, Network, Route as RouteIcon, Search, Bell,
-  ChevronDown, LogOut, Menu, X //  Tambahan: Icon Menu (Hamburger) & X (Tutup)
+  Settings, Network, Route as RouteIcon,
+  ChevronDown, LogOut, Menu, X 
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import LogoGrowPath from '../assets/logo-growpath.png';
@@ -11,8 +11,6 @@ import LogoGrowPath from '../assets/logo-growpath.png';
 export default function AdminLayout() {
   const { user, logout } = useAppContext();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  
-  //  STATE BARU: Untuk mengontrol buka/tutup sidebar di layar HP
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const userName = user?.name || 'Administrator';
@@ -28,7 +26,6 @@ export default function AdminLayout() {
     { name: 'Settings', path: '/admin/settings', icon: Settings },
   ];
 
-  // 🔥 Fungsi untuk menutup sidebar saat menu diklik (khusus HP)
   const handleNavClick = () => {
     setIsSidebarOpen(false);
   };
@@ -36,7 +33,7 @@ export default function AdminLayout() {
   return (
     <div className="flex min-h-screen bg-[#071226] text-slate-300 overflow-hidden relative">
 
-      {/* 🔥 OVERLAY GELAP UNTUK MOBILE (Muncul jika sidebar terbuka) */}
+      {/* OVERLAY GELAP UNTUK MOBILE */}
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-[#071226]/80 backdrop-blur-sm z-40 lg:hidden transition-opacity"
@@ -44,7 +41,7 @@ export default function AdminLayout() {
         ></div>
       )}
 
-      {/* SIDEBAR (Responsive: Fixed di HP, Static di PC) */}
+      {/* SIDEBAR */}
       <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-[250px] bg-[#0F1B33] border-r border-[#1E2A45] flex flex-col h-screen transition-transform duration-300 ease-in-out ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
@@ -56,7 +53,6 @@ export default function AdminLayout() {
               <p className="text-[10px] text-slate-400">Career Development</p>
             </div>
           </div>
-          {/* 🔥 Tombol X untuk menutup sidebar di HP */}
           <button 
             className="lg:hidden text-slate-400 hover:text-white p-1"
             onClick={() => setIsSidebarOpen(false)}
@@ -72,7 +68,7 @@ export default function AdminLayout() {
               <NavLink
                 key={item.name}
                 to={item.path}
-                onClick={handleNavClick} // Menutup sidebar setelah menu dipilih di HP
+                onClick={handleNavClick}
                 className={({ isActive }) =>
                   `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                     isActive ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20' : 'text-slate-400 hover:bg-[#162544] hover:text-white border border-transparent'
@@ -86,10 +82,11 @@ export default function AdminLayout() {
           </div>
         </nav>
 
+        {/* BAGIAN BAWAH SIDEBAR (RATA KIRI) */}
         <div className="p-4 border-t border-[#1E2A45] flex flex-col gap-3">
           <button
             onClick={logout}
-            className="w-full flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 py-3 px-4 rounded-xl transition-all font-medium border border-red-500/20 group"
+            className="w-full flex items-center justify-start gap-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 py-3.5 px-5 rounded-xl transition-all font-bold border border-red-500/20 group text-left"
           >
             <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" />
             <span className="text-sm">Logout</span>
@@ -104,29 +101,16 @@ export default function AdminLayout() {
         <header className="h-16 lg:h-20 bg-[#091529]/90 backdrop-blur-md border-b border-[#1E2A45] flex items-center justify-between px-4 lg:px-8 relative z-20">
           
           <div className="flex items-center gap-3 lg:gap-6">
-            {/* 🔥 Tombol Hamburger (Hanya tampil di HP) */}
             <button 
               onClick={() => setIsSidebarOpen(true)}
               className="lg:hidden p-2 -ml-2 text-slate-400 hover:text-white rounded-lg transition-colors focus:bg-[#162544]"
             >
               <Menu size={24} />
             </button>
-
             <h2 className="text-base lg:text-lg font-bold text-white hidden sm:block">Admin Panel</h2>
-            
-            {/* Search Bar (Disembunyikan di layar sangat kecil, tampil mulai ukuran tablet/md) */}
-            <div className="hidden md:flex items-center bg-[#0F1B33] border border-[#1E2A45] rounded-full px-4 h-10 w-[200px] lg:w-[320px]">
-              <Search size={16} className="text-slate-500" />
-              <input type="text" placeholder="Cari..." className="bg-transparent outline-none border-none text-sm text-white placeholder:text-slate-500 ml-3 w-full" />
-            </div>
           </div>
 
           <div className="flex items-center gap-3 lg:gap-5">
-            <button className="relative text-slate-400 hover:text-white transition-colors p-2">
-              <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500 border border-[#091529]"></span>
-            </button>
-
             {/* Profil Dropdown */}
             <div className="relative">
               <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-2 lg:gap-3 cursor-pointer hover:bg-[#0F1B33] p-1 lg:p-1.5 lg:pr-3 rounded-full transition-all">
@@ -159,7 +143,6 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        {/* AREA KONTEN (Dashboard dll) */}
         <main className="flex-1 overflow-y-auto bg-[#071226] p-4 lg:p-6 relative z-10 w-full">
           <Outlet />
         </main>

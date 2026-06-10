@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware'); // Wajib Import
+const authMiddleware = require('../middleware/authMiddleware');
 
 const {
   getAssessments,
+  getAssessmentById, // 🔥 TAMBAHAN: Untuk mengambil detail 1 ujian + soalnya
   createAssessment,
   deleteAssessment,
   submitAssessment,
@@ -13,9 +14,8 @@ const {
   deleteResult
 } = require('../controllers/assessmentController');
 
-// 🌟 PERBAIKAN: Semua rute disisipkan authMiddleware
-
 router.get('/', authMiddleware, getAssessments);
+router.get('/:id', authMiddleware, getAssessmentById); // 🔥 TAMBAHAN: Rute untuk frontend TakeAssessment
 router.post('/', authMiddleware, createAssessment);
 router.put('/:id', authMiddleware, updateAssessment);
 router.delete('/:id', authMiddleware, deleteAssessment);

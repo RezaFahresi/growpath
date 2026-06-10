@@ -8,7 +8,7 @@ const defaultProgress = {
   activeCourses: [], 
   roadmapChecklist: {}, 
   assessments: [] 
-};
+ };
 
 export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
@@ -21,6 +21,9 @@ export const AppProvider = ({ children }) => {
   const [courses, setCourses] = useState([]);
   const [availableAssessments, setAvailableAssessments] = useState([]);
   const [talentMappings, setTalentMappings] = useState([]);
+  
+  // 🌟 STATE BARU: Menyimpan data talent mapping khusus milik user yang sedang login
+  const [userTalent, setUserTalent] = useState(null);
 
   // ==========================================
   // 1. FUNGSI REFRESH PROGRESS
@@ -51,22 +54,31 @@ export const AppProvider = ({ children }) => {
       }
 
       try {
-        // Ambil data pendukung
-        const [authRes, assessRes, courseRes] = await Promise.all([
+        // 🌟 PERBAIKAN: Ikut sertakan endpoint /talent-mapping dalam Promise.all
+        const [authRes, assessRes, courseRes, talentRes] = await Promise.all([
           API.get('/auth/check-auth'),
           API.get('/assessments'),
-          API.get('/courses')
+          API.get('/courses'),
+          API.get('/talent-mapping').catch(() => ({ data: [] })) // Fallback jika route backend belum siap
         ]);
 
         if (authRes.data?.user) {
-          setUser(authRes.data.user);
+          const currentUser = authRes.data.user;
+          setUser(currentUser);
           setAvailableAssessments(Array.isArray(assessRes.data) ? assessRes.data : (assessRes.data.assessments || []));
           setCourses(Array.isArray(courseRes.data) ? courseRes.data : (courseRes.data.courses || []));
+          
+          const mappings = Array.isArray(talentRes.data) ? talentRes.data : (talentRes.data.mappings || []);
+          setTalentMappings(mappings);
+
+          // 🌟 LOGIKA PATOKAN: Cari apakah email user ini punya data penilaian dari admin
+          const myStats = mappings.find(t => t.email === currentUser.email);
+          setUserTalent(myStats || null);
+
           await refreshProgress();
         }
       } catch (err) {
         console.error("DEBUG: check-auth atau fetch data gagal!", err);
-        // 🔥 PERBAIKAN: JANGAN langsung hapus token. Jika error 401 baru hapus.
         if (err.response && err.response.status === 401) {
           localStorage.removeItem('token');
           localStorage.removeItem('growpath_user');
@@ -92,7 +104,7 @@ export const AppProvider = ({ children }) => {
 
 
   // ==========================================
-  // 4. FUNGSI-FUNGSI LAINNYA
+  // 4. FUNGSI-FUNGSI MANIPULASI DATA
   // ==========================================
   const saveAssessment = (assessmentResult) => {
     const attemptId = assessmentResult.attemptId || Date.now().toString();
@@ -134,9 +146,48 @@ export const AppProvider = ({ children }) => {
   const updateAssessment = (updatedData) => setAvailableAssessments(prev => prev.map(a => (String(a.id || a._id) === String(updatedData.id || updatedData._id)) ? { ...a, ...updatedData } : a));
   const deleteAssessment = (id) => setAvailableAssessments(prev => prev.filter(a => String(a.id || a._id) !== String(id)));
 
+  const addTalentMapping = (data) => {
+    const newTalent = data.talent || data.data || data;
+    setTalentMappings(prev => [...prev, { ...newTalent, id: newTalent._id || newTalent.id }]);
+  };
+
+  const updateTalentMapping = (data) => {
+    const updatedData = data.talent || data.data || data;
+    const targetId = String(updatedData.id || updatedData._id);
+    setTalentMappings(prev => prev.map(t => String(t.id || t._id) === targetId ? { ...t, ...updatedData } : t));
+  };
+
+  const deleteTalentMapping = (id) => {
+    const targetId = String(id);
+    setTalentMappings(prev => prev.filter(t => String(t.id || t._id) !== targetId));
+  };
+
+  // ==========================================
+  // 5. AUTH & PROFILE FUNCTIONS
+  // ==========================================
   const login = async (userData) => {
     setUser(userData);
     localStorage.setItem('growpath_user', JSON.stringify(userData));
+    
+    try {
+      // 🌟 PERBAIKAN: Tarik data talent mapping juga saat user baru berhasil login
+      const [assessRes, courseRes, talentRes] = await Promise.all([
+        API.get('/assessments'),
+        API.get('/courses'),
+        API.get('/talent-mapping').catch(() => ({ data: [] }))
+      ]);
+      setAvailableAssessments(Array.isArray(assessRes.data) ? assessRes.data : (assessRes.data.assessments || []));
+      setCourses(Array.isArray(courseRes.data) ? courseRes.data : (courseRes.data.courses || []));
+      
+      const mappings = Array.isArray(talentRes.data) ? talentRes.data : (talentRes.data.mappings || []);
+      setTalentMappings(mappings);
+
+      const myStats = mappings.find(t => t.email === userData.email);
+      setUserTalent(myStats || null);
+    } catch (err) {
+      console.error("Gagal menarik data master saat login:", err);
+    }
+
     await refreshProgress();
   };
 
@@ -145,6 +196,10 @@ export const AppProvider = ({ children }) => {
     localStorage.removeItem('growpath_user');
     setUser(null);
     setProgress(defaultProgress); 
+    setCourses([]); 
+    setAvailableAssessments([]); 
+    setTalentMappings([]); // Clear state saat keluar
+    setUserTalent(null);   // Clear patokan stat saat keluar
     window.location.href = '/login'; 
   };
 
@@ -166,7 +221,9 @@ export const AppProvider = ({ children }) => {
         progress, setProgress, toggleRoadmapItem, saveAssessment, deleteAssessmentHistory, markCourseCompleted,
         courses, addCourse, updateCourse, deleteCourse,
         availableAssessments, addAssessment, updateAssessment, deleteAssessment,
-        talentMappings
+        talentMappings, addTalentMapping, updateTalentMapping, deleteTalentMapping,
+        // 🌟 EXPOSE DATA PATOKAN: Sekarang bisa dipakai di Dashboard.jsx atau Roadmap.jsx
+        userTalent 
       }}
     >
       {!loading ? children : (

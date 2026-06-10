@@ -13,15 +13,37 @@ exports.getAssessments = async (req, res) => {
   }
 };
 
+// 🔥 TAMBAHAN BARU: Mengambil detail 1 Assessment beserta soal-soalnya
+exports.getAssessmentById = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ message: 'ID tidak valid' });
+
+    // Fungsi ini harus ada di assessmentModel Anda
+    const data = await AssessmentModel.getAssessmentById(id);
+    
+    if (!data) {
+        return res.status(404).json({ message: 'Assessment tidak ditemukan' });
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error("Error getAssessmentById:", error);
+    res.status(500).json({ message: 'Server error saat mengambil detail ujian' });
+  }
+};
+
 exports.createAssessment = async (req, res) => {
   try {
     // 1. Cek dari req.user (hasil dari authMiddleware)
     if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak. Hanya Admin.' });
     
-    const { title, category, duration, description } = req.body;
+    // 🔥 PERBAIKAN: Menerima 'questions' dari body request yang dikirim Admin
+    const { title, category, duration, description, questions } = req.body;
     if (!title || !category || !duration) return res.status(400).json({ message: 'Semua field wajib diisi.' });
 
-    const newAsm = await AssessmentModel.createAssessment(title, category, duration, description);
+    // Melemparkan data questions ke model untuk disimpan ke database
+    const newAsm = await AssessmentModel.createAssessment(title, category, duration, description, questions);
     res.status(201).json(newAsm);
   } catch (error) {
     console.error("Error createAssessment:", error);
@@ -34,12 +56,17 @@ exports.updateAssessment = async (req, res) => {
     if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak.' });
     
     const id = parseInt(req.params.id, 10);
-    const { title, category, duration, description } = req.body;
+    // 🔥 PERBAIKAN: Menerima 'questions' dari body request yang dikirim Admin
+    const { title, category, duration, description, questions } = req.body;
     if (!title || !category || !duration) return res.status(400).json({ message: 'Field wajib diisi.' });
 
-    const rows = await AssessmentModel.updateAssessment(id, title, category, duration, description);
-    if (rows.length === 0) return res.status(404).json({ message: 'Assessment tidak ditemukan' });
-    res.json(rows[0]);
+    // Melemparkan data questions ke model untuk diupdate di database
+    const updatedAsm = await AssessmentModel.updateAssessment(id, title, category, duration, description, questions);
+    
+    // Model harus mengembalikan null/undefined jika ID tidak ditemukan
+    if (!updatedAsm) return res.status(404).json({ message: 'Assessment tidak ditemukan' });
+    
+    res.json(updatedAsm);
   } catch (error) {
     console.error("Error updateAssessment:", error);
     res.status(500).json({ message: 'Gagal mengedit soal kuis.' });

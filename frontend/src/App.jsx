@@ -8,15 +8,12 @@ import AdminLayout from './components/AdminLayout';
 import UserRoute from './routes/UserRoute';
 import AdminRoute from './routes/AdminRoute';
 
-// LAZY LOADING: Import halaman menggunakan lazy()
+// LAZY LOADING
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-
-// ---> TAMBAHAN: Import TestOverview
 const TestOverview = lazy(() => import('./pages/Assessments/TestOverview'));
-
 const AssessmentList = lazy(() => import('./pages/Assessments/AssessmentList'));
 const TakeAssessment = lazy(() => import('./pages/Assessments/TakeAssessment'));
 const AssessmentResult = lazy(() => import('./pages/Assessments/AssessmentResult'));
@@ -44,7 +41,6 @@ export default function App() {
   return (
     <AppProvider>
       <BrowserRouter>
-        {/* Suspense akan menampilkan spinner saat halaman baru sedang dimuat */}
         <Suspense fallback={
           <div className="flex h-screen w-full items-center justify-center bg-slate-50">
             <div className="animate-spin h-12 w-12 border-4 border-indigo-600 rounded-full border-t-transparent"></div>
@@ -64,10 +60,7 @@ export default function App() {
             <Route path="/dashboard" element={<UserRoute><Layout /></UserRoute>}>
               <Route index element={<Dashboard />} />
               <Route path="assessments" element={<AssessmentList />} />
-              
-              {/* ---> TAMBAHAN: Route untuk Test Overview dimasukkan di sini */}
               <Route path="assessments/overview/:id" element={<TestOverview />} />
-              
               <Route path="assessments/take/:id" element={<TakeAssessment />} />
               <Route path="assessments/result/:id" element={<AssessmentResult />} />
               <Route path="roadmap" element={<Roadmap />} />
@@ -77,6 +70,9 @@ export default function App() {
               <Route path="progress" element={<Progress />} />
               <Route path="profile" element={<ProfileView />} />
               <Route path="profile/edit" element={<EditProfile />} />
+              
+              {/* 🔥 FIX: Mengalihkan rute settings sementara ke halaman edit profil */}
+              <Route path="settings" element={<Navigate to="/dashboard/profile/edit" replace />} />
             </Route>
 
             {/* Admin Routes */}
