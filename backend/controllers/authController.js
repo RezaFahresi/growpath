@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const UserModel = require('../models/userModel');
 const axios = require('axios');
 const jwt = require('jsonwebtoken'); 
+const db = require('../config/db'); // WAJIB DITAMBAHKAN untuk query ke talent_mappings
 
 // 1. REGISTER USER
 exports.register = async (req, res) => {
@@ -15,6 +16,17 @@ exports.register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
     const newUser = await UserModel.createUser(name, email, hashedPassword);
+
+    // PERBAIKAN 1: Otomatis daftarkan user baru ke tabel talent_mappings
+    try {
+      await db.query(
+        `INSERT INTO talent_mappings (name, email, role, department, performance, potential) 
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [name, email, 'user', 'General', 'Medium', 'Medium']
+      );
+    } catch (mappingErr) {
+      console.error("Warning: Gagal menambahkan ke talent_mappings", mappingErr.message);
+    }
 
     return res.status(201).json({ message: 'Registrasi berhasil', user: newUser });
   } catch (error) {
@@ -71,6 +83,17 @@ exports.googleLogin = async (req, res) => {
     if (!user) {
       const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-10), 10);
       user = await UserModel.createUser(name, email, randomPassword);
+
+      // PERBAIKAN 1: Otomatis daftarkan user Google baru ke tabel talent_mappings
+      try {
+        await db.query(
+          `INSERT INTO talent_mappings (name, email, role, department, performance, potential) 
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [name, email, 'user', 'General', 'Medium', 'Medium']
+        );
+      } catch (mappingErr) {
+        console.error("Warning: Gagal menambahkan Google User ke talent_mappings", mappingErr.message);
+      }
     }
 
     const token = jwt.sign(
@@ -79,7 +102,7 @@ exports.googleLogin = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    console.log(`🌍 [GOOGLE AUTH SUKSES] Email: ${user.email}`);
+    console.log(`[GOOGLE AUTH SUKSES] Email: ${user.email}`);
     return res.json({
       message: 'Login Google berhasil',
       token: token, 
@@ -96,9 +119,18 @@ exports.googleLogin = async (req, res) => {
 exports.loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const admin = await UserModel.findUserByEmailAndRoleCondition(email, true); 
+    
+    // PERBAIKAN 2: Cari akun berdasarkan email saja terlebih dahulu
+    const admin = await UserModel.findUserByEmail(email); 
 
-    if (!admin) return res.status(404).json({ message: 'Akun admin tidak ditemukan.' });
+    if (!admin) {
+      return res.status(404).json({ message: 'Akun tidak ditemukan.' });
+    }
+
+    // Jika akun ditemukan tapi role-nya bukan admin/superadmin, tolak dengan 403 Forbidden
+    if (admin.role !== 'admin' && admin.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Akses ditolak. Akun ini bukan Admin.' });
+    }
 
     const isMatch = await bcrypt.compare(password, admin.password);
 
@@ -112,7 +144,6 @@ exports.loginAdmin = async (req, res) => {
       return res.json({ 
         message: 'Login Admin Berhasil', 
         token: token, 
-        // 🔥 PERBAIKAN UTAMA: Ubah key 'admin' menjadi 'user' agar sinkron dengan Frontend
         user: { id: admin.id, name: admin.name, role: admin.role } 
       });
     } else {

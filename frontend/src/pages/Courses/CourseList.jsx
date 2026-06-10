@@ -1,17 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import { PlayCircle, Clock, BookOpen, Search, Sparkles, SlidersHorizontal, Lock } from 'lucide-react';
+import API from '../../api/axios'; // Pastikan path ini sesuai dengan letak axios Anda
 
 export default function CourseList() {
   const [activeTab, setActiveTab] = useState('Semua');
+  const [dbCompletedIds, setDbCompletedIds] = useState([]); // State khusus untuk data dari Database
   const navigate = useNavigate();
   
   const { courses, progress } = useAppContext();
   const dbCourses = courses || [];
   
-  // Ambil daftar ID kelas yang sudah diselesaikan, paksa menjadi format String agar aman
-  const completedCourses = (progress?.completedCourses || []).map(id => String(id));
+  // ========================================================
+  // 1. TARIK DATA PROGRESS DARI DATABASE SAAT HALAMAN DIBUKA
+  // ========================================================
+  useEffect(() => {
+    const fetchRealProgress = async () => {
+      try {
+        const response = await API.get('/progress');
+        // Pastikan kita mendapatkan data activeCourses dari backend
+        if (response.data && response.data.activeCourses) {
+          // Cari course yang statusnya isCompleted = true, lalu jadikan format String
+          const completedFromDB = response.data.activeCourses
+            .filter(course => course.isCompleted)
+            .map(course => String(course.courseId));
+          
+          setDbCompletedIds(completedFromDB);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data progress murni:", error);
+      }
+    };
+    
+    fetchRealProgress();
+  }, []);
+
+  // 2. GABUNGKAN DATA (Context + Database) AGAR AKURAT 100%
+  const contextCompletedIds = (progress?.completedCourses || []).map(id => String(id));
+  const completedCourses = Array.from(new Set([...contextCompletedIds, ...dbCompletedIds]));
 
   // ========================================================
   // LOGIKA ANTI-DUPLIKASI
@@ -92,12 +119,13 @@ export default function CourseList() {
           const fallbackImage = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600';
           const courseImage = course.image && course.image !== '[null]' ? course.image : fallbackImage;
 
-          // LOGIKA KUNCI
+          // LOGIKA KUNCI: Cek ID kelas sebelumnya
           const originalIndex = uniqueCourses.findIndex(c => String(c.id || c._id) === courseId);
           const prevCourseId = originalIndex > 0 
             ? String(uniqueCourses[originalIndex - 1].id || uniqueCourses[originalIndex - 1]._id) 
             : null;
 
+          // Gembok terbuka jika index ke-0 ATAU kelas sebelumnya ada di dalam array completedCourses
           const isLocked = originalIndex > 0 && !completedCourses.includes(prevCourseId);
 
           return (
