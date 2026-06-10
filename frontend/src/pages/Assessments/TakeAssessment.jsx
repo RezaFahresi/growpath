@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronRight, HelpCircle, Sparkles } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
@@ -7,63 +7,49 @@ import API from '../../api/axios';
 export default function TakeAssessment() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { saveAssessment, availableAssessments } = useAppContext();
+  const { saveAssessment } = useAppContext();
 
-  const assessmentData = availableAssessments.find(
-    (a) => String(a.id) === String(id)
-  );
-
-  const questions = [
-    {
-      id: 1,
-      question: "Manakah dari teknologi berikut yang digunakan untuk menstrukturkan kerangka utama sebuah halaman web?",
-      options: ["CSS", "HTML", "JavaScript", "SQL"],
-      correctIndex: 1 
-    },
-    {
-      id: 2,
-      question: "Di bawah ini, manakah yang merupakan peran utama dari sebuah Web Server API dalam arsitektur software?",
-      options: [
-        "Mendesain antarmuka visual aplikasi", 
-        "Menghubungkan client dengan database dan memproses logika bisnis", 
-        "Menyimpan file gambar secara lokal di komputer user", 
-        "Mempercepat rendering animasi CSS"
-      ],
-      correctIndex: 1
-    },
-    {
-      id: 3,
-      question: "Dalam dunia UI/UX design, apa fungsi utama dari pembuatan sebuah Wireframe?",
-      options: [
-        "Membuat animasi transisi halaman",
-        "Menyusun kerangka tata letak layout digital tanpa elemen visual detail",
-        "Menulis kode CSS untuk responsivitas layar ponsel",
-        "Melakukan backup basis data server ke cloud"
-      ],
-      correctIndex: 1
-    },
-    {
-      id: 4,
-      question: "Sintaks standar SQL manakah yang digunakan secara khusus untuk mengambil atau menampilkan data dari tabel database?",
-      options: ["INSERT", "UPDATE", "SELECT", "DELETE"],
-      correctIndex: 2 
-    },
-    {
-      id: 5,
-      question: "Apa keuntungan utama menggunakan arsitektur komponen seperti React dalam pengembangan Frontend?",
-      options: [
-        "Komponen dapat digunakan kembali (reusable) sehingga mempercepat development",
-        "Secara otomatis membuat database PostgreSQL",
-        "Menghilangkan kebutuhan memprogram logika Javascript",
-        "Membuat aplikasi langsung terbit di Google Play Store"
-      ],
-      correctIndex: 0
-    }
-  ];
+  const [assessmentData, setAssessmentData] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // MENGAMBIL DATA SOAL DARI DATABASE
+  useEffect(() => {
+    const fetchQuizData = async () => {
+      try {
+        setLoading(true);
+        const response = await API.get(`/assessments/${id}`);
+        const data = response.data;
+        
+        setAssessmentData(data);
+        
+        // Format soal dari database ke format UI
+        if (data.questions) {
+          const formattedQuestions = data.questions.map((q) => {
+            const correctIndex = q.correct_answer === 'A' ? 0 : q.correct_answer === 'B' ? 1 : q.correct_answer === 'C' ? 2 : 3;
+            return {
+              id: q.id,
+              question: q.question_text,
+              options: [q.option_a, q.option_b, q.option_c, q.option_d],
+              correctIndex: correctIndex
+            };
+          });
+          setQuestions(formattedQuestions);
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Gagal mengambil data soal ujian.');
+        navigate('/dashboard/assessments');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchQuizData();
+  }, [id, navigate]);
 
   const handleSelectOption = (optionIndex) => {
     setAnswers((prev) => ({
@@ -82,45 +68,31 @@ export default function TakeAssessment() {
       return;
     }
 
+    // HITUNG SKOR DINAMIS
     const correctCount = questions.reduce((acc, q, idx) => {
       return acc + (answers[idx] === q.correctIndex ? 1 : 0);
     }, 0);
     
     const score = Math.round((correctCount / questions.length) * 100);
 
-    const breakdown = [
-      { topic: 'React & Frontend Basics', score: answers[4] === questions[4].correctIndex || answers[0] === questions[0].correctIndex ? 90 : 55 },
-      { topic: 'Logic & API Systems', score: answers[1] === questions[1].correctIndex ? 85 : 50 },
-      { topic: 'UI/UX Principles', score: answers[2] === questions[2].correctIndex ? 90 : 60 },
-      { topic: 'Database Fundamentals', score: answers[3] === questions[3].correctIndex ? 95 : 45 }
-    ];
-
     const assessmentResult = {
       assessmentId: id,
       title: assessmentData?.title || 'Talent Mapping Assessment',
       score,
-      date: new Date().toISOString(),
-      breakdown,
-      recommendation:
-        score >= 80
-          ? "Great job! Anda memiliki pemahaman logika IT yang sangat kuat."
-          : "Focus more on fundamentals. Mari bangun fondasi dasarmu bersama-sama."
+      date: new Date().toISOString()
     };
 
     try {
       setIsSubmitting(true);
       
-      // Request akan menggunakan JWT Authorization Header
       const response = await API.post('/assessments/submit', {
         assessment_id: id,
         score
       });
 
-      const data = response.data;
-
       const finalResult = {
         ...assessmentResult,
-        attemptId: data?.data?.id?.toString() || Date.now().toString()
+        attemptId: response.data?.data?.id?.toString() || Date.now().toString()
       };
 
       saveAssessment(finalResult);
@@ -133,6 +105,18 @@ export default function TakeAssessment() {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+        <div className="animate-spin h-12 w-12 border-4 border-indigo-600 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
+  if (questions.length === 0) {
+    return <div className="text-center mt-20 text-slate-500 font-bold">Admin belum menambahkan soal untuk ujian ini.</div>;
+  }
 
   const progress = ((currentQuestion + 1) / questions.length) * 100;
   const optionLetters = ['A', 'B', 'C', 'D'];
@@ -147,7 +131,7 @@ export default function TakeAssessment() {
               <HelpCircle size={22} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
             </div>
             <h2 className="font-extrabold text-lg md:text-xl text-slate-800 tracking-tight">
-              {assessmentData?.title || 'Talent Mapping Assessment'}
+              {assessmentData?.title || 'Assessment'}
             </h2>
           </div>
 
@@ -171,7 +155,7 @@ export default function TakeAssessment() {
 
         <div className="mb-8">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-800 text-xs font-black text-amber-400 uppercase tracking-widest rounded-lg mb-4 shadow-sm border border-slate-700">
-            <Sparkles size={14} className="text-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.8)]" /> Kompetensi IT Dasar
+            <Sparkles size={14} className="text-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.8)]" /> {assessmentData?.category || 'General'}
           </span>
           <h3 className="text-xl md:text-2xl font-bold text-slate-800 leading-relaxed">
             {questions[currentQuestion].question}
@@ -181,28 +165,20 @@ export default function TakeAssessment() {
         <div className="space-y-4">
           {questions[currentQuestion].options.map((option, index) => {
             const isSelected = selectedAnswer === index;
-
             return (
               <div
                 key={index}
                 onClick={() => handleSelectOption(index)}
                 className={`group p-4 md:p-5 border-2 rounded-2xl cursor-pointer transition-all duration-200 flex items-center gap-4 ${
-                  isSelected
-                    ? 'border-indigo-600 bg-indigo-50/50 text-indigo-900 shadow-sm'
-                    : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50/50 text-slate-600'
+                  isSelected ? 'border-indigo-600 bg-indigo-50/50 text-indigo-900 shadow-sm' : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50/50 text-slate-600'
                 }`}
               >
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold border-2 transition-colors text-sm shrink-0 ${
-                  isSelected
-                    ? 'bg-indigo-600 border-indigo-600 text-white'
-                    : 'bg-white border-slate-200 text-slate-400 group-hover:border-indigo-300 group-hover:text-indigo-600'
+                  isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-200 text-slate-400 group-hover:border-indigo-300 group-hover:text-indigo-600'
                 }`}>
                   {optionLetters[index]}
                 </div>
-                
-                <span className="font-semibold text-sm md:text-base leading-relaxed">
-                  {option}
-                </span>
+                <span className="font-semibold text-sm md:text-base leading-relaxed">{option}</span>
               </div>
             );
           })}
@@ -213,16 +189,12 @@ export default function TakeAssessment() {
             onClick={handleNext}
             disabled={selectedAnswer === undefined || isSubmitting}
             className={`w-full sm:w-auto px-10 py-4 text-white rounded-2xl font-bold transition-all flex items-center justify-center gap-2 text-base ${
-              selectedAnswer !== undefined && !isSubmitting
-                ? 'bg-slate-900 shadow-xl shadow-slate-900/10 hover:bg-slate-800 hover:scale-[1.02]'
-                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+              selectedAnswer !== undefined && !isSubmitting ? 'bg-slate-900 shadow-xl shadow-slate-900/10 hover:bg-slate-800 hover:scale-[1.02]' : 'bg-slate-100 text-slate-400 cursor-not-allowed'
             }`}
           >
             {isSubmitting ? (
-              <>Menyimpan Jawaban... <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div></>
-            ) : currentQuestion === questions.length - 1 ? (
-              'Selesai & Lihat Hasil'
-            ) : (
+              <>Menyimpan... <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div></>
+            ) : currentQuestion === questions.length - 1 ? 'Selesai & Lihat Hasil' : (
               <>Pertanyaan Berikutnya <ChevronRight size={18} /></>
             )}
           </button>

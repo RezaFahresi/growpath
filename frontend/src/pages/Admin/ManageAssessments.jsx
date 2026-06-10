@@ -4,13 +4,7 @@ import { Trash2, Plus, Edit2, X, ClipboardCheck, FileText, Search } from 'lucide
 import API from '../../api/axios';
 
 export default function ManageAssessments() {
-  const {
-    availableAssessments,
-    addAssessment,
-    deleteAssessment,
-    updateAssessment,
-    user
-  } = useAppContext();
+  const { availableAssessments, addAssessment, deleteAssessment, updateAssessment, user } = useAppContext();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -19,82 +13,92 @@ export default function ManageAssessments() {
 
   const defaultCategory = user?.role === 'Admin' ? (user?.interest || '') : '';
 
+  // 🔥 STATE DITAMBAH: Menyimpan daftar pertanyaan
   const [assessmentData, setAssessmentData] = useState({
-    title: '',
-    category: defaultCategory,
-    duration: '',
-    description: ''
+    title: '', category: defaultCategory, duration: '', description: '', questions: []
   });
 
-  const displayAssessments = Array.isArray(availableAssessments) 
-    ? [...availableAssessments].sort((a, b) => (a.id || 0) - (b.id || 0)) 
-    : [];
+  const displayAssessments = Array.isArray(availableAssessments) ? [...availableAssessments].sort((a, b) => (a.id || 0) - (b.id || 0)) : [];
 
   const openAddForm = () => {
-    setAssessmentData({ title: '', category: defaultCategory, duration: '', description: '' });
-    setIsEditing(false);
-    setEditId(null);
-    setIsFormOpen(true);
+    setAssessmentData({ title: '', category: defaultCategory, duration: '', description: '', questions: [] });
+    setIsEditing(false); setEditId(null); setIsFormOpen(true);
   };
 
-  const openEditForm = (item) => {
+  const openEditForm = async (item) => {
     const itemId = item.id || item._id;
-    setAssessmentData({
-      title: item.title || '',
-      category: item.category || '',
-      duration: item.duration || '',
-      description: item.description || ''
-    });
-    setIsEditing(true);
-    setEditId(itemId);
-    setIsFormOpen(true);
+    // Mengambil data lengkap beserta pertanyaannya dari backend
+    try {
+      const res = await API.get(`/assessments/${itemId}`);
+      setAssessmentData({
+        title: res.data.title || '',
+        category: res.data.category || '',
+        duration: res.data.duration || '',
+        description: res.data.description || '',
+        questions: res.data.questions || []
+      });
+      setIsEditing(true); setEditId(itemId); setIsFormOpen(true);
+    } catch (err) {
+      alert("Gagal mengambil detail ujian.");
+    }
   };
 
   const closeForm = () => {
-    setIsFormOpen(false);
-    setIsEditing(false);
-    setEditId(null);
-    setAssessmentData({ title: '', category: defaultCategory, duration: '', description: '' });
+    setIsFormOpen(false); setIsEditing(false); setEditId(null);
+  };
+
+  // 🔥 Fungsi Tambah Pertanyaan Lokal (belum di-save ke DB)
+  const handleAddQuestion = () => {
+    setAssessmentData(prev => ({
+      ...prev,
+      questions: [
+        ...prev.questions, 
+        { question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'A' }
+      ]
+    }));
+  };
+
+  // 🔥 Fungsi Update Pertanyaan Spesifik
+  const handleQuestionChange = (index, field, value) => {
+    const updatedQuestions = [...assessmentData.questions];
+    updatedQuestions[index][field] = value;
+    setAssessmentData({ ...assessmentData, questions: updatedQuestions });
+  };
+
+  // 🔥 Fungsi Hapus Pertanyaan
+  const handleRemoveQuestion = (index) => {
+    const updatedQuestions = assessmentData.questions.filter((_, i) => i !== index);
+    setAssessmentData({ ...assessmentData, questions: updatedQuestions });
   };
 
   const handleSubmit = async () => {
-    if (!assessmentData.title) {
-      alert('Title is required!');
-      return;
-    }
+    if (!assessmentData.title) return alert('Judul ujian wajib diisi!');
 
     try {
       setLoading(true);
       let response;
-
       if (isEditing) {
-        // Backend sudah memiliki rute PUT /api/assessments/:id
         response = await API.put(`/assessments/${editId}`, assessmentData);
         if (updateAssessment) updateAssessment(response.data);
       } else {
         response = await API.post('/assessments', assessmentData);
         addAssessment(response.data);
       }
-
       closeForm();
     } catch (error) {
-      console.error(`Failed to save:`, error);
-      alert(error.response?.data?.message || 'Gagal menyimpan assessment. Pastikan Anda memiliki akses admin.');
+      alert(error.response?.data?.message || 'Gagal menyimpan assessment.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!id) return;
-    if (!window.confirm("Yakin ingin menghapus assessment ini?")) return;
-
+    if (!id || !window.confirm("Yakin ingin menghapus ujian beserta semua soalnya?")) return;
     try {
       setLoading(true);
       await API.delete(`/assessments/${id}`);
       deleteAssessment(id);
     } catch (error) {
-      console.error('Delete Error:', error);
       alert('Gagal menghapus assessment.');
     } finally {
       setLoading(false);
@@ -102,178 +106,136 @@ export default function ManageAssessments() {
   };
 
   return (
-    // Margin diseragamkan dengan w-full max-w-7xl mx-auto agar fit in
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
       
-      {/* ================= HEADER ================= */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Manage Assessments</h1>
-          <p className="text-sm text-slate-400 mt-1">Buat, perbarui, dan kelola ujian evaluasi untuk pengguna.</p>
+          <p className="text-sm text-slate-400 mt-1">Buat, perbarui, dan kelola ujian evaluasi beserta soal-soalnya.</p>
         </div>
-        
         {!isFormOpen && (
-          <button
-            onClick={openAddForm}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 hover:-translate-y-0.5 transition-all shadow-lg shadow-blue-600/30 font-bold text-sm"
-          >
-            <Plus size={18} strokeWidth={2.5} /> Buat Ujian Baru
+          <button onClick={openAddForm} className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-bold text-sm">
+            <Plus size={18} /> Buat Ujian Baru
           </button>
         )}
       </div>
 
-      {/* ================= FORM PANEL ================= */}
       {isFormOpen && (
-        <div className="bg-[#0B172E] p-8 rounded-[2rem] border border-[#1E2A45] shadow-2xl relative overflow-hidden animate-in slide-in-from-top-4 mb-6">
+        <div className="bg-[#0B172E] p-8 rounded-[2rem] border border-[#1E2A45] shadow-2xl relative overflow-hidden mb-6">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-400"></div>
           
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl font-bold text-white flex items-center gap-3">
-              {/* Ikon Form Diperbarui dengan background & highlight */}
-              <div className="p-2.5 bg-[#071226] border border-[#1E2A45] rounded-xl shadow-md">
-                <FileText className="text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)]" size={20} />
-              </div>
-              {isEditing ? 'Edit Assessment' : 'Add New Assessment'}
+              <div className="p-2.5 bg-[#071226] border border-[#1E2A45] rounded-xl"><FileText className="text-blue-400" size={20} /></div>
+              {isEditing ? 'Edit Ujian & Soal' : 'Buat Ujian & Soal Baru'}
             </h2>
-            <button onClick={closeForm} className="p-2.5 text-slate-400 hover:text-white bg-[#0F1B33] rounded-xl transition-colors border border-[#1E2A45]">
-              <X size={18} />
-            </button>
+            <button onClick={closeForm} className="p-2.5 text-slate-400 hover:text-white bg-[#0F1B33] rounded-xl border border-[#1E2A45]"><X size={18} /></button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Form Informasi Utama */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 border-b border-[#1E2A45] pb-8">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Judul Ujian</label>
-              <input 
-                type="text" 
-                placeholder="Ex: Dasar Pemrograman React" 
-                className="w-full border border-[#1E2A45] bg-[#071226] text-white px-5 py-3.5 rounded-xl focus:outline-none focus:border-blue-500 transition-colors placeholder:text-slate-600 font-medium" 
-                value={assessmentData.title} 
-                onChange={e => setAssessmentData({...assessmentData, title: e.target.value})} 
-              />
+              <label className="text-xs font-bold text-slate-400 uppercase">Judul Ujian</label>
+              <input type="text" className="w-full border border-[#1E2A45] bg-[#071226] text-white px-5 py-3.5 rounded-xl focus:border-blue-500" value={assessmentData.title} onChange={e => setAssessmentData({...assessmentData, title: e.target.value})} />
             </div>
-
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Kategori</label>
-              <input 
-                type="text" 
-                placeholder="Ex: Frontend Development" 
-                className="w-full border border-[#1E2A45] bg-[#071226] text-white px-5 py-3.5 rounded-xl focus:outline-none focus:border-blue-500 transition-colors placeholder:text-slate-600 font-medium" 
-                value={assessmentData.category} 
-                onChange={e => setAssessmentData({...assessmentData, category: e.target.value})} 
-              />
+              <label className="text-xs font-bold text-slate-400 uppercase">Kategori</label>
+              <input type="text" className="w-full border border-[#1E2A45] bg-[#071226] text-white px-5 py-3.5 rounded-xl focus:border-blue-500" value={assessmentData.category} onChange={e => setAssessmentData({...assessmentData, category: e.target.value})} />
             </div>
-
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Durasi (Menit)</label>
-              <input 
-                type="number" 
-                placeholder="Ex: 45" 
-                className="w-full border border-[#1E2A45] bg-[#071226] text-white px-5 py-3.5 rounded-xl focus:outline-none focus:border-blue-500 transition-colors placeholder:text-slate-600 font-medium" 
-                value={assessmentData.duration} 
-                onChange={e => setAssessmentData({...assessmentData, duration: e.target.value})} 
-              />
+              <label className="text-xs font-bold text-slate-400 uppercase">Durasi (Menit)</label>
+              <input type="number" className="w-full border border-[#1E2A45] bg-[#071226] text-white px-5 py-3.5 rounded-xl focus:border-blue-500" value={assessmentData.duration} onChange={e => setAssessmentData({...assessmentData, duration: e.target.value})} />
             </div>
-
             <div className="col-span-1 md:col-span-3 space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Deskripsi Singkat</label>
-              <textarea 
-                placeholder="Jelaskan secara singkat apa yang akan diuji dalam assessment ini..." 
-                rows="3" 
-                className="w-full border border-[#1E2A45] bg-[#071226] text-white px-5 py-4 rounded-xl focus:outline-none focus:border-blue-500 transition-colors placeholder:text-slate-600 font-medium resize-none" 
-                value={assessmentData.description} 
-                onChange={e => setAssessmentData({...assessmentData, description: e.target.value})} 
-              />
+              <label className="text-xs font-bold text-slate-400 uppercase">Deskripsi Singkat</label>
+              <textarea rows="2" className="w-full border border-[#1E2A45] bg-[#071226] text-white px-5 py-3.5 rounded-xl focus:border-blue-500 resize-none" value={assessmentData.description} onChange={e => setAssessmentData({...assessmentData, description: e.target.value})} />
+            </div>
+          </div>
+
+          {/* 🔥 FORM PERTANYAAN (DINAMIS) */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">Daftar Pertanyaan ({assessmentData.questions.length})</h3>
+              <button onClick={handleAddQuestion} className="flex items-center gap-2 px-4 py-2 bg-[#0F1B33] text-blue-400 border border-blue-500/30 rounded-xl hover:bg-blue-600/10 transition-colors text-sm font-bold">
+                <Plus size={16} /> Tambah Soal
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {assessmentData.questions.map((q, idx) => (
+                <div key={idx} className="bg-[#071226] p-5 rounded-2xl border border-[#1E2A45] relative">
+                  <button onClick={() => handleRemoveQuestion(idx)} className="absolute top-4 right-4 text-slate-500 hover:text-red-400"><Trash2 size={18} /></button>
+                  <p className="text-blue-400 font-bold mb-3 text-sm">Soal #{idx + 1}</p>
+                  
+                  <div className="space-y-4">
+                    <input type="text" placeholder="Tuliskan pertanyaan di sini..." className="w-full border border-[#1E2A45] bg-[#0B172E] text-white px-4 py-3 rounded-lg focus:border-blue-500 text-sm font-medium" value={q.question_text} onChange={e => handleQuestionChange(idx, 'question_text', e.target.value)} />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {['a', 'b', 'c', 'd'].map(opt => (
+                        <div key={opt} className="flex items-center gap-3">
+                          <span className="text-slate-400 font-bold uppercase w-4">{opt}.</span>
+                          <input type="text" placeholder={`Opsi ${opt.toUpperCase()}`} className="flex-1 border border-[#1E2A45] bg-[#0B172E] text-white px-4 py-2.5 rounded-lg focus:border-blue-500 text-sm" value={q[`option_${opt}`]} onChange={e => handleQuestionChange(idx, `option_${opt}`, e.target.value)} />
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-3 mt-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase">Kunci Jawaban Benar:</label>
+                      <select className="bg-[#0B172E] border border-[#1E2A45] text-white px-4 py-2 rounded-lg text-sm font-bold focus:border-emerald-500" value={q.correct_answer} onChange={e => handleQuestionChange(idx, 'correct_answer', e.target.value)}>
+                        <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
           <div className="flex justify-end gap-3 border-t border-[#1E2A45] pt-6">
-            <button onClick={closeForm} className="px-6 py-3 bg-[#0F1B33] hover:bg-[#1E2A45] text-slate-300 font-bold rounded-xl transition-colors border border-[#1E2A45]">
-              Batal
-            </button>
-            <button onClick={handleSubmit} disabled={loading} className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all">
-              {loading ? 'Menyimpan...' : (isEditing ? 'Simpan Perubahan' : 'Buat Ujian')}
+            <button onClick={closeForm} className="px-6 py-3 bg-[#0F1B33] text-slate-300 font-bold rounded-xl border border-[#1E2A45]">Batal</button>
+            <button onClick={handleSubmit} disabled={loading} className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-600/20">
+              {loading ? 'Menyimpan...' : (isEditing ? 'Simpan Perubahan' : 'Buat Ujian & Soal')}
             </button>
           </div>
         </div>
       )}
 
-      {/* ================= TABLE LIST ================= */}
+      {/* Tabel Ujian Tetap Sama */}
       <div className="bg-[#0B172E] rounded-[2rem] border border-[#1E2A45] shadow-xl overflow-hidden min-h-[400px]">
-        
-        {/* Table Header Wrapper */}
         <div className="p-6 border-b border-[#1E2A45] flex items-center justify-between bg-[#0F1B33]">
           <h2 className="font-bold text-white flex items-center gap-3">
-            {/* Ikon Table Diperbarui dengan background & highlight */}
-            <div className="p-2 bg-[#071226] border border-[#1E2A45] rounded-lg shadow-sm">
-              <ClipboardCheck size={18} className="text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)]" />
-            </div>
+            <div className="p-2 bg-[#071226] border border-[#1E2A45] rounded-lg shadow-sm"><ClipboardCheck size={18} className="text-blue-400" /></div>
             Daftar Ujian Tersedia
           </h2>
-          <span className="bg-blue-500/10 text-blue-400 text-xs font-bold px-3 py-1.5 rounded-full border border-blue-500/20">
-            {displayAssessments.length} Total
-          </span>
+          <span className="bg-blue-500/10 text-blue-400 text-xs font-bold px-3 py-1.5 rounded-full border border-blue-500/20">{displayAssessments.length} Total</span>
         </div>
-
-        <div className="overflow-x-auto custom-scrollbar">
+        <div className="overflow-x-auto">
           <table className="w-full text-left text-sm border-collapse min-w-[700px]">
             <thead className="bg-[#0B172E]">
               <tr>
-                <th className="px-8 py-5 font-bold text-slate-400 uppercase text-xs tracking-wider border-b border-[#1E2A45]">Informasi Ujian</th>
-                <th className="px-6 py-5 font-bold text-slate-400 uppercase text-xs tracking-wider border-b border-[#1E2A45]">Kategori</th>
-                <th className="px-6 py-5 font-bold text-slate-400 uppercase text-xs tracking-wider border-b border-[#1E2A45]">Durasi</th>
-                <th className="px-8 py-5 font-bold text-slate-400 uppercase text-xs tracking-wider text-right border-b border-[#1E2A45]">Aksi</th>
+                <th className="px-8 py-5 font-bold text-slate-400 uppercase text-xs border-b border-[#1E2A45]">Informasi Ujian</th>
+                <th className="px-6 py-5 font-bold text-slate-400 uppercase text-xs border-b border-[#1E2A45]">Kategori</th>
+                <th className="px-6 py-5 font-bold text-slate-400 uppercase text-xs border-b border-[#1E2A45]">Durasi</th>
+                <th className="px-8 py-5 font-bold text-slate-400 uppercase text-xs text-right border-b border-[#1E2A45]">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1E2A45]">
-              {displayAssessments.length > 0 ? (
-                displayAssessments.map((item) => (
-                  <tr key={item.id} className="hover:bg-[#0F1B33] transition-colors group">
-                    <td className="px-8 py-5">
-                      <p className="font-bold text-white text-base mb-1 group-hover:text-blue-400 transition-colors">{item.title}</p>
-                      <p className="text-slate-500 text-xs truncate max-w-sm">{item.description || 'Tidak ada deskripsi.'}</p>
-                    </td>
-                    <td className="px-6 py-5">
-                      <span className="inline-flex px-3 py-1.5 bg-[#071226] text-slate-300 rounded-lg text-xs font-semibold border border-[#1E2A45]">
-                        {item.category || 'General'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5 font-medium text-slate-400">
-                      {item.duration ? `${item.duration} Menit` : '-'}
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center justify-end gap-2">
-                        <button 
-                          onClick={() => openEditForm(item)} 
-                          className="p-2.5 bg-[#0F1B33] text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-all border border-[#1E2A45] hover:border-blue-500/30"
-                          title="Edit Ujian"
-                        >
-                          <Edit2 size={16}/>
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(item.id)} 
-                          className="p-2.5 bg-[#0F1B33] text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all border border-[#1E2A45] hover:border-red-500/30"
-                          title="Hapus Ujian"
-                        >
-                          <Trash2 size={16}/>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="px-6 py-20 text-center">
-                    <div className="flex flex-col items-center justify-center">
-                      {/* Ikon Empty State Diperbarui */}
-                      <div className="w-20 h-20 bg-[#071226] rounded-2xl flex items-center justify-center mb-5 border border-[#1E2A45] shadow-lg">
-                        <Search size={32} className="text-slate-400 drop-shadow-[0_0_8px_rgba(148,163,184,0.4)]" />
-                      </div>
-                      <p className="text-slate-300 font-bold text-lg mb-1">Belum ada ujian.</p>
-                      <p className="text-slate-500 text-sm">Klik "Buat Ujian Baru" untuk menambahkan data.</p>
+              {displayAssessments.map((item) => (
+                <tr key={item.id} className="hover:bg-[#0F1B33] transition-colors">
+                  <td className="px-8 py-5">
+                    <p className="font-bold text-white text-base mb-1">{item.title}</p>
+                    <p className="text-slate-500 text-xs truncate max-w-sm">{item.description}</p>
+                  </td>
+                  <td className="px-6 py-5"><span className="px-3 py-1.5 bg-[#071226] text-slate-300 rounded-lg text-xs font-semibold border border-[#1E2A45]">{item.category}</span></td>
+                  <td className="px-6 py-5 font-medium text-slate-400">{item.duration} Menit</td>
+                  <td className="px-8 py-5">
+                    <div className="flex items-center justify-end gap-2">
+                      <button onClick={() => openEditForm(item)} className="p-2.5 bg-[#0F1B33] text-slate-400 hover:text-blue-400 rounded-xl border border-[#1E2A45]"><Edit2 size={16}/></button>
+                      <button onClick={() => handleDelete(item.id)} className="p-2.5 bg-[#0F1B33] text-slate-400 hover:text-red-400 rounded-xl border border-[#1E2A45]"><Trash2 size={16}/></button>
                     </div>
                   </td>
                 </tr>
-              )}
+              ))}
             </tbody>
           </table>
         </div>

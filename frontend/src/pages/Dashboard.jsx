@@ -5,14 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import API from '../api/axios';
 
 export default function Dashboard() {
-  const { user, progress, setProgress, courses } = useAppContext();
+  // 🔥 AMBIL userTalent DARI CONTEXT
+  const { user, progress, setProgress, courses, userTalent } = useAppContext();
   const navigate = useNavigate();
 
   const [dashboardStats, setDashboardStats] = useState({
-    streak: 0,
-    completed: 0,
-    totalHours: 0,
-    achievements: 0
+    streak: 0, completed: 0, totalHours: 0, achievements: 0
   });
   
   const [rawRoadmaps, setRawRoadmaps] = useState([]);
@@ -23,42 +21,25 @@ export default function Dashboard() {
       if (!user?.id) return;
       setLoading(true);
       try {
-        // 🔥 PERBAIKAN: Hapus /user/${user.id}. Cukup panggil /progress
         const [progressRes, rmRes] = await Promise.all([
           API.get('/progress'), 
           API.get('/roadmaps')
         ]);
 
         const progressData = progressRes.data;
-
-        // Set Statistik
-        if (progressData?.stats) {
-          setDashboardStats(progressData.stats);
-        }
-        
-        // Gabungkan data dari Backend dengan data lokal di Context
-        if (progressData) {
-          setProgress(prev => ({
-             ...prev,
-             ...progressData
-          }));
-        }
-
-        // Simpan data roadmap mentah
-        if (rmRes.data) {
-          setRawRoadmaps(rmRes.data);
-        }
+        if (progressData?.stats) setDashboardStats(progressData.stats);
+        if (progressData) setProgress(prev => ({ ...prev, ...progressData }));
+        if (rmRes.data) setRawRoadmaps(rmRes.data);
       } catch (error) {
-        console.error("Gagal mengambil data dashboard:", error.response?.data?.message || error.message);
+        console.error("Gagal mengambil data dashboard:", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchDashboardData();
   }, [user?.id, setProgress]); 
 
-  // Kalkulasi status roadmap secara otomatis
+  // Kalkulasi status roadmap secara otomatis dengan Kunci Talent
   const roadmapSteps = useMemo(() => {
     if (!rawRoadmaps || rawRoadmaps.length === 0) return [];
     
@@ -68,13 +49,23 @@ export default function Dashboard() {
       const isCompleted = checklist.length >= 2;
 
       let status = 'Locked';
-      if (index === 0) {
-        status = isCompleted ? 'Done' : 'Active';
-      } else {
-        const prevPhaseId = `phase${index}`;
-        const prevChecklist = progress?.roadmapChecklist?.[prevPhaseId] || [];
-        const prevCompleted = prevChecklist.length >= 2;
-        if (prevCompleted) status = isCompleted ? 'Done' : 'Active';
+      
+      // JIKA SUDAH DINILAI OLEH TALENT MAPPING
+      if (userTalent) {
+        if (index === 0) {
+          status = isCompleted ? 'Done' : 'Active';
+        } else {
+          const prevPhaseId = `phase${index}`;
+          const prevChecklist = progress?.roadmapChecklist?.[prevPhaseId] || [];
+          const prevCompleted = prevChecklist.length >= 2;
+          
+          // Logika Akselerasi di Mini Tracker
+          if (userTalent.potential === 'High' && index === 1) {
+             status = isCompleted ? 'Done' : 'Active';
+          } else if (prevCompleted) {
+             status = isCompleted ? 'Done' : 'Active';
+          }
+        }
       }
 
       const shortTitle = item.title.replace(/Step \d: /, '').replace(' Roadmap', '');
@@ -82,9 +73,8 @@ export default function Dashboard() {
     });
     
     return formattedRoadmap.slice(0, 4);
-  }, [rawRoadmaps, progress?.roadmapChecklist]);
+  }, [rawRoadmaps, progress?.roadmapChecklist, userTalent]);
 
-  // Ikon statistik diperbarui dengan background abu-tua dan glow text
   const stats = [
     { title: 'Current Streak', value: `${dashboardStats.streak} Days`, icon: Calendar, color: 'text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]', bg: 'bg-slate-800 shadow-md', border: 'border-slate-100' },
     { title: 'Courses Done', value: dashboardStats.completed.toString(), icon: BookOpen, color: 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.6)]', bg: 'bg-slate-800 shadow-md', border: 'border-slate-100' },
@@ -243,7 +233,7 @@ export default function Dashboard() {
             <div className="space-y-0 relative ml-2">
               <div className="absolute left-[13px] top-4 bottom-4 w-[2px] bg-slate-100 -z-10"></div>
 
-              {roadmapSteps.length > 0 ? roadmapSteps.map((step, index) => (
+              {roadmapSteps.length > 0 ? roadmapSteps.map((step) => (
                 <div key={step.id} className="flex gap-5 items-start relative pb-8 last:pb-0">
                   <div className="relative z-10 bg-white py-1">
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-colors ${

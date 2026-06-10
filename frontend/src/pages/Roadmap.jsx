@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { CheckCircle, Circle, Lock, Zap, ChevronRight, Trophy, BookOpen } from 'lucide-react';
+import { CheckCircle, Circle, Lock, Zap, ChevronRight, Trophy, BookOpen, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import API from '../api/axios';
 
 export default function Roadmap() {
-  const { user, progress, toggleRoadmapItem } = useAppContext();
+  // 🔥 AMBIL userTalent DARI CONTEXT
+  const { user, progress, toggleRoadmapItem, userTalent } = useAppContext();
   const [phases, setPhases] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
@@ -41,7 +42,6 @@ export default function Roadmap() {
     toggleRoadmapItem(phaseId, itemId);
     if (user) {
       try {
-        // 🔥 PERBAIKAN: Hapus userId dari payload. Backend membacanya dari JWT!
         await API.post('/roadmaps/progress', { phaseId, taskId: itemId });
       } catch (error) {
         console.error("Gagal sinkronisasi:", error);
@@ -50,19 +50,38 @@ export default function Roadmap() {
   };
 
   const processedPhases = useMemo(() => {
+    // 🔥 JIKA BELUM ADA DATA TALENT MAPPING, KUNCI SEMUA ROADMAP!
+    if (!userTalent) {
+      return phases.map(phase => ({ ...phase, isLocked: true, progress: 0, isCompleted: false }));
+    }
+
     return phases.map((phase, index) => {
       const checklist = progress?.roadmapChecklist?.[phase.id] || [];
       const isCompleted = phase.items.length > 0 && phase.items.every(item => checklist.includes(item.id));
       let currentProgress = Math.round((checklist.length / phase.items.length) * 100);
       if (currentProgress > 100 || isCompleted) currentProgress = 100;
 
-      if (index === 0) return { ...phase, isLocked: false, progress: currentProgress, isCompleted };
-      const prev = phases[index - 1];
-      const prevChecklist = progress?.roadmapChecklist?.[prev?.id] || [];
-      const prevCompleted = prev?.items?.length > 0 && prev.items.every(item => prevChecklist.includes(item.id));
-      return { ...phase, isLocked: !prevCompleted, progress: currentProgress, isCompleted };
+      let isLocked = true;
+
+      // 🔥 LOGIKA AKSELERASI BERDASARKAN TALENT MAPPING
+      if (index === 0) {
+        isLocked = false; // Phase 1 selalu terbuka jika sudah punya talent mapping
+      } else {
+        const prev = phases[index - 1];
+        const prevChecklist = progress?.roadmapChecklist?.[prev?.id] || [];
+        const prevCompleted = prev?.items?.length > 0 && prev.items.every(item => prevChecklist.includes(item.id));
+        
+        // JIKA POTENSI HIGH, PHASE 2 LANGSUNG TERBUKA WALAUPUN PHASE 1 BELUM SELESAI
+        if (userTalent.potential === 'High' && index === 1) {
+          isLocked = false;
+        } else {
+          isLocked = !prevCompleted;
+        }
+      }
+
+      return { ...phase, isLocked, progress: currentProgress, isCompleted };
     });
-  }, [phases, progress]);
+  }, [phases, progress, userTalent]);
 
   const totalXP = useMemo(() => {
     let xp = 0;
@@ -90,6 +109,21 @@ export default function Roadmap() {
           <span className="font-bold">{totalXP} Total Experience Points</span>
         </div>
       </div>
+
+      {/* 🔥 PERINGATAN JIKA BELUM DILAKUKAN TALENT MAPPING */}
+      {!userTalent && (
+        <div className="bg-amber-50 border border-amber-200 rounded-[2rem] p-8 flex flex-col md:flex-row items-center gap-6 shadow-sm">
+          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
+            <AlertTriangle size={32} className="text-amber-500" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-amber-900 mb-2">Roadmap Terkunci!</h2>
+            <p className="text-amber-800/80 text-sm leading-relaxed">
+              Sistem membutuhkan data statistik "Talent Mapping" milikmu untuk menyusun jalur belajar. Silakan ikuti <button onClick={() => navigate('/dashboard/assessments')} className="font-bold text-indigo-600 underline">Diagnostic Assessment</button> terlebih dahulu atau hubungi Admin/HR.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* TIMELINE CONTAINER */}
       <div className="relative pl-8 md:pl-12 space-y-12">
