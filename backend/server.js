@@ -54,6 +54,7 @@ app.use('/api/assessments', require('./routes/assessmentRoutes'));
 app.use('/api/roadmaps', require('./routes/roadmapRoutes'));
 app.use('/api/progress', require('./routes/progressRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/talent-mapping', require('./routes/talentMappingRoutes'));
 
 // Root route untuk cek status server
 app.get('/api', (req, res) => {
