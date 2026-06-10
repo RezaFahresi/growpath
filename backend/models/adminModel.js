@@ -35,14 +35,10 @@ exports.getRecentActivities = async () => {
 
 // 5. Mengambil tren Roadmap
 exports.getTrendingRoadmaps = async () => {
-  // Catatan: Jika tabel user_roadmap_progress belum ada di Supabase,
-  // query ini akan gagal, tetapi Controller akan menangkap errornya
-  // sehingga aplikasi TIDAK akan crash.
   const query = `
-    SELECT r.title, COUNT(urp.id) as completion_count
-    FROM user_roadmap_progress urp
-    JOIN roadmaps r ON urp.roadmap_id = r.id
-    GROUP BY r.title
+    SELECT phase_id as title, COUNT(id) as completion_count
+    FROM user_roadmap_progress
+    GROUP BY phase_id
     ORDER BY completion_count DESC
     LIMIT 3
   `;
