@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import { Trash2, Plus, Edit2, X, Upload, Network, Search, Users, Shield, TrendingUp } from 'lucide-react';
+import { Trash2, Plus, Edit2, X, ClipboardCheck, FileText, Search } from 'lucide-react';
 
 export default function ManageTalentMapping() {
   const { talentMappings, addTalentMapping, deleteTalentMapping, user } = useAppContext();
