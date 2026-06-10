@@ -24,6 +24,32 @@ export default function CourseDetail() {
   
   const playerRef = useRef(null);
 
+  // 🔥 PERBAIKAN 1: Pengecekan Riwayat Progress dari Backend
+  useEffect(() => {
+    const checkPreviousProgress = async () => {
+      try {
+        // Panggil API untuk mengecek status course ini (sesuaikan endpoint dengan backend Anda)
+        const response = await API.get(`/progress/courses/${id}`); 
+        
+        // Jika dari database terdeteksi sudah selesai
+        if (response.data && response.data.isCompleted) {
+          if (course?.lessons && Array.isArray(course.lessons)) {
+            setCompletedLessons(course.lessons.map(l => l.id));
+          } else if (course?.lessons && !isNaN(course.lessons)) {
+            setCompletedLessons(Array.from({ length: Number(course.lessons) }).map((_, i) => i));
+          }
+        }
+      } catch (error) {
+        console.log("Belum ada riwayat progress untuk course ini atau endpoint tidak ditemukan.");
+      }
+    };
+
+    if (course) {
+      checkPreviousProgress();
+    }
+  }, [id, course]);
+
+  // Efek untuk memuat YouTube Player
   useEffect(() => {
     if (isPlaying && course && (courseVideoIds[course.id] || courseVideoIds[course._id])) {
       if (!window.YT) {
@@ -85,12 +111,8 @@ export default function CourseDetail() {
 
     try {
       setIsSubmitting(true);
-      
-      // Request ini akan otomatis menggunakan header Authorization dengan Token JWT.
-      // Backend (req.user.id) akan mendeteksi user mana yang menyelesaikan kursus ini.
       await API.post(`/courses/${currentId}/complete`);
 
-      // Mengupdate state lokal di AppContext agar UI langsung berubah selesai
       if (markCourseCompleted) markCourseCompleted(currentId);
       
       alert("🎉 Selamat! Kelas berhasil diselesaikan.");
@@ -116,7 +138,6 @@ export default function CourseDetail() {
     setCompletedLessons(newCompleted);
   };
 
-  // --- TAMPILAN JIKA COURSE TIDAK DITEMUKAN ---
   if (!course) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 w-full max-w-7xl mx-auto">
@@ -143,7 +164,6 @@ export default function CourseDetail() {
   return (
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      {/* --- TOMBOL KEMBALI --- */}
       <button
         onClick={() => navigate('/dashboard/courses')}
         className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-colors text-sm font-semibold group w-max"
@@ -156,10 +176,7 @@ export default function CourseDetail() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* KOLOM KIRI: VIDEO PLAYER & DESKRIPSI */}
         <div className="lg:col-span-8 space-y-6">
-          
-          {/* CONTAINER VIDEO */}
           <div className="bg-slate-950 rounded-[2rem] aspect-video relative overflow-hidden shadow-xl shadow-slate-200/50 group border border-slate-200">
             {!isPlaying ? (
               <div className="absolute inset-0 flex items-center justify-center">
@@ -182,7 +199,6 @@ export default function CourseDetail() {
             )}
           </div>
 
-          {/* DESKRIPSI MATERI */}
           <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
             <div className="flex flex-wrap items-center gap-4 mb-5">
               <span className="px-3.5 py-1.5 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-full uppercase tracking-wider">
@@ -214,7 +230,6 @@ export default function CourseDetail() {
           </div>
         </div>
 
-        {/* KOLOM KANAN: SYLLABUS / COURSE CONTENT */}
         <div className="lg:col-span-4">
           <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden lg:sticky lg:top-8 flex flex-col max-h-[85vh]">
             

@@ -17,11 +17,27 @@ export default function TakeAssessment() {
   const [answers, setAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // MENGAMBIL DATA SOAL DARI DATABASE
+  // 🔥 PERBAIKAN 2: Mencegah Ujian Diulang Jika Sudah Dikerjakan
   useEffect(() => {
     const fetchQuizData = async () => {
       try {
         setLoading(true);
+
+        // Cek riwayat ujian terlebih dahulu
+        try {
+          // Sesuaikan endpoint ini dengan rute backend Anda
+          const historyRes = await API.get(`/assessments/history/${id}`);
+          if (historyRes.data && historyRes.data.hasCompleted) {
+            alert('Anda sudah pernah menyelesaikan ujian ini. Mengalihkan ke hasil...');
+            navigate(`/dashboard/assessments/result/${historyRes.data.attemptId}`);
+            return; // Berhenti mengeksekusi ke bawah
+          }
+        } catch (historyErr) {
+          // Lanjutkan jika belum pernah ujian
+          console.log("Memulai ujian baru.");
+        }
+
+        // Ambil data soal
         const response = await API.get(`/assessments/${id}`);
         const data = response.data;
         
