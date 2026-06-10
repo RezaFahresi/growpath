@@ -1,7 +1,7 @@
 const ProgressModel = require('../models/progressModel');
 
 exports.getUserProgress = async (req, res) => {
-  // 🔥 AMBIL USER ID LANGSUNG DARI TOKEN JWT
+  // AMBIL USER ID LANGSUNG DARI TOKEN JWT
   // Dengan ini, aplikasi lebih aman karena user tidak bisa mengakses data orang lain
   const userId = req.user.id; 
 
@@ -110,5 +110,24 @@ exports.getUserProgress = async (req, res) => {
   } catch (err) {
     console.error("Error fetching progress:", err);
     res.status(500).json({ error: "Terjadi kesalahan saat mengambil data progress." });
+  }
+};
+
+// TAMBAHAN: Membalas pertanyaan frontend: "Apakah course ini sudah selesai?"
+exports.checkCourseStatus = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const courseId = req.params.id;
+
+    const progress = await ProgressModel.checkCourseProgress(userId, courseId);
+
+    if (progress) {
+      return res.json({ isCompleted: true });
+    } else {
+      return res.json({ isCompleted: false });
+    }
+  } catch (error) {
+    console.error("Error check course status:", error);
+    res.status(500).json({ message: 'Server error' });
   }
 };

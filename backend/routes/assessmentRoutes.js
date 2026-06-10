@@ -4,18 +4,22 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 const {
   getAssessments,
-  getAssessmentById, // 🔥 TAMBAHAN: Untuk mengambil detail 1 ujian + soalnya
+  getAssessmentById, 
   createAssessment,
   deleteAssessment,
   submitAssessment,
   getUserResults,
   getResultDetail,
   updateAssessment,
-  deleteResult
+  deleteResult,
+  checkHistory // FUNGSI BARU DI-IMPORT
 } = require('../controllers/assessmentController');
 
+//PENTING: Rute history harus DI ATAS /:id agar parameter :id tidak membajak kata "history"
+router.get('/history/:id', authMiddleware, checkHistory); 
+
 router.get('/', authMiddleware, getAssessments);
-router.get('/:id', authMiddleware, getAssessmentById); // 🔥 TAMBAHAN: Rute untuk frontend TakeAssessment
+router.get('/:id', authMiddleware, getAssessmentById); 
 router.post('/', authMiddleware, createAssessment);
 router.put('/:id', authMiddleware, updateAssessment);
 router.delete('/:id', authMiddleware, deleteAssessment);

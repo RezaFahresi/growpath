@@ -5,7 +5,7 @@ exports.getAllAssessments = async () => {
   return result.rows;
 };
 
-// 🔥 TAMBAHAN BARU: Mengambil detail 1 paket ujian beserta lembar soalnya
+//TAMBAHAN BARU: Mengambil detail 1 paket ujian beserta lembar soalnya
 exports.getAssessmentById = async (id) => {
   // 1. Ambil data informasi utama kuis
   const assessmentResult = await db.query(`SELECT * FROM assessments WHERE id = $1`, [id]);
@@ -27,7 +27,7 @@ exports.getAssessmentById = async (id) => {
   return assessment;
 };
 
-// 🔥 PERBAIKAN: Mendukung penyimpanan judul kuis DAN array pertanyaan sekaligus
+// PERBAIKAN: Mendukung penyimpanan judul kuis DAN array pertanyaan sekaligus
 exports.createAssessment = async (title, category, duration, description, questions = []) => {
   await db.query('BEGIN'); // Mulai Transaksi Database
   try {
@@ -67,7 +67,7 @@ exports.createAssessment = async (title, category, duration, description, questi
   }
 };
 
-// 🔥 PERBAIKAN: Mendukung edit informasi kuis dan update daftar pertanyaan
+// PERBAIKAN: Mendukung edit informasi kuis dan update daftar pertanyaan
 exports.updateAssessment = async (id, title, category, duration, description, questions = []) => {
   await db.query('BEGIN'); // Mulai Transaksi Database
   try {
@@ -196,4 +196,13 @@ exports.getResultDetail = async (id, userId, adminId) => {
 exports.deleteResult = async (id) => {
   const result = await db.query(`DELETE FROM assessment_results WHERE id = $1 RETURNING *`, [id]);
   return result.rowCount;
+};
+
+// FUNGSI BARU UNTUK CEK RIWAYAT (ANTI-AMNESIA)
+exports.checkUserHistory = async (userId, assessmentId) => {
+  const result = await db.query(
+    'SELECT id FROM assessment_results WHERE user_id = $1 AND assessment_id = $2 LIMIT 1',
+    [userId, assessmentId]
+  );
+  return result.rows[0];
 };
