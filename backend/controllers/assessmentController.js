@@ -13,7 +13,7 @@ exports.getAssessments = async (req, res) => {
   }
 };
 
-// 🔥 TAMBAHAN BARU: Mengambil detail 1 Assessment beserta soal-soalnya
+// TAMBAHAN BARU: Mengambil detail 1 Assessment beserta soal-soalnya
 exports.getAssessmentById = async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -38,7 +38,7 @@ exports.createAssessment = async (req, res) => {
     // 1. Cek dari req.user (hasil dari authMiddleware)
     if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak. Hanya Admin.' });
     
-    // 🔥 PERBAIKAN: Menerima 'questions' dari body request yang dikirim Admin
+    // PERBAIKAN: Menerima 'questions' dari body request yang dikirim Admin
     const { title, category, duration, description, questions } = req.body;
     if (!title || !category || !duration) return res.status(400).json({ message: 'Semua field wajib diisi.' });
 
@@ -56,7 +56,7 @@ exports.updateAssessment = async (req, res) => {
     if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak.' });
     
     const id = parseInt(req.params.id, 10);
-    // 🔥 PERBAIKAN: Menerima 'questions' dari body request yang dikirim Admin
+    // PERBAIKAN: Menerima 'questions' dari body request yang dikirim Admin
     const { title, category, duration, description, questions } = req.body;
     if (!title || !category || !duration) return res.status(400).json({ message: 'Field wajib diisi.' });
 
@@ -151,5 +151,24 @@ exports.deleteResult = async (req, res) => {
   } catch (error) {
     console.error("Error deleteResult:", error);
     res.status(500).json({ message: 'Gagal menghapus data riwayat.' });
+  }
+};
+
+// FUNGSI BARU UNTUK CEK RIWAYAT (ANTI-AMNESIA)
+exports.checkHistory = async (req, res) => {
+  try {
+    const userId = req.user.id; 
+    const assessmentId = req.params.id;
+
+    const history = await AssessmentModel.checkUserHistory(userId, assessmentId);
+
+    if (history) {
+      return res.json({ hasCompleted: true, attemptId: history.id });
+    } else {
+      return res.json({ hasCompleted: false });
+    }
+  } catch (error) {
+    console.error("Error check history:", error);
+    res.status(500).json({ message: 'Terjadi kesalahan server' });
   }
 };

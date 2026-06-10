@@ -5,6 +5,12 @@ exports.getAllCourses = async () => {
   return result.rows;
 };
 
+// TAMBAHAN: Fungsi untuk mengambil 1 kelas spesifik
+exports.getCourseById = async (id) => {
+  const result = await db.query('SELECT * FROM courses WHERE id = $1', [id]);
+  return result.rows[0];
+};
+
 exports.createCourse = async (title, description, image, category, duration, lessons) => {
   const result = await db.query(
     `INSERT INTO courses (title, description, image, category, duration, lessons, created_at) 
@@ -29,6 +35,7 @@ exports.deleteCourse = async (id) => {
   return result.rowCount;
 };
 
+// --- LOGIKA PROGRESS ---
 exports.checkProgressExists = async (userId, courseId) => {
   const checkProgress = await db.query(
     `SELECT id FROM user_course_progress WHERE user_id = $1 AND course_id = $2`,

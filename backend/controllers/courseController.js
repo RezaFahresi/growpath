@@ -13,9 +13,24 @@ exports.getCourses = async (req, res) => {
   }
 };
 
+// TAMBAHAN: Controller untuk mengambil 1 detail kelas
+exports.getCourseById = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ message: 'ID tidak valid' });
+
+    const course = await CourseModel.getCourseById(id);
+    if (!course) return res.status(404).json({ message: 'Course tidak ditemukan.' });
+    
+    res.json(course);
+  } catch (error) {
+    console.error("Error getCourseById:", error);
+    res.status(500).json({ message: 'Gagal mengambil detail course.' });
+  }
+};
+
 exports.createCourse = async (req, res) => {
   try {
-    // Gunakan req.user dari authMiddleware
     if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak. Hanya Admin.' });
     
     const { title, description, image, category, duration, lessons } = req.body;
@@ -63,7 +78,6 @@ exports.deleteCourse = async (req, res) => {
 
 exports.completeCourse = async (req, res) => {
   try {
-    // Pastikan user sudah login lewat token
     if (!req.user) return res.status(401).json({ message: 'Silakan login.' });
     
     const userId = parseInt(req.user.id, 10);

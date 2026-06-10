@@ -62,3 +62,24 @@ exports.getUserRoadmapProgress = async (userId) => {
   const result = await db.query(query, [userId]);
   return result.rows;
 };
+
+// TAMBAHAN: Mengecek apakah user sudah pernah menyelesaikan course
+exports.checkCourseProgress = async (userId, courseId) => {
+  const result = await db.query(
+    'SELECT id FROM user_course_progress WHERE user_id = $1 AND course_id = $2 LIMIT 1',
+    [userId, courseId]
+  );
+  return result.rows[0];
+};
+
+// TAMBAHAN: Menyimpan data bahwa user telah menyelesaikan course
+exports.markCourseCompleted = async (userId, courseId) => {
+  const check = await this.checkCourseProgress(userId, courseId);
+  if (check) return check;
+
+  const result = await db.query(
+    'INSERT INTO user_course_progress (user_id, course_id, is_completed, progress_percentage) VALUES ($1, $2, TRUE, 100) RETURNING *',
+    [userId, courseId]
+  );
+  return result.rows[0];
+};
