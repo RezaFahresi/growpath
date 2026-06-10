@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Loader2, AlertCircle, Shield, Mail, Calendar, User, Search, Edit2, Trash2, X, Save, Search } from 'lucide-react';
+import { Download, Loader2, AlertCircle, Shield, Mail, Calendar, User, Search, Edit2, Trash2, X, Save } from 'lucide-react';
 import API from '../../api/axios'; 
 
 export default function UserInsights() {
