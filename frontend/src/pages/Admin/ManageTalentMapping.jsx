@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import { Trash2, Plus, Edit2, X, ClipboardCheck, FileText, Search } from 'lucide-react';
+//PERBAIKAN: Semua ikon yang digunakan di bawah sekarang sudah di-import dengan benar
+import { Trash2, Plus, Edit2, X, Upload, Network, Search, Users, Shield, TrendingUp } from 'lucide-react';
 
 export default function ManageTalentMapping() {
   const { talentMappings, addTalentMapping, deleteTalentMapping, user } = useAppContext();
@@ -18,7 +19,6 @@ export default function ManageTalentMapping() {
 
   const handleAdd = () => {
     if (newTalent.name && newTalent.role) {
-      // Menambahkan talent ke context
       addTalentMapping({ 
         ...newTalent, 
         id: Date.now(), // ID sementara
@@ -32,14 +32,12 @@ export default function ManageTalentMapping() {
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Catatan: Jika ingin upload ke server, gunakan FormData di sini
       const imageUrl = URL.createObjectURL(file);
       setNewTalent({ ...newTalent, image: imageUrl });
     }
   };
 
   return (
-    // Margin diseragamkan dengan menambahkan w-full max-w-7xl mx-auto p-4 md:p-8 agar fit in
     <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 p-4 md:p-8">
       
       {/* ================= HEADER ================= */}
@@ -66,7 +64,6 @@ export default function ManageTalentMapping() {
           
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl font-bold text-white flex items-center gap-3">
-              {/* Ikon Form Diperbarui dengan background & highlight */}
               <div className="p-2.5 bg-[#071226] border border-[#1E2A45] rounded-xl shadow-md">
                 <Users className="text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)]" size={20} />
               </div>
@@ -185,7 +182,6 @@ export default function ManageTalentMapping() {
         {/* Table Header Wrapper */}
         <div className="p-6 border-b border-[#1E2A45] flex items-center justify-between bg-[#0F1B33]">
           <h2 className="font-bold text-white flex items-center gap-3">
-            {/* Ikon Table Diperbarui dengan background & highlight */}
             <div className="p-2 bg-[#071226] border border-[#1E2A45] rounded-lg shadow-sm">
               <Network size={18} className="text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)]" />
             </div>
@@ -252,7 +248,6 @@ export default function ManageTalentMapping() {
                 <tr>
                   <td colSpan="4" className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center justify-center">
-                      {/* Ikon Empty State Diperbarui */}
                       <div className="w-20 h-20 bg-[#071226] rounded-2xl flex items-center justify-center mb-5 border border-[#1E2A45] shadow-lg">
                         <Search size={32} className="text-slate-400 drop-shadow-[0_0_8px_rgba(148,163,184,0.4)]" />
                       </div>
