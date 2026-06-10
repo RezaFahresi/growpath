@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
-import { PlayCircle, Clock, BookOpen, Search, Sparkles, SlidersHorizontal, Lock } from 'lucide-react';
+import { PlayCircle, Clock, BookOpen, Search, Sparkles, SlidersHorizontal, Lock, Search } from 'lucide-react';
 
 export default function CourseList() {
   const [activeTab, setActiveTab] = useState('Semua');
