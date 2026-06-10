@@ -1,45 +1,57 @@
-// backend/controllers/adminController.js
 const AdminModel = require('../models/adminModel');
-const db = require('../config/db'); // Pastikan Anda memiliki akses ke db pool
 
 exports.getDashboardStats = async (req, res) => {
   try {
-    // 1. Ambil data asli dari Model/Database
-    const totalUsers = await AdminModel.getTotalUsers();
-    const activeAssessments = await AdminModel.getTotalAssessments();
-    
-    // 2. 🔥 DINAMIS: Ambil jumlah 'High Potential' dari tabel talent_mappings
-    const talentResult = await db.query(
-      "SELECT COUNT(*) FROM talent_mappings WHERE potential = 'High'"
-    );
-    const highPotentialCount = talentResult.rows[0].count;
+    // 1. Ambil data dasar (Gunakan let agar aman jika gagal)
+    let totalUsers = 0;
+    let activeAssessments = 0;
+    let highPotentialCount = 0;
 
-    // 3. Aktivitas Terbaru (bisa diambil dari tabel user_activities jika ada)
-    // Untuk sementara tetap gunakan format yang sama agar UI tidak rusak
-    const recentActivity = [
-      { name: 'Emma Stone', action: 'completed the "Tech Core" assessment', time: '2m ago' },
-      { name: 'James Wilson', action: 'matched with "AI Product Manager"', time: '15m ago' }
-    ];
+    try {
+      totalUsers = await AdminModel.getTotalUsers();
+      activeAssessments = await AdminModel.getTotalAssessments();
+      highPotentialCount = await AdminModel.getHighPotentialCount(); // Memanggil fungsi dari Model
+    } catch (e) {
+      console.warn("Peringatan: Gagal mengambil statistik dasar:", e.message);
+    }
 
-    // 4. Trending Paths (bisa Anda ambil berdasarkan seringnya user masuk ke roadmap tertentu)
-    const trending = [
-      { title: 'AI Product Manager', match: '98%' },
-      { title: 'Data Storyteller', match: '94%' },
-      { title: 'Cloud Architect', match: '89%' }
-    ];
+    // 2. Ambil Aktivitas Terbaru secara Dinamis
+    let recentActivity = [];
+    try {
+      recentActivity = await AdminModel.getRecentActivities();
+    } catch (e) {
+      console.warn("Peringatan: Tabel assessment_results mungkin belum ada.", e.message);
+      // Fallback jika tabel belum ada agar tidak Error 500
+      recentActivity = []; 
+    }
 
+    // 3. Ambil Tren Roadmap secara Dinamis
+    let trending = [];
+    try {
+      trending = await AdminModel.getTrendingRoadmaps();
+    } catch (e) {
+      console.warn("Peringatan: Tabel user_roadmap_progress mungkin belum ada.", e.message);
+      // Fallback jika tabel belum ada agar tidak Error 500
+      trending = []; 
+    }
+
+    // 4. Kirim semua data asli ke Frontend
     res.json({
       stats: { 
         totalUsers, 
         activeAssessments, 
-        highPotential: highPotentialCount, // Menampilkan data asli
-        progress: 92 
+        highPotential: highPotentialCount,
+        progress: 92 // (Opsional: bisa dibuat dinamis nanti)
       },
       recentActivities: recentActivity,
       trendingPaths: trending
     });
+    
   } catch (err) {
-    console.error("Error Admin Dashboard:", err);
-    res.status(500).json({ message: 'Server Error' });
+    console.error("🚨 Error Fatal Admin Dashboard:", err);
+    res.status(500).json({ 
+      message: 'Server Error pada Admin Dashboard',
+      detail: err.message
+    });
   }
 };
