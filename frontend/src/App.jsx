@@ -59,10 +59,13 @@ export default function App() {
             {/* User Routes */}
             <Route path="/dashboard" element={<UserRoute><Layout /></UserRoute>}>
               <Route index element={<Dashboard />} />
+              
+              {/* RUTE ASSESSMENTS (Sudah Diperbaiki) */}
               <Route path="assessments" element={<AssessmentList />} />
-              <Route path="assessments/overview/:id" element={<TestOverview />} />
+              <Route path="assessments/:id" element={<TestOverview />} />
               <Route path="assessments/take/:id" element={<TakeAssessment />} />
               <Route path="assessments/result/:id" element={<AssessmentResult />} />
+              
               <Route path="roadmap" element={<Roadmap />} />
               <Route path="roadmap/:id" element={<RoadmapDetail />} />
               <Route path="courses" element={<CourseList />} />
@@ -71,7 +74,6 @@ export default function App() {
               <Route path="profile" element={<ProfileView />} />
               <Route path="profile/edit" element={<EditProfile />} />
               
-              {/* 🔥 FIX: Mengalihkan rute settings sementara ke halaman edit profil */}
               <Route path="settings" element={<Navigate to="/dashboard/profile/edit" replace />} />
             </Route>
 
