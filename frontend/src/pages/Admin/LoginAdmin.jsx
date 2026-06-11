@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import API from '../../api/axios'; 
 import LogoGrowPath from '../../assets/logo-growpath.png'; 
+import Swal from 'sweetalert2';
 
 export default function LoginAdmin() {
   const [showPassword, setShowPassword] = useState(false);
@@ -19,31 +20,51 @@ export default function LoginAdmin() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+  e.preventDefault();
+  setError('');
+  setLoading(true);
 
-    try {
-      const response = await API.post('/auth/login-admin', formData);
-      const { token, user } = response.data;
+  try {
+    const response = await API.post('/auth/login-admin', formData);
+    const { token, user } = response.data;
 
-      // Pastikan object user memiliki role sebelum disimpan
-      // Jika backend tidak mengirim role, kita berikan fallback 'admin'
-      const userData = { ...user, role: user.role || 'admin' };
+    const userData = { ...user, role: user.role || 'admin' };
 
-      // Simpan kredensial dengan format JSON yang benar
-      localStorage.setItem('token', token);
-      localStorage.setItem('growpath_user', JSON.stringify(userData));
+    localStorage.setItem('token', token);
+    localStorage.setItem('growpath_user', JSON.stringify(userData));
 
-      // Hard reload untuk memaksa AppContext membaca ulang data user baru
+    Swal.fire({
+      icon: 'success',
+      title: 'Login Berhasil!',
+      text: 'Selamat datang di dashboard admin.',
+      background: '#131C2F',
+      color: '#ffffff',
+      confirmButtonColor: '#2563eb',
+      timer: 1500,
+      showConfirmButton: false
+    }).then(() => {
       window.location.href = '/admin/dashboard';
-    } catch (err) {
-      console.error('Login Error:', err);
-      setError(err.response?.data?.message || 'Akses ditolak. Periksa kembali email dan password Anda.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+
+  } catch (err) {
+    console.error('Login Error:', err);
+
+    const errorMessage = err.response?.data?.message || 'Akses ditolak. Periksa kembali email dan password Anda.';
+    setError(errorMessage);
+
+    Swal.fire({
+      icon: 'error',
+      title: 'Login Gagal!',
+      text: errorMessage,
+      background: '#131C2F',
+      color: '#ffffff',
+      confirmButtonColor: '#dc2626'
+    });
+
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex w-full font-sans bg-[#090E17]">

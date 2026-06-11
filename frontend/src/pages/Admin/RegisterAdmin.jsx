@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import API from '../../api/axios'; 
-
+import Swal from 'sweetalert2';
 // IMPORT LOGO GAMBAR
 import LogoGrowPath from '../../assets/logo-growpath.png'; 
 
@@ -23,26 +23,48 @@ export default function RegisterAdmin() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+  e.preventDefault();
+  setLoading(true);
+  setError('');
 
-    try {
-      // Menambahkan role: 'admin' agar backend tahu ini akun admin
-      await API.post('/auth/register', { 
-        ...formData, 
-        role: 'admin' 
-      });
+  try {
+    await API.post('/auth/register', { 
+      ...formData, 
+      role: 'admin' 
+    });
 
-      alert('Registrasi Administrator Berhasil! Silakan masuk.');
+    Swal.fire({
+      icon: 'success',
+      title: 'Registrasi Berhasil!',
+      text: 'Akun admin berhasil dibuat. Silakan login.',
+      background: '#131C2F',
+      color: '#ffffff',
+      confirmButtonColor: '#2563eb',
+      timer: 1500,
+      showConfirmButton: false
+    }).then(() => {
       navigate('/login-admin');
-    } catch (err) {
-      console.error('Register Error:', err);
-      setError(err.response?.data?.message || 'Registrasi gagal, periksa koneksi atau coba lagi.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+
+  } catch (err) {
+    console.error('Register Error:', err);
+
+    const errorMessage = err.response?.data?.message || 'Registrasi gagal, periksa koneksi atau coba lagi.';
+    setError(errorMessage);
+
+    Swal.fire({
+      icon: 'error',
+      title: 'Registrasi Gagal!',
+      text: errorMessage,
+      background: '#131C2F',
+      color: '#ffffff',
+      confirmButtonColor: '#dc2626'
+    });
+
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex w-full font-sans bg-[#090E17]">
