@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { useGoogleLogin } from '@react-oauth/google'; 
 import API from '../api/axios'; 
+import Swal from 'sweetalert2';
 
 // IMPORT LOGO GAMBAR
 import LogoGrowPath from '../assets/logo-growpath.png'; 
@@ -21,53 +22,150 @@ export default function Register() {
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
-    e.preventDefault();
-    if (password !== confirmPassword) return alert('Password tidak cocok!');
-    if (!agreeTerms) return alert('Anda harus menyetujui Syarat & Ketentuan.');
+  e.preventDefault();
 
-    setIsLoading(true);
-    try {
-      const res = await API.post('/auth/register', { name, email, password });
-      
-      if (res.data && res.data.token) {
-        localStorage.setItem('token', res.data.token);
-        localStorage.setItem('growpath_user', JSON.stringify(res.data.user));
-        await login(res.data.user); 
-        navigate('/dashboard/assessments/overview/1');
-      } else {
-        alert('Registrasi berhasil! Silakan login untuk memulai.');
-        navigate('/login', { state: { isNewUser: true } });
-      }
-    } catch (error) {
-      console.error(error);
-      alert(error.response?.data?.message || 'Terjadi kesalahan pada server');
-    } finally {
-      setIsLoading(false);
+  if (password !== confirmPassword) {
+    return Swal.fire({
+      icon: 'error',
+      title: 'Password Tidak Cocok',
+      text: 'Pastikan password dan konfirmasi password sama.'
+    });
+  }
+
+  if (!agreeTerms) {
+    return Swal.fire({
+      icon: 'warning',
+      title: 'Perhatian',
+      text: 'Anda harus menyetujui Syarat & Ketentuan.'
+    });
+  }
+
+  setIsLoading(true);
+
+  Swal.fire({
+    title: 'Membuat Akun...',
+    text: 'Mohon tunggu...',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    showConfirmButton: false,
+    didOpen: () => {
+      Swal.showLoading();
     }
-  };
+  });
+
+  try {
+    const res = await API.post('/auth/register', {
+      name,
+      email,
+      password
+    });
+
+    if (res.data && res.data.token) {
+      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('growpath_user', JSON.stringify(res.data.user));
+
+      await login(res.data.user);
+
+      Swal.close();
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Registrasi Berhasil',
+        text: 'Selamat datang di GrowPath!',
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      navigate('/dashboard/assessments/overview/1');
+    } else {
+      Swal.close();
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Registrasi Berhasil',
+        text: 'Silakan login untuk memulai.'
+      });
+
+      navigate('/login', {
+        state: { isNewUser: true }
+      });
+    }
+  } catch (error) {
+    console.error(error);
+
+    Swal.fire({
+      icon: 'error',
+      title: 'Registrasi Gagal',
+      text: error.response?.data?.message || 'Terjadi kesalahan pada server'
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const loginWithGoogle = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        const res = await API.post('/auth/google', { access_token: tokenResponse.access_token });
-        const data = res.data;
-        
-        localStorage.setItem('token', data.token); 
-        localStorage.setItem('growpath_user', JSON.stringify(data.user));
-        await login(data.user); 
-        
-        const role = (data.user.role || '').toLowerCase();
-        if (role === 'superadmin') navigate('/superadmin');
-        else if (role === 'admin') navigate('/admin');
-        else navigate('/dashboard/assessments/overview/1');
-        
-      } catch (error) {
-        console.error("Google Auth Error:", error);
-        alert(error.response?.data?.message || 'Gagal registrasi dengan Google');
+  onSuccess: async (tokenResponse) => {
+    try {
+      Swal.fire({
+        title: 'Memproses...',
+        text: 'Mohon tunggu...',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const res = await API.post('/auth/google', {
+        access_token: tokenResponse.access_token
+      });
+
+      const data = res.data;
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('growpath_user', JSON.stringify(data.user));
+
+      await login(data.user);
+
+      Swal.close();
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Registrasi Berhasil',
+        text: 'Berhasil masuk dengan Google',
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      const role = (data.user.role || '').toLowerCase();
+
+      if (role === 'superadmin') {
+        navigate('/superadmin');
+      } else if (role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard/assessments/overview/1');
       }
-    },
-    onError: () => alert('Registrasi Google dibatalkan.')
-  });
+    } catch (error) {
+      console.error("Google Auth Error:", error);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Registrasi Google Gagal',
+        text: error.response?.data?.message || 'Gagal registrasi dengan Google'
+      });
+    }
+  },
+
+  onError: () => {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Dibatalkan',
+      text: 'Registrasi Google dibatalkan.'
+    });
+  }
+});
 
   return (
     <div className="min-h-screen flex w-full font-sans bg-slate-50">
