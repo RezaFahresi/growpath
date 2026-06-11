@@ -1,5 +1,6 @@
-// backend/controllers/talentMappingController.js
 const TalentModel = require('../models/talentMappingModel');
+
+const isSuperAdmin = (user) => user && user.role === 'superadmin';
 
 exports.getTalentMappings = async (req, res) => {
   try {
@@ -10,7 +11,7 @@ exports.getTalentMappings = async (req, res) => {
   }
 };
 
-// 🔥 TAMBAHAN: Handle Update (Edit)
+// TAMBAHAN: Handle Update (Edit)
 exports.updateTalent = async (req, res) => {
   try {
     const { id } = req.params;
@@ -22,9 +23,13 @@ exports.updateTalent = async (req, res) => {
   }
 };
 
-// 🔥 TAMBAHAN: Handle Delete (Hapus)
+// TAMBAHAN: Handle Delete (Hapus) - Terkunci untuk Superadmin
 exports.deleteTalent = async (req, res) => {
   try {
+    if (!isSuperAdmin(req.user)) {
+      return res.status(403).json({ message: 'Akses ditolak! Hanya Superadmin yang boleh menghapus data.' });
+    }
+
     const { id } = req.params;
     const deletedData = await TalentModel.deleteTalentMapping(id);
     if (!deletedData) return res.status(404).json({ message: "Data tidak ditemukan" });
