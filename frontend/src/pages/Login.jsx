@@ -24,7 +24,7 @@ export default function Login() {
       const response = await API.post('/auth/login-user', { email, password });
       const data = response.data;
 
-      // 🌟 PERBAIKAN: Gunakan key 'growpath_user' agar sinkron dengan AppContext
+      // PERBAIKAN: Gunakan key 'growpath_user' agar sinkron dengan AppContext
       localStorage.setItem('token', data.token);
       localStorage.setItem('growpath_user', JSON.stringify(data.user));
       
@@ -60,7 +60,7 @@ export default function Login() {
         
         const data = res.data;
         
-        // 🌟 PERBAIKAN: Gunakan key 'growpath_user'
+        // PERBAIKAN: Gunakan key 'growpath_user'
         localStorage.setItem('token', data.token); 
         localStorage.setItem('growpath_user', JSON.stringify(data.user));
         
@@ -88,6 +88,7 @@ export default function Login() {
       alert('Login Google dibatalkan.');
     }
   });
+
 
   return (
     <div className="min-h-screen flex w-full font-sans bg-slate-50">

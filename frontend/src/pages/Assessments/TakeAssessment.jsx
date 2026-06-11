@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronRight, HelpCircle, Sparkles } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import API from '../../api/axios';
+import Swal from 'sweetalert2'; // IMPORT SWEETALERT
 
 export default function TakeAssessment() {
   const { id } = useParams();
@@ -26,7 +27,15 @@ export default function TakeAssessment() {
         try {
           const historyRes = await API.get(`/assessments/history/${id}`);
           if (historyRes.data && historyRes.data.hasCompleted) {
-            alert('Anda sudah pernah menyelesaikan ujian ini. Mengalihkan ke hasil laporan...');
+            // NOTIFIKASI INFO (Sudah Dikerjakan)
+            await Swal.fire({
+              title: 'Sudah Dikerjakan',
+              text: 'Anda sudah pernah menyelesaikan ujian ini. Sistem akan mengalihkan ke hasil laporan.',
+              icon: 'info',
+              confirmButtonColor: '#4f46e5',
+              confirmButtonText: 'Lihat Hasil',
+              borderRadius: '1.5rem'
+            });
             navigate(`/dashboard/assessments/result/${historyRes.data.attemptId}`);
             return; 
           }
@@ -54,7 +63,15 @@ export default function TakeAssessment() {
         }
       } catch (err) {
         console.error(err);
-        alert('Gagal mengambil data soal ujian.');
+        // NOTIFIKASI ERROR GAGAL TARIK DATA
+        await Swal.fire({
+          title: 'Data Tidak Ditemukan',
+          text: 'Gagal mengambil data soal ujian. Silakan kembali ke daftar ujian.',
+          icon: 'error',
+          confirmButtonColor: '#ef4444',
+          confirmButtonText: 'Kembali',
+          borderRadius: '1.5rem'
+        });
         navigate('/dashboard/assessments');
       } finally {
         setLoading(false);
@@ -75,9 +92,27 @@ export default function TakeAssessment() {
   const handleNext = async () => {
     const isLast = currentQuestion === questions.length - 1;
 
+    // Jika belum nomor terakhir, lanjut ke soal berikutnya
     if (!isLast) {
       setCurrentQuestion((prev) => prev + 1);
       return;
+    }
+
+    // NOTIFIKASI KONFIRMASI (Sebelum Submit)
+    const confirmSubmit = await Swal.fire({
+      title: 'Kirim Jawaban?',
+      text: "Pastikan semua jawaban sudah benar. Anda tidak dapat mengulangi ujian ini.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#4f46e5',
+      cancelButtonColor: '#94a3b8',
+      confirmButtonText: 'Ya, Kirim Sekarang!',
+      cancelButtonText: 'Batal',
+      borderRadius: '1.5rem'
+    });
+
+    if (!confirmSubmit.isConfirmed) {
+      return; // Berhenti jika user klik Batal
     }
 
     const correctCount = questions.reduce((acc, q, idx) => {
@@ -107,11 +142,29 @@ export default function TakeAssessment() {
       };
 
       saveAssessment(finalResult);
+
+      // NOTIFIKASI SUKSES (Jawaban Terkirim)
+      await Swal.fire({
+        title: 'Berhasil!',
+        text: 'Jawaban Anda telah tersimpan dan sedang dianalisis.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        borderRadius: '1.5rem'
+      });
+
       navigate(`/dashboard/assessments/result/${finalResult.attemptId}`);
 
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Gagal menyimpan hasil ujian. Silakan coba lagi.');
+      // NOTIFIKASI ERROR (Gagal Simpan)
+      Swal.fire({
+        title: 'Gagal Menyimpan',
+        text: err.response?.data?.message || 'Gagal menyimpan hasil ujian. Periksa koneksi internet Anda.',
+        icon: 'error',
+        confirmButtonColor: '#ef4444',
+        borderRadius: '1.5rem'
+      });
     } finally {
       setIsSubmitting(false);
     }
