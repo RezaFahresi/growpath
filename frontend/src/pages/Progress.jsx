@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Target, Zap, Award, Star, Clock, TrendingUp, BookOpen, Trophy, Activity, Hexagon } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import API from '../api/axios';
@@ -160,64 +160,75 @@ export default function Progress() {
           </div>
         </div>
 
-        {/* RADAR CHART: Skill Analysis (DIPERBARUI LEBIH BAGUS) */}
-        <div className="bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col relative overflow-hidden">
-          <div className="mb-6 relative z-10">
-            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
-              <div className="p-2 bg-slate-800 rounded-xl shadow-md">
-                <Hexagon size={18} className="text-pink-400 drop-shadow-[0_0_5px_rgba(244,114,182,0.6)]" />
-              </div>
-              Distribusi Keahlian
-            </h2>
-            <p className="text-xs font-medium text-slate-400 mt-2">Pemetaan persentase area kompetensi</p>
-          </div>
+        {/* SKILL DISTRIBUTION */}
+          <div className="bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col relative overflow-hidden">
+            <div className="mb-6 relative z-10">
+              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
+                <div className="p-2 bg-slate-800 rounded-xl shadow-md">
+                  <Hexagon size={18} className="text-pink-400 drop-shadow-[0_0_5px_rgba(244,114,182,0.6)]" />
+                </div>
+                Distribusi Keahlian
+              </h2>
+              <p className="text-xs font-medium text-slate-400 mt-2">
+                Persentase penguasaan tiap area kompetensi
+              </p>
+            </div>
 
-          <div className="flex-1 w-full min-h-[250px] flex items-center justify-center relative z-10">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="65%" data={displaySkillData}>
-                {/* Jaring Laba-laba & Skala Persentase */}
-                <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
-                <PolarAngleAxis dataKey="subject" tick={{fill: '#334155', fontSize: 11, fontWeight: 700}} />
-                
-                {/* Axis untuk memunculkan garis 0 - 100% di dalam chart */}
-                <PolarRadiusAxis 
-                  angle={30} 
-                  domain={[0, 100]} 
-                  tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 600}} 
-                  tickCount={5} 
-                  orientation="middle" 
-                />
-                
-                {/* Bentuk Area Kemampuan dengan Gradient */}
-                <Radar 
-                  name="Penguasaan" 
-                  dataKey="A" 
-                  stroke="#8b5cf6" 
-                  strokeWidth={3} 
-                  fill="url(#colorSkillGradient)" 
-                  fillOpacity={0.5} 
-                />
-                
-                <Tooltip 
-                  formatter={(value) => [`${value}%`, 'Penguasaan']}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontWeight: 'bold', color: '#1e293b' }} 
-                />
-                
-                {/* Efek Warna Gradient untuk Radar */}
-                <defs>
-                  <linearGradient id="colorSkillGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#a855f7" stopOpacity={0.9}/>
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.7}/>
-                  </linearGradient>
-                </defs>
-              </RadarChart>
-            </ResponsiveContainer>
+            <div className="flex-1 w-full min-h-[280px] relative z-10">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={displaySkillData}
+                  layout="vertical"
+                  margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+
+                  <XAxis
+                    type="number"
+                    domain={[0, 100]}
+                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(value) => `${value}%`}
+                  />
+
+                  <YAxis
+                    type="category"
+                    dataKey="subject"
+                    width={80}
+                    tick={{ fill: '#334155', fontSize: 12, fontWeight: 700 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+
+                  <Tooltip
+                    formatter={(value) => [`${value}%`, 'Penguasaan']}
+                    contentStyle={{
+                      borderRadius: '12px',
+                      border: 'none',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                      fontWeight: 'bold',
+                      color: '#1e293b'
+                    }}
+                  />
+
+                  <Bar
+                    dataKey="A"
+                    fill="#6366f1"
+                    radius={[0, 10, 10, 0]}
+                    barSize={22}
+                    background={{ fill: '#f1f5f9', radius: 10 }}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="mt-4 text-xs text-slate-400 font-medium text-center">
+              Semakin panjang bar, semakin tinggi tingkat penguasaan skill.
+            </div>
+
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-indigo-400/10 rounded-full blur-3xl pointer-events-none"></div>
           </div>
-          
-          {/* Elemen Dekoratif Blur di belakang chart */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-indigo-400/10 rounded-full blur-3xl pointer-events-none"></div>
-        </div>
-      </div>
 
       {/* ========================================= */}
       {/* RECENT ACHIEVEMENTS (BADGES) */}

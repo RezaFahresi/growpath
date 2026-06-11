@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Lock, Zap, ChevronRight, Trophy, AlertTriangle, Target, Code2, Megaphone, TrendingUp, Palette } from 'lucide-react';
+import { Zap, ChevronRight, Trophy, AlertTriangle, Target, Code2, Megaphone, TrendingUp, Palette } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import API from '../api/axios';
@@ -11,6 +11,10 @@ export default function Roadmap() {
   const [userTalentData, setUserTalentData] = useState(userTalent);
 
   useEffect(() => {
+    setUserTalentData(userTalent);
+  }, [userTalent]);
+
+  useEffect(() => {
     const fetchUserTalent = async () => {
       try {
         const res = await API.get('/talent-mapping/me');
@@ -19,14 +23,12 @@ export default function Roadmap() {
           setUserTalentData(res.data);
         }
       } catch (error) {
-        console.log('User belum memiliki talent mapping');
+        setUserTalentData(null);
       }
     };
 
-    if (!userTalentData) {
-      fetchUserTalent();
-    }
-  }, [userTalentData]);
+    fetchUserTalent();
+  }, []);
 
   const availableRoadmaps = [
     {
@@ -73,23 +75,26 @@ export default function Roadmap() {
 
   const totalXP = useMemo(() => {
     let xp = 0;
+
     if (progress?.roadmapChecklist) {
       Object.values(progress.roadmapChecklist).forEach(checklist => {
-        xp += (checklist.length * 10);
+        xp += checklist.length * 10;
       });
     }
+
     return xp;
   }, [progress]);
 
   return (
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 space-y-12 animate-in fade-in duration-700">
-      
       <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 rounded-[2.5rem] p-10 text-center text-white shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4 pointer-events-none">
           <Target size={250} />
         </div>
+
         <div className="relative z-10">
           <h1 className="text-4xl font-black mb-4">Peta Perjalanan Karir</h1>
+
           <p className="text-indigo-200/80 mb-8 max-w-2xl mx-auto leading-relaxed">
             Pilih jalur pembelajaran spesifik yang ingin Anda kuasai. Anda bebas mengambil lintas disiplin ilmu untuk menjadi profesional yang serba bisa.
           </p>
@@ -108,10 +113,18 @@ export default function Roadmap() {
           <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
             <AlertTriangle size={32} className="text-amber-500" />
           </div>
+
           <div>
             <h2 className="text-xl font-bold text-amber-900 mb-2">Sistem Rekomendasi Belum Aktif</h2>
             <p className="text-amber-800/80 text-sm leading-relaxed">
-              Anda bebas memilih roadmap manapun di bawah ini secara manual. Namun, jika Anda bingung harus mulai dari mana, silakan ikuti <button onClick={() => navigate('/dashboard/assessments')} className="font-bold text-indigo-600 underline hover:text-indigo-800">Diagnostic Assessment</button> terlebih dahulu agar kami bisa mengarahkan Anda.
+              Anda bebas memilih roadmap manapun di bawah ini secara manual. Namun, jika Anda bingung harus mulai dari mana, silakan ikuti{' '}
+              <button
+                onClick={() => navigate('/dashboard/assessments')}
+                className="font-bold text-indigo-600 underline hover:text-indigo-800"
+              >
+                Diagnostic Assessment
+              </button>{' '}
+              terlebih dahulu agar kami bisa mengarahkan Anda.
             </p>
           </div>
         </div>
@@ -122,6 +135,7 @@ export default function Roadmap() {
           <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
             <Zap size={32} className="text-emerald-500 fill-emerald-500" />
           </div>
+
           <div>
             <h2 className="text-xl font-bold text-emerald-900 mb-2">Sistem Rekomendasi Aktif</h2>
             <p className="text-emerald-800/80 text-sm leading-relaxed">
@@ -136,6 +150,7 @@ export default function Roadmap() {
           <div className="p-2.5 bg-slate-800 rounded-xl shadow-md">
             <Zap size={20} className="text-indigo-400 fill-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]" />
           </div>
+
           <h2 className="text-2xl font-extrabold text-slate-800">Katalog Roadmap Tersedia</h2>
         </div>
 
@@ -157,6 +172,7 @@ export default function Roadmap() {
                   <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${roadmap.theme} border ${roadmap.border} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                     {roadmap.icon}
                   </div>
+
                   <span className="px-4 py-1.5 bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-wider rounded-full border border-slate-200">
                     {roadmap.category}
                   </span>
@@ -175,14 +191,18 @@ export default function Roadmap() {
                     <span className={isCompleted ? 'text-emerald-600' : 'text-slate-500'}>
                       {isCompleted ? 'Roadmap Selesai!' : 'Progres Belajar'}
                     </span>
+
                     <span className={isCompleted ? 'text-emerald-600' : 'text-indigo-600'}>
                       {progressPercentage}%
                     </span>
                   </div>
+
                   <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden shadow-inner">
                     <div 
                       className={`h-full rounded-full transition-all duration-1000 ease-out ${
-                        isCompleted ? 'bg-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.6)]' : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]'
+                        isCompleted
+                          ? 'bg-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.6)]'
+                          : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]'
                       }`} 
                       style={{ width: `${progressPercentage}%` }}
                     ></div>
@@ -198,7 +218,6 @@ export default function Roadmap() {
           })}
         </div>
       </div>
-
     </div>
   );
 }

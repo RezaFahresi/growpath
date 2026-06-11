@@ -5,85 +5,76 @@ import { useNavigate } from 'react-router-dom';
 import API from '../api/axios';
 
 export default function Dashboard() {
-  const { user, progress, setProgress, courses, userTalent } = useAppContext();
+  const { user, progress, setProgress, courses } = useAppContext();
   const navigate = useNavigate();
 
   const [dashboardStats, setDashboardStats] = useState({
-    streak: 0, completed: 0, totalHours: 0, achievements: 0
+    streak: 0,
+    completed: 0,
+    totalHours: 0,
+    achievements: 0
   });
-  
-  const [rawRoadmaps, setRawRoadmaps] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       if (!user?.id) return;
-      setLoading(true);
-      try {
-        const [progressRes, rmRes] = await Promise.all([
-          API.get('/progress'), 
-          API.get('/roadmaps')
-        ]);
 
+      setLoading(true);
+
+      try {
+        const progressRes = await API.get('/progress');
         const progressData = progressRes.data;
-        if (progressData?.stats) setDashboardStats(progressData.stats);
-        if (progressData) setProgress(prev => ({ ...prev, ...progressData }));
-        if (rmRes.data) setRawRoadmaps(rmRes.data);
+
+        if (progressData?.stats) {
+          setDashboardStats(progressData.stats);
+        }
+
+        if (progressData) {
+          setProgress(prev => ({
+            ...prev,
+            ...progressData
+          }));
+        }
+
       } catch (error) {
         console.error("Gagal mengambil data dashboard:", error);
       } finally {
         setLoading(false);
       }
     };
+
     fetchDashboardData();
-  }, [user?.id, setProgress]); 
+  }, [user?.id, setProgress]);
 
   const roadmapSteps = useMemo(() => {
-    if (!rawRoadmaps || rawRoadmaps.length === 0) return [];
+    const availableRoadmaps = [
+      { id: 'web-dev-101', title: 'Fullstack Web Development' },
+      { id: 'marketing-101', title: 'Digital Marketing Specialist' },
+      { id: 'ui-ux-101', title: 'UI/UX Design Masterclass' },
+      { id: 'business-101', title: 'Business & Data Analytics' }
+    ];
 
-    return rawRoadmaps.slice(0, 4).map((item, index) => {
-      const percent = Number(
-        item.progress_percentage ??
-        item.progressPercent ??
-        item.percentage ??
-        item.progress ??
-        item.completion ??
-        item.completion_percentage ??
-        0
-      );
-
-      const isCompleted =
-        percent >= 100 ||
-        item.isCompleted === true ||
-        item.is_completed === true ||
-        item.status === 'completed' ||
-        item.status === 'done';
-
-      const isActive =
-        item.status === 'active' ||
-        item.isActive === true ||
-        item.is_active === true ||
-        percent > 0;
+    return availableRoadmaps.map((roadmap, index) => {
+      const completedItems = progress?.roadmapChecklist?.[roadmap.id]?.length || 0;
+      const progressPercentage = Math.round((completedItems / 5) * 100);
 
       let status = 'Locked';
 
-      if (isCompleted) {
+      if (progressPercentage >= 100) {
         status = 'Done';
-      } else if (isActive || index === 0) {
+      } else if (progressPercentage > 0 || index === 0) {
         status = 'Active';
       }
 
-      const shortTitle = item.title
-        ?.replace(/Step \d: /, '')
-        ?.replace(' Roadmap', '') || `Roadmap ${index + 1}`;
-
       return {
-        id: item.id || item._id || index + 1,
-        title: shortTitle,
+        id: roadmap.id,
+        title: roadmap.title,
         status
       };
     });
-  }, [rawRoadmaps]);
+  }, [progress?.roadmapChecklist]);
 
   const stats = [
     { title: 'Current Streak', value: `${dashboardStats.streak} Days`, icon: Calendar, color: 'text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]', bg: 'bg-slate-800 shadow-md', border: 'border-slate-100' },
@@ -119,15 +110,18 @@ export default function Dashboard() {
             <span className="px-4 py-1.5 bg-indigo-500/30 text-indigo-200 text-xs font-bold rounded-full border border-indigo-400/30 backdrop-blur-md uppercase tracking-wider inline-block mb-1">
               Dashboard Pembelajaran
             </span>
+
             <h1 className="text-3xl md:text-5xl font-black leading-tight tracking-tight">
               Selamat datang kembali, <br className="hidden md:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-cyan-300">
                 {user?.name?.split(' ')[0] || 'Learner'}!
               </span>
             </h1>
+
             <p className="text-indigo-200/90 text-sm md:text-base leading-relaxed">
               Lanjutkan progres belajarmu hari ini. Konsistensi adalah kunci untuk mencapai karir impianmu.
             </p>
+
             <button 
               onClick={() => navigate('/dashboard/courses')} 
               className="mt-2 px-8 py-3.5 bg-white text-slate-900 font-extrabold rounded-2xl hover:bg-indigo-50 transition-all shadow-lg hover:-translate-y-0.5 flex items-center gap-2"
@@ -184,7 +178,10 @@ export default function Dashboard() {
                     </div>
                     
                     <div className="flex-1">
-                      <h3 className="font-bold text-lg text-slate-800 mb-1 group-hover:text-indigo-600 transition-colors line-clamp-1">{course.title}</h3>
+                      <h3 className="font-bold text-lg text-slate-800 mb-1 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                        {course.title}
+                      </h3>
+
                       <p className="text-xs text-slate-400 font-medium mb-3 line-clamp-1">
                         {course.description && course.description !== '[null]' ? course.description : 'Lanjutkan materi terakhirmu.'}
                       </p>
@@ -238,28 +235,37 @@ export default function Dashboard() {
             <div className="space-y-0 relative ml-2">
               <div className="absolute left-[13px] top-4 bottom-4 w-[2px] bg-slate-100 -z-10"></div>
 
-              {roadmapSteps.length > 0 ? roadmapSteps.map((step) => (
+              {roadmapSteps.map((step) => (
                 <div key={step.id} className="flex gap-5 items-start relative pb-8 last:pb-0">
                   <div className="relative z-10 bg-white py-1">
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-colors ${
-                      step.status === 'Done' ? 'bg-emerald-500 border-emerald-500 text-white' : 
-                      step.status === 'Active' ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200' : 
-                      'bg-slate-50 border-slate-200 text-slate-300'
+                      step.status === 'Done'
+                        ? 'bg-emerald-500 border-emerald-500 text-white'
+                        : step.status === 'Active'
+                          ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200'
+                          : 'bg-slate-50 border-slate-200 text-slate-300'
                     }`}>
-                      {step.status === 'Done' ? <CheckCircle2 size={16} /> : 
-                       step.status === 'Locked' ? <Lock size={12} /> : 
-                       <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />}
+                      {step.status === 'Done' ? (
+                        <CheckCircle2 size={16} />
+                      ) : step.status === 'Locked' ? (
+                        <Lock size={12} />
+                      ) : (
+                        <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
+                      )}
                     </div>
                   </div>
                   
                   <div className="pt-1.5 flex-1">
                     <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${
-                      step.status === 'Done' ? 'text-emerald-500' : 
-                      step.status === 'Active' ? 'text-indigo-600' : 
-                      'text-slate-400'
+                      step.status === 'Done'
+                        ? 'text-emerald-500'
+                        : step.status === 'Active'
+                          ? 'text-indigo-600'
+                          : 'text-slate-400'
                     }`}>
                       {step.status === 'Done' ? 'Selesai' : step.status === 'Active' ? 'Fase Aktif' : 'Terkunci'}
                     </p>
+
                     <span className={`text-sm font-bold transition-colors ${
                       step.status === 'Locked' ? 'text-slate-400' : 'text-slate-800'
                     }`}>
@@ -267,11 +273,7 @@ export default function Dashboard() {
                     </span>
                   </div>
                 </div>
-              )) : (
-                <div className="text-center py-6">
-                  <p className="text-sm text-slate-400 font-medium">Belum ada roadmap yang aktif.</p>
-                </div>
-              )}
+              ))}
             </div>
 
             <button 
