@@ -5,9 +5,16 @@ const isSuperAdmin = (user) => user && user.role === 'superadmin';
 exports.getTalentMappings = async (req, res) => {
   try {
     const data = await TalentModel.getAllTalentMappings();
+
+    console.log('USER LOGIN:', req.user);
+    console.log('TOTAL TALENT DIKIRIM:', data.length);
+
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: 'Gagal mengambil data talenta', detail: error.message });
+    res.status(500).json({
+      message: 'Gagal mengambil data talenta',
+      detail: error.message
+    });
   }
 };
 

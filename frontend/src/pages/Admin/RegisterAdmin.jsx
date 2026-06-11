@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import API from '../../api/axios'; 
 import Swal from 'sweetalert2';
-// IMPORT LOGO GAMBAR
 import LogoGrowPath from '../../assets/logo-growpath.png'; 
 
 export default function RegisterAdmin() {
@@ -23,76 +22,75 @@ export default function RegisterAdmin() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError('');
+    e.preventDefault();
+    setError('');
 
-  try {
-    await API.post('/auth/register', { 
-      ...formData, 
-      role: 'admin' 
-    });
+    if (!formData.name || !formData.email || !formData.password) {
+      return Swal.fire({
+        icon: 'warning',
+        title: 'Data Belum Lengkap',
+        text: 'Nama, email, dan password wajib diisi.',
+        background: '#131C2F',
+        color: '#ffffff',
+        confirmButtonColor: '#2563eb'
+      });
+    }
 
-    Swal.fire({
-      icon: 'success',
-      title: 'Registrasi Berhasil!',
-      text: 'Akun admin berhasil dibuat. Silakan login.',
-      background: '#131C2F',
-      color: '#ffffff',
-      confirmButtonColor: '#2563eb',
-      timer: 1500,
-      showConfirmButton: false
-    }).then(() => {
+    setLoading(true);
+
+    try {
+      await API.post('/auth/register', { 
+        ...formData, 
+        role: 'admin' 
+      });
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Registrasi Berhasil!',
+        text: 'Akun admin berhasil dibuat. Silakan login.',
+        background: '#131C2F',
+        color: '#ffffff',
+        confirmButtonColor: '#2563eb',
+        timer: 1500,
+        showConfirmButton: false
+      });
+
       navigate('/login-admin');
-    });
 
-  } catch (err) {
-    console.error('Register Error:', err);
+    } catch (err) {
+      console.error('Register Error:', err);
 
-    const errorMessage = err.response?.data?.message || 'Registrasi gagal, periksa koneksi atau coba lagi.';
-    setError(errorMessage);
+      const errorMessage = err.response?.data?.message || 'Registrasi gagal, periksa koneksi atau coba lagi.';
+      setError(errorMessage);
 
-    Swal.fire({
-      icon: 'error',
-      title: 'Registrasi Gagal!',
-      text: errorMessage,
-      background: '#131C2F',
-      color: '#ffffff',
-      confirmButtonColor: '#dc2626'
-    });
+      Swal.fire({
+        icon: 'error',
+        title: 'Registrasi Gagal!',
+        text: errorMessage,
+        background: '#131C2F',
+        color: '#ffffff',
+        confirmButtonColor: '#dc2626'
+      });
 
-  } finally {
-    setLoading(false);
-  }
-};
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex w-full font-sans bg-[#090E17]">
-      
-      {/* ========================================= */}
-      {/* LEFT SIDE - FADING IMAGE ASSET */}
-      {/* ========================================= */}
       <div className="hidden lg:block lg:w-1/2 relative">
         <img 
           src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop" 
           alt="Admin Portal Background" 
           className="absolute inset-0 w-full h-full object-cover opacity-90 scale-x-[-1]"
         />
-        {/* EFEK FADING: Menyatu dengan background sebelah kanan */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#090E17]/10 via-[#090E17]/60 to-[#090E17]"></div>
       </div>
 
-      {/* ========================================= */}
-      {/* RIGHT SIDE - FLOATING CARD FORM */}
-      {/* ========================================= */}
       <div className="flex w-full lg:w-1/2 flex-col items-center justify-center p-6 sm:p-12 relative z-10 overflow-y-auto">
-        
         <div className="w-full max-w-[420px] flex flex-col items-center my-auto py-10">
-
-          {/* KARTU FORM */}
           <div className="w-full bg-[#131C2F] p-8 sm:p-10 rounded-3xl border border-[#1E2D4A] shadow-2xl relative mt-10">
-            
-            {/* LOGO DI TENGAH ATAS KARTU */}
             <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-2xl overflow-hidden bg-[#090E17] border border-[#1E2D4A] shadow-lg flex items-center justify-center">
               <img src={LogoGrowPath} alt="GrowPath Logo" className="w-full h-full object-cover scale-110" />
             </div>
@@ -109,8 +107,7 @@ export default function RegisterAdmin() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* FULL NAME */}
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold tracking-wider text-slate-400 ml-1 uppercase">Full Name</label>
                 <div className="relative">
@@ -118,7 +115,6 @@ export default function RegisterAdmin() {
                   <input 
                     type="text" 
                     name="name"
-                    required 
                     value={formData.name} 
                     onChange={handleChange} 
                     className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm placeholder:text-slate-600 [color-scheme:dark]" 
@@ -127,7 +123,6 @@ export default function RegisterAdmin() {
                 </div>
               </div>
               
-              {/* EMAIL */}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold tracking-wider text-slate-400 ml-1 uppercase">Email Address</label>
                 <div className="relative">
@@ -135,7 +130,6 @@ export default function RegisterAdmin() {
                   <input 
                     type="email" 
                     name="email"
-                    required 
                     value={formData.email} 
                     onChange={handleChange} 
                     className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm placeholder:text-slate-600 [color-scheme:dark]" 
@@ -144,7 +138,6 @@ export default function RegisterAdmin() {
                 </div>
               </div>
               
-              {/* PASSWORD */}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold tracking-wider text-slate-400 ml-1 uppercase">Password</label>
                 <div className="relative">
@@ -152,7 +145,6 @@ export default function RegisterAdmin() {
                   <input 
                     type={showPassword ? "text" : "password"} 
                     name="password"
-                    required 
                     value={formData.password} 
                     onChange={handleChange} 
                     className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 pr-12 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm placeholder:text-slate-600 [color-scheme:dark]" 
@@ -180,7 +172,6 @@ export default function RegisterAdmin() {
             </p>
           </div>
 
-          {/* FOOTER BAWAH */}
           <div className="mt-8 text-center space-y-2">
             <p className="text-[10px] text-slate-500 font-medium">By registering, you agree to our policies.</p>
             <div className="flex items-center justify-center gap-3 text-[10px] font-bold text-slate-500">
