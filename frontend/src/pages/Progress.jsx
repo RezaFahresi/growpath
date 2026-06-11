@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 import { Target, Zap, Award, Star, Clock, TrendingUp, BookOpen, Trophy, Activity, Hexagon } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import API from '../api/axios';
 
-// Memetakan string dari database ke komponen ikon Lucide
 const iconMap = {
   Target: Target,
   Zap: Zap,
@@ -18,20 +25,23 @@ const iconMap = {
 
 export default function Progress() {
   const { user } = useAppContext();
-  
-  // State lokal untuk menyimpan data dari Database
-  const [data, setData] = useState({ 
+
+  const [data, setData] = useState({
     stats: { totalHours: 0, streak: 0, completed: 0, achievements: 0 },
-    activityData: [], 
-    skillData: [], 
-    badges: [] 
+    activityData: [],
+    skillData: [],
+    badges: []
   });
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProgressData = async () => {
-      if (!user) return; 
-      
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
       try {
         const response = await API.get('/progress');
         setData(response.data);
@@ -45,7 +55,6 @@ export default function Progress() {
     fetchProgressData();
   }, [user]);
 
-  // --- TAMPILAN LOADING ---
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] bg-slate-50/50">
@@ -55,8 +64,6 @@ export default function Progress() {
     );
   }
 
-  // DATA CADANGAN JIKA DATABASE KOSONG
-  // Agar grafik jaring laba-laba tidak terlihat bolong/rusak untuk pengguna baru
   const defaultSkillData = [
     { subject: 'Teknologi', A: 0, fullMark: 100 },
     { subject: 'Bisnis', A: 0, fullMark: 100 },
@@ -65,24 +72,20 @@ export default function Progress() {
     { subject: 'Analisa', A: 0, fullMark: 100 },
   ];
 
-  const displaySkillData = data.skillData && data.skillData.length > 0 
-    ? data.skillData 
+  const displaySkillData = data.skillData && data.skillData.length > 0
+    ? data.skillData
     : defaultSkillData;
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 p-4 md:p-8">
-      
-      {/* ========================================= */}
-      {/* HEADER SECTION */}
-      {/* ========================================= */}
+
       <div>
         <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard Progres</h1>
-        <p className="text-slate-500 mt-1 text-sm md:text-base">Pantau aktivitas belajarmu, analisis keahlian, dan pamerkan pencapaianmu.</p>
+        <p className="text-slate-500 mt-1 text-sm md:text-base">
+          Pantau aktivitas belajarmu, analisis keahlian, dan pamerkan pencapaianmu.
+        </p>
       </div>
 
-      {/* ========================================= */}
-      {/* STATS CARDS */}
-      {/* ========================================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <StatCard 
           label="Total Jam Belajar" 
@@ -118,12 +121,8 @@ export default function Progress() {
         />
       </div>
 
-      {/* ========================================= */}
-      {/* CHARTS SECTION */}
-      {/* ========================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-        
-        {/* BAR CHART: Learning Activity */}
+
         <div className="lg:col-span-2 bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -133,26 +132,34 @@ export default function Progress() {
                 </div>
                 Aktivitas Belajar
               </h2>
-              <p className="text-xs font-medium text-slate-400 mt-2">Total jam belajar dalam 7 hari terakhir</p>
+              <p className="text-xs font-medium text-slate-400 mt-2">
+                Total jam belajar dalam 7 hari terakhir
+              </p>
             </div>
           </div>
-          
+
           <div className="flex-1 w-full min-h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.activityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12, fontWeight: 500}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
                 <Tooltip 
-                  cursor={{fill: '#f8fafc'}}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', fontWeight: 'bold', color: '#1e293b' }}
+                  cursor={{ fill: '#f8fafc' }}
+                  contentStyle={{
+                    borderRadius: '12px',
+                    border: 'none',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                    fontWeight: 'bold',
+                    color: '#1e293b'
+                  }}
                 />
                 <Bar dataKey="hours" fill="url(#colorIndigo)" radius={[6, 6, 6, 6]} barSize={32} />
-                
+
                 <defs>
                   <linearGradient id="colorIndigo" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#6366f1" stopOpacity={1}/>
-                    <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.8}/>
+                    <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.8} />
                   </linearGradient>
                 </defs>
               </BarChart>
@@ -160,79 +167,77 @@ export default function Progress() {
           </div>
         </div>
 
-        {/* SKILL DISTRIBUTION */}
-          <div className="bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col relative overflow-hidden">
-            <div className="mb-6 relative z-10">
-              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
-                <div className="p-2 bg-slate-800 rounded-xl shadow-md">
-                  <Hexagon size={18} className="text-pink-400 drop-shadow-[0_0_5px_rgba(244,114,182,0.6)]" />
-                </div>
-                Distribusi Keahlian
-              </h2>
-              <p className="text-xs font-medium text-slate-400 mt-2">
-                Persentase penguasaan tiap area kompetensi
-              </p>
-            </div>
-
-            <div className="flex-1 w-full min-h-[280px] relative z-10">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={displaySkillData}
-                  layout="vertical"
-                  margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-
-                  <XAxis
-                    type="number"
-                    domain={[0, 100]}
-                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={(value) => `${value}%`}
-                  />
-
-                  <YAxis
-                    type="category"
-                    dataKey="subject"
-                    width={80}
-                    tick={{ fill: '#334155', fontSize: 12, fontWeight: 700 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-
-                  <Tooltip
-                    formatter={(value) => [`${value}%`, 'Penguasaan']}
-                    contentStyle={{
-                      borderRadius: '12px',
-                      border: 'none',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                      fontWeight: 'bold',
-                      color: '#1e293b'
-                    }}
-                  />
-
-                  <Bar
-                    dataKey="A"
-                    fill="#6366f1"
-                    radius={[0, 10, 10, 0]}
-                    barSize={22}
-                    background={{ fill: '#f1f5f9', radius: 10 }}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="mt-4 text-xs text-slate-400 font-medium text-center">
-              Semakin panjang bar, semakin tinggi tingkat penguasaan skill.
-            </div>
-
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-indigo-400/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col relative overflow-hidden">
+          <div className="mb-6 relative z-10">
+            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
+              <div className="p-2 bg-slate-800 rounded-xl shadow-md">
+                <Hexagon size={18} className="text-pink-400 drop-shadow-[0_0_5px_rgba(244,114,182,0.6)]" />
+              </div>
+              Distribusi Keahlian
+            </h2>
+            <p className="text-xs font-medium text-slate-400 mt-2">
+              Persentase penguasaan tiap area kompetensi
+            </p>
           </div>
 
-      {/* ========================================= */}
-      {/* RECENT ACHIEVEMENTS (BADGES) */}
-      {/* ========================================= */}
+          <div className="flex-1 w-full min-h-[280px] relative z-10">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={displaySkillData}
+                layout="vertical"
+                margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+
+                <XAxis
+                  type="number"
+                  domain={[0, 100]}
+                  tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(value) => `${value}%`}
+                />
+
+                <YAxis
+                  type="category"
+                  dataKey="subject"
+                  width={80}
+                  tick={{ fill: '#334155', fontSize: 12, fontWeight: 700 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+
+                <Tooltip
+                  formatter={(value) => [`${value}%`, 'Penguasaan']}
+                  contentStyle={{
+                    borderRadius: '12px',
+                    border: 'none',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                    fontWeight: 'bold',
+                    color: '#1e293b'
+                  }}
+                />
+
+                <Bar
+                  dataKey="A"
+                  fill="#6366f1"
+                  radius={[0, 10, 10, 0]}
+                  barSize={22}
+                  background={{ fill: '#f1f5f9', radius: 10 }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="mt-4 text-xs text-slate-400 font-medium text-center">
+            Semakin panjang bar, semakin tinggi tingkat penguasaan skill.
+          </div>
+
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-indigo-400/10 rounded-full blur-3xl pointer-events-none"></div>
+        </div>
+
+      </div>
+
       <div className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-5 text-amber-500 pointer-events-none">
           <Award size={150} />
@@ -246,26 +251,31 @@ export default function Progress() {
               </div>
               Koleksi Lencana
             </h2>
-            <p className="text-slate-500 text-sm mt-2 font-medium">Prestasi dan pencapaian yang berhasil kamu raih selama belajar.</p>
+            <p className="text-slate-500 text-sm mt-2 font-medium">
+              Prestasi dan pencapaian yang berhasil kamu raih selama belajar.
+            </p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 md:gap-8 relative z-10">
           {data.badges && data.badges.length > 0 ? (
             data.badges.map((badge, idx) => {
-              const IconComponent = iconMap[badge.icon_name] || Award; 
-              
+              const IconComponent = iconMap[badge.icon_name] || Award;
+
               return (
                 <div key={idx} className="group flex flex-col items-center">
                   <div className="relative mb-4">
                     <div className="absolute inset-0 bg-indigo-500 blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300 rounded-full"></div>
-                    
+
                     <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-[2rem] bg-gradient-to-br from-indigo-500 via-indigo-600 to-indigo-800 flex items-center justify-center shadow-lg shadow-indigo-200 border-4 border-white transform group-hover:-translate-y-2 group-hover:scale-105 transition-all duration-300 cursor-pointer">
                       <IconComponent size={40} className="text-white drop-shadow-md" />
                       <Star size={12} className="absolute top-3 right-3 text-amber-300 fill-amber-300 opacity-80" />
                     </div>
                   </div>
-                  <h3 className="font-bold text-slate-800 text-sm text-center group-hover:text-indigo-600 transition-colors">{badge.title}</h3>
+
+                  <h3 className="font-bold text-slate-800 text-sm text-center group-hover:text-indigo-600 transition-colors">
+                    {badge.title}
+                  </h3>
                   <p className="text-[10px] text-slate-400 font-medium text-center mt-1 uppercase tracking-wider">Unlocked</p>
                 </div>
               );
@@ -276,7 +286,9 @@ export default function Progress() {
                 <Trophy size={28} className="text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]" />
               </div>
               <h3 className="text-slate-700 font-bold mb-1">Belum Ada Pencapaian</h3>
-              <p className="text-slate-400 text-sm max-w-sm">Selesaikan modul dan ujian untuk mendapatkan lencana eksklusif pertamamu!</p>
+              <p className="text-slate-400 text-sm max-w-sm">
+                Selesaikan modul dan ujian untuk mendapatkan lencana eksklusif pertamamu!
+              </p>
             </div>
           )}
         </div>
@@ -286,9 +298,6 @@ export default function Progress() {
   );
 }
 
-// =========================================
-// KOMPONEN PEMBANTU (STAT CARD)
-// =========================================
 function StatCard({ label, value, icon: Icon, color, bg, border }) {
   return (
     <div className={`bg-white p-5 md:p-6 rounded-[1.5rem] border ${border} shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex items-center gap-4 group`}>
