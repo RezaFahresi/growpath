@@ -1,14 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import * as LucideIcons from 'lucide-react';
-import API from '../../api/axios'; // Pastikan path ini benar sesuai struktur Anda
+import API from '../../api/axios'; 
+import { useAppContext } from '../../context/AppContext'; // Import ditambahkan
 
 export default function ManageTalentMapping() {
+  const { user } = useAppContext(); // Mengambil data user yang sedang login
+  
   const [talents, setTalents] = useState([]);
   const [loading, setLoading] = useState(true);
   
   // State untuk form
   const [isAdding, setIsAdding] = useState(false);
-  const [editId, setEditId] = useState(null); // Menyimpan ID user yang sedang diedit
+  const [editId, setEditId] = useState(null); 
   const fileInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
@@ -49,7 +52,6 @@ export default function ManageTalentMapping() {
     });
     setEditId(talent.id);
     setIsAdding(true);
-    // Scroll ke atas agar form terlihat
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -63,12 +65,10 @@ export default function ManageTalentMapping() {
         await API.put(`/talent-mapping/${editId}`, formData);
         alert("Data berhasil diupdate!");
       } else {
-        // PROSES TAMBAH (POST) - Opsional jika Anda punya rute POST
-        // await API.post('/talent-mapping', formData);
+        // PROSES TAMBAH (POST)
         alert("Fungsi tambah manual sedang disiapkan.");
       }
       
-      // Reset form dan reload data
       setIsAdding(false);
       setEditId(null);
       setFormData({ name: '', role: '', department: '', performance: 'Medium', potential: 'Medium', image: '' });
@@ -87,7 +87,6 @@ export default function ManageTalentMapping() {
     if (isConfirmed) {
       try {
         await API.delete(`/talent-mapping/${id}`);
-        // Hilangkan dari tampilan tanpa perlu reload halaman
         setTalents(talents.filter(t => t.id !== id));
       } catch (error) {
         console.error("Gagal menghapus:", error);
@@ -293,9 +292,13 @@ export default function ManageTalentMapping() {
                           <button onClick={() => handleEditClick(talent)} className="p-2.5 bg-[#0F1B33] text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-all border border-[#1E2A45]" title="Edit">
                             <LucideIcons.Edit2 size={16} />
                           </button>
-                          <button onClick={() => handleDeleteClick(talent.id, talent.name)} className="p-2.5 bg-[#0F1B33] text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all border border-[#1E2A45]" title="Hapus">
-                            <LucideIcons.Trash2 size={16} />
-                          </button>
+                          
+                          {/* TOMBOL HAPUS HANYA MUNCUL UNTUK SUPERADMIN */}
+                          {user?.role === 'superadmin' && (
+                            <button onClick={() => handleDeleteClick(talent.id, talent.name)} className="p-2.5 bg-[#0F1B33] text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all border border-[#1E2A45]" title="Hapus">
+                              <LucideIcons.Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

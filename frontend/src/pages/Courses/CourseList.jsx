@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import { PlayCircle, Clock, BookOpen, Search, Sparkles, SlidersHorizontal, Lock } from 'lucide-react';
-import API from '../../api/axios'; // Pastikan path ini sesuai dengan letak axios Anda
+import API from '../../api/axios'; 
 
 export default function CourseList() {
   const [activeTab, setActiveTab] = useState('Semua');
-  const [dbCompletedIds, setDbCompletedIds] = useState([]); // State khusus untuk data dari Database
+  const [dbCompletedIds, setDbCompletedIds] = useState([]); 
   const navigate = useNavigate();
   
   const { courses, progress } = useAppContext();
@@ -19,9 +19,7 @@ export default function CourseList() {
     const fetchRealProgress = async () => {
       try {
         const response = await API.get('/progress');
-        // Pastikan kita mendapatkan data activeCourses dari backend
         if (response.data && response.data.activeCourses) {
-          // Cari course yang statusnya isCompleted = true, lalu jadikan format String
           const completedFromDB = response.data.activeCourses
             .filter(course => course.isCompleted)
             .map(course => String(course.courseId));
