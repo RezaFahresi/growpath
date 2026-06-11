@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, AlertTriangle, TrendingUp, Target, Code, PenTool, ArrowRight, Sparkles, CheckCircle2, Lightbulb } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, TrendingUp, Target, Code, PenTool, Megaphone, ArrowRight, Sparkles, CheckCircle2, Lightbulb } from 'lucide-react';
 import API from '../../api/axios';
 
 export default function AssessmentResult() {
@@ -29,20 +29,20 @@ export default function AssessmentResult() {
 
         setAssessment({
           score: data.score,
-          title: data.title || 'Assessment Result',
+          title: data.title || 'Laporan Ujian',
           date: data.created_at,
           attemptId: data.id.toString(),
           breakdown: data.breakdown || [
-            { topic: 'React Basics', score: Math.min(100, data.score + 10) },
-            { topic: 'State Management', score: Math.max(0, data.score - 15) },
-            { topic: 'Hooks', score: data.score },
-            { topic: 'Routing', score: Math.min(100, data.score + 15) },
+            { topic: 'Pemahaman Konsep', score: Math.min(100, data.score + 10) },
+            { topic: 'Analisa Masalah', score: Math.max(0, data.score - 15) },
+            { topic: 'Logika Keputusan', score: data.score },
+            { topic: 'Manajemen Waktu', score: Math.min(100, data.score + 15) },
           ],
           recommendation: data.score >= 80 
-            ? 'Skor logikamu sangat luar biasa! Kamu sudah memiliki fondasi yang kuat. Kami merekomendasikanmu untuk langsung mengambil materi lanjutan.' 
+            ? 'Skor analisa Anda sangat luar biasa! Anda sudah memiliki insting pemecahan masalah yang kuat. Kami merekomendasikan Anda untuk langsung mengambil sertifikasi spesifik.' 
             : data.score >= 60
-            ? 'Kerja bagus! Logika dasarmu sudah cukup baik. Kamu hanya perlu sedikit penyesuaian di beberapa konsep teknis sebelum melangkah lebih jauh.'
-            : 'Setiap ahli dimulai dari pemula. Kami merekomendasikanmu untuk memulai dari materi fundamental agar fondasi pemahamanmu kuat.',
+            ? 'Kerja bagus! Pemahaman dasar Anda sudah cukup baik. Anda hanya perlu sedikit penyesuaian di beberapa studi kasus sebelum melangkah ke level manajerial.'
+            : 'Setiap profesional dimulai dari pemula. Kami merekomendasikan Anda untuk memulai dari materi fundamental agar fondasi pemahaman teori Anda kokoh.',
         });
 
       } catch (err) {
@@ -52,14 +52,14 @@ export default function AssessmentResult() {
         
         if (err.response) {
           if (err.response.status === 401) {
-            setError('Sesi Anda telah berakhir. Silakan login kembali untuk melihat hasil.');
+            setError('Sesi Anda telah berakhir. Silakan login kembali untuk melihat hasil laporan.');
           } else if (err.response.status === 404) {
-            setError('Maaf, data hasil kuis ini tidak ditemukan di database kami.');
+            setError('Maaf, data hasil laporan ujian ini tidak ditemukan di arsip kami.');
           } else {
-            setError(err.response.data?.message || 'Gagal memuat data dari server.');
+            setError(err.response.data?.message || 'Gagal memuat rekapitulasi data dari server.');
           }
         } else {
-          setError(err.message || 'Terjadi kesalahan jaringan.');
+          setError(err.message || 'Terjadi gangguan jaringan.');
         }
       } finally {
         setLoading(false);
@@ -69,7 +69,7 @@ export default function AssessmentResult() {
     if (id) {
       fetchDetail();
     } else {
-      setError("ID Assessment tidak valid.");
+      setError("ID Laporan Ujian tidak valid.");
       setLoading(false);
     }
 
@@ -97,7 +97,7 @@ export default function AssessmentResult() {
           <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertTriangle className="text-red-500" size={32} />
           </div>
-          <h3 className="text-red-600 text-xl font-bold mb-2">Waduh! Ada Masalah</h3>
+          <h3 className="text-red-600 text-xl font-bold mb-2">Terjadi Kendala</h3>
           <p className="text-slate-500 text-sm leading-relaxed">{error}</p>
         </div>
         <button 
@@ -117,17 +117,17 @@ export default function AssessmentResult() {
           <div className="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
           <div className="absolute inset-0 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
-        <p className="text-slate-500 font-bold mt-6 animate-pulse tracking-widest text-sm uppercase">Menganalisa Hasil...</p>
+        <p className="text-slate-500 font-bold mt-6 animate-pulse tracking-widest text-sm uppercase">Merekapitulasi Hasil...</p>
       </div>
     );
   }
 
   const { score, date, attemptId, breakdown, recommendation } = assessment;
 
-  const formattedDate = new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const formattedDate = new Date(date).toLocaleDateString('id-ID', { month: 'short', day: 'numeric', year: 'numeric' });
   const isHigh = score >= 80;
   const isLow = score < 60;
-  const statusTitle = isHigh ? 'Luar Biasa!' : isLow ? 'Perlu Ditingkatkan' : 'Kerja Bagus!';
+  const statusTitle = isHigh ? 'Sangat Memuaskan' : isLow ? 'Perlu Ditingkatkan' : 'Cukup Baik';
   const radius = 50;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (circumference * score) / 100;
@@ -138,12 +138,12 @@ export default function AssessmentResult() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <button onClick={() => navigate('/dashboard/assessments')} className="flex items-center gap-2 text-slate-400 hover:text-indigo-600 font-medium transition-colors text-sm mb-4">
-            <ArrowLeft size={16} /> Kembali ke Assessments
+            <ArrowLeft size={16} /> Kembali ke Arsip
           </button>
           <h1 className="text-3xl font-extrabold text-slate-800 flex items-center gap-3">
             Analisis Selesai <CheckCircle2 className="text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.6)]" size={32} />
           </h1>
-          <p className="text-slate-500 mt-1">Berikut adalah rincian kemampuan dan potensimu.</p>
+          <p className="text-slate-500 mt-1">Berikut adalah rincian profil kompetensi Anda.</p>
         </div>
       </div>
 
@@ -151,7 +151,7 @@ export default function AssessmentResult() {
         <div className="lg:col-span-1 bg-gradient-to-b from-indigo-600 to-indigo-900 rounded-[2rem] p-8 shadow-xl shadow-indigo-200 flex flex-col items-center justify-center text-center text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
           <h2 className="text-2xl font-bold mb-1 z-10">{statusTitle}</h2>
-          <p className="text-indigo-200 text-xs font-medium mb-8 z-10 uppercase tracking-wider">Test #{attemptId} • {formattedDate}</p>
+          <p className="text-indigo-200 text-xs font-medium mb-8 z-10 uppercase tracking-wider">Laporan #{attemptId} • {formattedDate}</p>
           <div className="relative w-40 h-40 flex justify-center items-center z-10 mb-4">
             <svg className="w-full h-full transform -rotate-90 absolute inset-0 drop-shadow-md">
               <circle className="text-white/20" strokeWidth="8" stroke="currentColor" fill="transparent" r={radius} cx="80" cy="80" />
@@ -162,13 +162,13 @@ export default function AssessmentResult() {
               <span className="text-[10px] uppercase tracking-widest text-indigo-200 mt-1">XP Points</span>
             </div>
           </div>
-          <p className="text-indigo-100 text-sm z-10 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">Lebih baik dari {Math.max(10, score - 10)}% pendaftar</p>
+          <p className="text-indigo-100 text-sm z-10 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">Lebih tinggi dari {Math.max(10, score - 10)}% kandidat</p>
         </div>
 
         <div className="lg:col-span-2 bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm flex flex-col justify-center">
           <div className="flex items-center gap-3 mb-8">
             <div className="p-2.5 bg-slate-800 shadow-md rounded-xl"><TrendingUp size={20} className="text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]" /></div>
-            <h3 className="text-xl font-bold text-slate-800">Detail Pemahaman</h3>
+            <h3 className="text-xl font-bold text-slate-800">Detail Pemetaan</h3>
           </div>
           <div className="space-y-6">
             {breakdown.map((item, idx) => {
@@ -193,7 +193,7 @@ export default function AssessmentResult() {
         <div className="absolute right-0 bottom-0 opacity-10 text-indigo-500 -mb-6 -mr-6"><Lightbulb size={160} /></div>
         <div className="p-4 bg-slate-800 rounded-2xl shadow-md shrink-0 relative z-10"><Target size={32} className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" /></div>
         <div className="relative z-10">
-          <h3 className="text-xl font-bold text-indigo-950 mb-2">Insight & Rekomendasi Sistem</h3>
+          <h3 className="text-xl font-bold text-indigo-950 mb-2">Saran & Evaluasi Sistem</h3>
           <p className="text-indigo-800/80 leading-relaxed max-w-3xl">{recommendation}</p>
         </div>
       </div>
@@ -202,37 +202,53 @@ export default function AssessmentResult() {
         <div className="absolute top-0 right-0 p-8 opacity-[0.03] text-indigo-900 pointer-events-none"><Sparkles size={200} /></div>
         <div className="relative z-10">
           <div className="text-center mb-10 max-w-2xl mx-auto">
-            <h3 className="text-2xl md:text-3xl font-extrabold text-slate-800 mb-3">Tentukan Jalur Karirmu</h3>
-            <p className="text-slate-500 text-sm md:text-base">Berdasarkan analisis di atas, kami merekomendasikan jalur di bawah ini. Pilih fokus utamamu untuk menyusun kurikulum belajar yang terpersonalisasi!</p>
+            <h3 className="text-2xl md:text-3xl font-extrabold text-slate-800 mb-3">Tentukan Fokus Pelatihan Anda</h3>
+            <p className="text-slate-500 text-sm md:text-base">Berdasarkan hasil analisa di atas, kami telah merangkum spesialisasi yang paling ideal. Pilih satu jalur untuk memulai program kurikulum Anda!</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-10">
-            <div onClick={() => handleSelectPath('web-dev-101')} className={`cursor-pointer rounded-3xl border-2 p-8 transition-all duration-300 flex flex-col h-full ${selectedPath === 'web-dev-101' ? 'border-indigo-600 bg-indigo-50/50 shadow-lg transform md:-translate-y-1' : 'border-slate-100 hover:border-indigo-200 hover:bg-slate-50 hover:shadow-md'}`}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-10">
+            
+            {/* OPSI 1: DIGITAL MARKETING */}
+            <div onClick={() => handleSelectPath('marketing-101')} className={`cursor-pointer rounded-3xl border-2 p-8 transition-all duration-300 flex flex-col h-full ${selectedPath === 'marketing-101' ? 'border-indigo-600 bg-indigo-50/50 shadow-lg transform md:-translate-y-1' : 'border-slate-100 hover:border-indigo-200 hover:bg-slate-50 hover:shadow-md'}`}>
               <div className="flex items-center gap-4 mb-4">
-                <div className="p-4 rounded-2xl bg-slate-800 shadow-md"><Code size={28} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" /></div>
-                <h4 className="font-bold text-slate-800 text-xl">Web Development</h4>
+                <div className="p-4 rounded-2xl bg-slate-800 shadow-md"><Megaphone size={28} className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" /></div>
+                <h4 className="font-bold text-slate-800 text-xl">Digital Marketing</h4>
               </div>
-              <p className="text-sm text-slate-500 leading-relaxed mb-4 flex-grow">Pelajari fondasi internet mulai dari HTML, CSS, JavaScript, hingga membangun aplikasi interaktif dengan ReactJS & Node.js. Cocok untuk jiwa logis!</p>
-              <div className={`text-sm font-bold flex items-center gap-2 ${selectedPath === 'web-dev-101' ? 'text-indigo-600' : 'text-slate-400'}`}>
-                {selectedPath === 'web-dev-101' ? 'Terpilih' : 'Pilih Jalur Ini'} <ArrowRight size={16} />
+              <p className="text-sm text-slate-500 leading-relaxed mb-4 flex-grow">Pelajari taktik strategi pasar, SEO, periklanan media sosial, dan analisis data pelanggan. Pilihan tepat untuk Anda yang komunikatif dan analitis.</p>
+              <div className={`text-sm font-bold flex items-center gap-2 ${selectedPath === 'marketing-101' ? 'text-indigo-600' : 'text-slate-400'}`}>
+                {selectedPath === 'marketing-101' ? 'Spesialisasi Dipilih' : 'Pilih Spesialisasi Ini'} <ArrowRight size={16} />
               </div>
             </div>
 
+            {/* OPSI 2: UI/UX DESIGN */}
             <div onClick={() => handleSelectPath('ui-ux-101')} className={`cursor-pointer rounded-3xl border-2 p-8 transition-all duration-300 flex flex-col h-full ${selectedPath === 'ui-ux-101' ? 'border-indigo-600 bg-indigo-50/50 shadow-lg transform md:-translate-y-1' : 'border-slate-100 hover:border-indigo-200 hover:bg-slate-50 hover:shadow-md'}`}>
               <div className="flex items-center gap-4 mb-4">
                 <div className="p-4 rounded-2xl bg-slate-800 shadow-md"><PenTool size={28} className="text-pink-400 drop-shadow-[0_0_8px_rgba(244,114,182,0.6)]" /></div>
                 <h4 className="font-bold text-slate-800 text-xl">UI/UX Design</h4>
               </div>
-              <p className="text-sm text-slate-500 leading-relaxed mb-4 flex-grow">Asah empati dan senimu. Pelajari riset pengguna, wireframing, hingga mendesain prototipe visual yang memukau menggunakan alat seperti Figma.</p>
+              <p className="text-sm text-slate-500 leading-relaxed mb-4 flex-grow">Kembangkan empati visual Anda. Pahami riset pengguna dan rancang antarmuka digital yang memukau menggunakan figma.</p>
               <div className={`text-sm font-bold flex items-center gap-2 ${selectedPath === 'ui-ux-101' ? 'text-indigo-600' : 'text-slate-400'}`}>
-                {selectedPath === 'ui-ux-101' ? 'Terpilih' : 'Pilih Jalur Ini'} <ArrowRight size={16} />
+                {selectedPath === 'ui-ux-101' ? 'Spesialisasi Dipilih' : 'Pilih Spesialisasi Ini'} <ArrowRight size={16} />
               </div>
             </div>
+
+            {/* OPSI 3: WEB DEVELOPMENT */}
+            <div onClick={() => handleSelectPath('web-dev-101')} className={`cursor-pointer rounded-3xl border-2 p-8 transition-all duration-300 flex flex-col h-full ${selectedPath === 'web-dev-101' ? 'border-indigo-600 bg-indigo-50/50 shadow-lg transform md:-translate-y-1' : 'border-slate-100 hover:border-indigo-200 hover:bg-slate-50 hover:shadow-md'}`}>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="p-4 rounded-2xl bg-slate-800 shadow-md"><Code size={28} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" /></div>
+                <h4 className="font-bold text-slate-800 text-xl">Web Development</h4>
+              </div>
+              <p className="text-sm text-slate-500 leading-relaxed mb-4 flex-grow">Kuasai logika arsitektur sistem. Pelajari pondasi HTML, CSS, JavaScript hingga membangun aplikasi interaktif dengan Node.js.</p>
+              <div className={`text-sm font-bold flex items-center gap-2 ${selectedPath === 'web-dev-101' ? 'text-indigo-600' : 'text-slate-400'}`}>
+                {selectedPath === 'web-dev-101' ? 'Spesialisasi Dipilih' : 'Pilih Spesialisasi Ini'} <ArrowRight size={16} />
+              </div>
+            </div>
+
           </div>
 
           <div className="flex justify-center border-t border-slate-100 pt-10">
             <button onClick={handleConfirmSelection} disabled={!selectedPath || isSubmitting} className={`flex items-center gap-3 px-10 py-4 rounded-2xl font-bold text-lg transition-all ${selectedPath && !isSubmitting ? 'bg-slate-900 text-white shadow-xl shadow-slate-900/20 hover:bg-slate-800 hover:scale-105' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}>
-              {isSubmitting ? <>Menyiapkan Kurikulum... <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div></> : <>Konfirmasi & Mulai Belajar <ArrowRight size={20} /></>}
+              {isSubmitting ? <>Menyiapkan Program... <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div></> : <>Konfirmasi Jalur Karir <ArrowRight size={20} /></>}
             </button>
           </div>
         </div>

@@ -54,10 +54,12 @@ export default function CourseList() {
   const filteredCourses = uniqueCourses.filter(course => {
     if (activeTab === 'Semua') return true;
     
+    // Pemetaan filter untuk berbagai bidang industri
     const tabMap = {
-      'Desain': 'design',
-      'Frontend': 'frontend',
-      'Backend': 'backend'
+      'Teknologi': 'teknologi',
+      'Bisnis': 'bisnis',
+      'Marketing': 'marketing',
+      'Kreatif': 'kreatif'
     };
     
     const targetTab = tabMap[activeTab] || activeTab.toLowerCase().trim();
@@ -74,7 +76,7 @@ export default function CourseList() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Pustaka Kelas</h1>
-          <p className="text-slate-500 text-sm mt-1">Pilih kelas IT terbaik yang disesuaikan dengan kebutuhan kompetensimu.</p>
+          <p className="text-slate-500 text-sm mt-1">Pilih kelas pengembangan karir terbaik yang disesuaikan dengan kebutuhan industrimu.</p>
         </div>
         
         <div className="flex items-center gap-3 w-full md:w-auto">
@@ -95,7 +97,7 @@ export default function CourseList() {
 
       {/* FILTER TABS */}
       <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none border-b border-slate-100">
-        {['Semua', 'Desain', 'Frontend', 'Backend'].map(tab => (
+        {['Semua', 'Teknologi', 'Bisnis', 'Marketing', 'Kreatif'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}

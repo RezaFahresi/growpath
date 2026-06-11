@@ -12,10 +12,18 @@ export default function CourseDetail() {
 
   const course = courses?.find(c => String(c.id) === String(id) || String(c._id) === String(id));
 
+  // Pemetaan ID Course dari Database ke Video YouTube Edukasi Asli
   const courseVideoIds = {
-    1: 'c9Wg6Cb_YlU', 
-    2: 'TNhaISOUy6Q',
-    3: 'Oe421EPjeBE', 
+    // Teknologi (IT)
+    1: 'PkZNo7MF68', // Dasar Pemrograman / Software Engineering
+    2: 'zJSY8tbf_ys', // Frontend Web Development
+    // Kreatif (Desain)
+    3: 'c9Wg6Cb_YlU', // UI/UX Design Masterclass
+    // Marketing
+    4: 'bixR-KIJKYM', // Digital Marketing Fundamentals
+    // Bisnis / Finance
+    5: '8ZtInClXe1Q', // Business Administration & Management
+    6: '_a5IEA-O-IA', // Corporate Finance Analytics
   };
 
   const [completedLessons, setCompletedLessons] = useState([]);
@@ -24,14 +32,12 @@ export default function CourseDetail() {
   
   const playerRef = useRef(null);
 
-  // 🔥 PERBAIKAN 1: Pengecekan Riwayat Progress dari Backend
+  // Pengecekan Riwayat Progress dari Backend
   useEffect(() => {
     const checkPreviousProgress = async () => {
       try {
-        // Panggil API untuk mengecek status course ini (sesuaikan endpoint dengan backend Anda)
         const response = await API.get(`/progress/courses/${id}`); 
         
-        // Jika dari database terdeteksi sudah selesai
         if (response.data && response.data.isCompleted) {
           if (course?.lessons && Array.isArray(course.lessons)) {
             setCompletedLessons(course.lessons.map(l => l.id));
@@ -51,7 +57,7 @@ export default function CourseDetail() {
 
   // Efek untuk memuat YouTube Player
   useEffect(() => {
-    if (isPlaying && course && (courseVideoIds[course.id] || courseVideoIds[course._id])) {
+    if (isPlaying && course) {
       if (!window.YT) {
         const tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
@@ -75,6 +81,7 @@ export default function CourseDetail() {
     if (!course) return;
     const currentId = course.id || course._id;
     
+    // Jika ID course tidak terdaftar di courseVideoIds, gunakan video UI/UX (c9Wg6Cb_YlU) sebagai default
     playerRef.current = new window.YT.Player(`Youtubeer-${currentId}`, {
       videoId: courseVideoIds[String(currentId)] || 'c9Wg6Cb_YlU',
       playerVars: {
@@ -115,7 +122,7 @@ export default function CourseDetail() {
 
       if (markCourseCompleted) markCourseCompleted(currentId);
       
-      alert("🎉 Selamat! Kelas berhasil diselesaikan.");
+      alert("Selamat! Kelas berhasil diselesaikan.");
       navigate('/dashboard/progress');
       
     } catch (error) {
@@ -202,7 +209,7 @@ export default function CourseDetail() {
           <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
             <div className="flex flex-wrap items-center gap-4 mb-5">
               <span className="px-3.5 py-1.5 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-full uppercase tracking-wider">
-                {course.category || 'Kelas IT'}
+                {course.category || 'Materi Pelatihan'}
               </span>
               
               <span className="text-slate-500 text-sm font-bold flex items-center gap-2">

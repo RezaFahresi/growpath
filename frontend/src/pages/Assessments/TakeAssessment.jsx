@@ -17,7 +17,6 @@ export default function TakeAssessment() {
   const [answers, setAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 🔥 PERBAIKAN 2: Mencegah Ujian Diulang Jika Sudah Dikerjakan
   useEffect(() => {
     const fetchQuizData = async () => {
       try {
@@ -25,15 +24,13 @@ export default function TakeAssessment() {
 
         // Cek riwayat ujian terlebih dahulu
         try {
-          // Sesuaikan endpoint ini dengan rute backend Anda
           const historyRes = await API.get(`/assessments/history/${id}`);
           if (historyRes.data && historyRes.data.hasCompleted) {
-            alert('Anda sudah pernah menyelesaikan ujian ini. Mengalihkan ke hasil...');
+            alert('Anda sudah pernah menyelesaikan ujian ini. Mengalihkan ke hasil laporan...');
             navigate(`/dashboard/assessments/result/${historyRes.data.attemptId}`);
-            return; // Berhenti mengeksekusi ke bawah
+            return; 
           }
         } catch (historyErr) {
-          // Lanjutkan jika belum pernah ujian
           console.log("Memulai ujian baru.");
         }
 
@@ -43,7 +40,6 @@ export default function TakeAssessment() {
         
         setAssessmentData(data);
         
-        // Format soal dari database ke format UI
         if (data.questions) {
           const formattedQuestions = data.questions.map((q) => {
             const correctIndex = q.correct_answer === 'A' ? 0 : q.correct_answer === 'B' ? 1 : q.correct_answer === 'C' ? 2 : 3;
@@ -84,7 +80,6 @@ export default function TakeAssessment() {
       return;
     }
 
-    // HITUNG SKOR DINAMIS
     const correctCount = questions.reduce((acc, q, idx) => {
       return acc + (answers[idx] === q.correctIndex ? 1 : 0);
     }, 0);
@@ -93,7 +88,7 @@ export default function TakeAssessment() {
 
     const assessmentResult = {
       assessmentId: id,
-      title: assessmentData?.title || 'Talent Mapping Assessment',
+      title: assessmentData?.title || 'Evaluasi Kompetensi',
       score,
       date: new Date().toISOString()
     };
@@ -116,7 +111,7 @@ export default function TakeAssessment() {
 
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Submit failed. Please try again.');
+      alert(err.response?.data?.message || 'Gagal menyimpan hasil ujian. Silakan coba lagi.');
     } finally {
       setIsSubmitting(false);
     }
@@ -209,7 +204,7 @@ export default function TakeAssessment() {
             }`}
           >
             {isSubmitting ? (
-              <>Menyimpan... <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div></>
+              <>Menyimpan Laporan... <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div></>
             ) : currentQuestion === questions.length - 1 ? 'Selesai & Lihat Hasil' : (
               <>Pertanyaan Berikutnya <ChevronRight size={18} /></>
             )}
