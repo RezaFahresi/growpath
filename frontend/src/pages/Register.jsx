@@ -76,7 +76,7 @@ export default function Register() {
         showConfirmButton: false
       });
 
-      navigate('/dashboard/assessments/overview/1');
+      navigate('/dashboard/assessments/1');
     } else {
       Swal.close();
 
@@ -145,7 +145,7 @@ export default function Register() {
       } else if (role === 'admin') {
         navigate('/admin');
       } else {
-        navigate('/dashboard/assessments/overview/1');
+        navigate('/dashboard/assessments/1');
       }
     } catch (error) {
       console.error("Google Auth Error:", error);
