@@ -2,6 +2,7 @@ const CourseModel = require('../models/courseModel');
 
 // Helper untuk validasi admin
 const isAdmin = (user) => user && (user.role === 'admin' || user.role === 'superadmin');
+const isSuperAdmin = (user) => user && user.role === 'superadmin';
 
 exports.getCourses = async (req, res) => {
   try {
@@ -63,7 +64,10 @@ exports.updateCourse = async (req, res) => {
 
 exports.deleteCourse = async (req, res) => {
   try {
-    if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak.' });
+    // Pembatasan: Hanya Superadmin yang bisa menghapus
+    if (!isSuperAdmin(req.user)) {
+      return res.status(403).json({ message: 'Akses ditolak. Hanya Superadmin yang diizinkan menghapus data.' });
+    }
     
     const id = parseInt(req.params.id, 10);
     const rowCount = await CourseModel.deleteCourse(id);

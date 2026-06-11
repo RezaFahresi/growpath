@@ -27,9 +27,9 @@ export default function LoginAdmin() {
       const response = await API.post('/auth/login-admin', formData);
       const { token, user } = response.data;
 
-      // 🌟 PERBAIKAN: Pastikan object user memiliki role sebelum disimpan
-      // Jika backend tidak mengirim role, kita berikan fallback 'superadmin'
-      const userData = { ...user, role: user.role || 'superadmin' };
+      // Pastikan object user memiliki role sebelum disimpan
+      // Jika backend tidak mengirim role, kita berikan fallback 'admin'
+      const userData = { ...user, role: user.role || 'admin' };
 
       // Simpan kredensial dengan format JSON yang benar
       localStorage.setItem('token', token);
@@ -121,6 +121,17 @@ export default function LoginAdmin() {
               {loading ? 'Signing in...' : <>Sign in to Portal <ArrowRight size={18} /></>}
             </button>
           </form>
+
+          {/* AREA REGISTER ADMIN */}
+          <div className="mt-8 pt-6 border-t border-[#1E2D4A] text-center">
+            <p className="text-slate-400 text-xs font-medium">
+              Belum memiliki akun admin?{' '}
+              <Link to="/admin/register" className="text-blue-500 hover:text-blue-400 font-bold transition-colors">
+                Daftar di sini
+              </Link>
+            </p>
+          </div>
+
         </div>
       </div>
     </div>

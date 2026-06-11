@@ -17,7 +17,7 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
     const newUser = await UserModel.createUser(name, email, hashedPassword);
 
-    // PERBAIKAN 1: Otomatis daftarkan user baru ke tabel talent_mappings
+    // Otomatis daftarkan user baru ke tabel talent_mappings
     try {
       await db.query(
         `INSERT INTO talent_mappings (name, email, role, department, performance, potential) 
@@ -84,7 +84,7 @@ exports.googleLogin = async (req, res) => {
       const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-10), 10);
       user = await UserModel.createUser(name, email, randomPassword);
 
-      // PERBAIKAN 1: Otomatis daftarkan user Google baru ke tabel talent_mappings
+      // Otomatis daftarkan user Google baru ke tabel talent_mappings
       try {
         await db.query(
           `INSERT INTO talent_mappings (name, email, role, department, performance, potential) 
@@ -120,15 +120,18 @@ exports.loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    // PERBAIKAN 2: Cari akun berdasarkan email saja terlebih dahulu
+    // Cari akun berdasarkan email saja terlebih dahulu
     const admin = await UserModel.findUserByEmail(email); 
 
     if (!admin) {
       return res.status(404).json({ message: 'Akun tidak ditemukan.' });
     }
 
+    // Bersihkan format string role (hindari error karena huruf kapital atau spasi berlebih)
+    const userRole = (admin.role || '').toLowerCase().trim();
+
     // Jika akun ditemukan tapi role-nya bukan admin/superadmin, tolak dengan 403 Forbidden
-    if (admin.role !== 'admin' && admin.role !== 'superadmin') {
+    if (userRole !== 'admin' && userRole !== 'superadmin') {
       return res.status(403).json({ message: 'Akses ditolak. Akun ini bukan Admin.' });
     }
 
@@ -136,7 +139,7 @@ exports.loginAdmin = async (req, res) => {
 
     if (isMatch) {
       const token = jwt.sign(
-        { id: admin.id, role: admin.role, adminId: admin.id },
+        { id: admin.id, role: userRole, adminId: admin.id },
         process.env.JWT_SECRET,
         { expiresIn: '1d' }
       );
@@ -144,7 +147,7 @@ exports.loginAdmin = async (req, res) => {
       return res.json({ 
         message: 'Login Admin Berhasil', 
         token: token, 
-        user: { id: admin.id, name: admin.name, role: admin.role } 
+        user: { id: admin.id, name: admin.name, role: userRole } 
       });
     } else {
       return res.status(401).json({ message: 'Password salah.' });
