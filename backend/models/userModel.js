@@ -19,11 +19,14 @@ exports.findUserById = async (id) => {
   return result.rows[0];
 };
 
-exports.createUser = async (name, email, hashedPassword) => {
+exports.createUser = async (name, email, password, role = 'user') => {
   const result = await db.query(
-    "INSERT INTO users (name, email, password, role, created_at) VALUES ($1, $2, $3, 'user', NOW()) RETURNING id, name, email, role",
-    [name, email, hashedPassword]
+    `INSERT INTO users (name, email, password, role)
+     VALUES ($1, $2, $3, $4)
+     RETURNING id, name, email, role`,
+    [name, email, password, role]
   );
+
   return result.rows[0];
 };
 

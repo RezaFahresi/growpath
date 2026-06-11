@@ -1,13 +1,33 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Lock, Zap, ChevronRight, Trophy, AlertTriangle, Target, Code2, Megaphone, TrendingUp, Palette } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
+import API from '../api/axios';
 
 export default function Roadmap() {
   const { progress, userTalent } = useAppContext();
   const navigate = useNavigate();
 
-  // Daftar Pilihan Roadmap Universal (IT & Non-IT)
+  const [userTalentData, setUserTalentData] = useState(userTalent);
+
+  useEffect(() => {
+    const fetchUserTalent = async () => {
+      try {
+        const res = await API.get('/talent-mapping/me');
+
+        if (res.data) {
+          setUserTalentData(res.data);
+        }
+      } catch (error) {
+        console.log('User belum memiliki talent mapping');
+      }
+    };
+
+    if (!userTalentData) {
+      fetchUserTalent();
+    }
+  }, [userTalentData]);
+
   const availableRoadmaps = [
     {
       id: 'web-dev-101',
@@ -51,7 +71,6 @@ export default function Roadmap() {
     }
   ];
 
-  // Menghitung total XP dari semua roadmap yang pernah dikerjakan
   const totalXP = useMemo(() => {
     let xp = 0;
     if (progress?.roadmapChecklist) {
@@ -65,7 +84,6 @@ export default function Roadmap() {
   return (
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 space-y-12 animate-in fade-in duration-700">
       
-      {/* HEADER */}
       <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 rounded-[2.5rem] p-10 text-center text-white shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4 pointer-events-none">
           <Target size={250} />
@@ -85,8 +103,7 @@ export default function Roadmap() {
         </div>
       </div>
 
-      {/* PERINGATAN JIKA BELUM DILAKUKAN TALENT MAPPING */}
-      {!userTalent && (
+      {!userTalentData && (
         <div className="bg-amber-50 border border-amber-200 rounded-[2rem] p-8 flex flex-col md:flex-row items-center gap-6 shadow-sm">
           <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
             <AlertTriangle size={32} className="text-amber-500" />
@@ -100,7 +117,20 @@ export default function Roadmap() {
         </div>
       )}
 
-      {/* ROADMAP GRID */}
+      {userTalentData && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-[2rem] p-8 flex flex-col md:flex-row items-center gap-6 shadow-sm">
+          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
+            <Zap size={32} className="text-emerald-500 fill-emerald-500" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-emerald-900 mb-2">Sistem Rekomendasi Aktif</h2>
+            <p className="text-emerald-800/80 text-sm leading-relaxed">
+              Roadmap Anda sudah disesuaikan berdasarkan hasil assessment. Silakan lanjutkan pembelajaran sesuai jalur yang direkomendasikan.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div>
         <div className="flex items-center gap-3 mb-8 px-2">
           <div className="p-2.5 bg-slate-800 rounded-xl shadow-md">

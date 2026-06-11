@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import API from '../api/axios';
 
 export default function Dashboard() {
-  // 🔥 AMBIL userTalent DARI CONTEXT
   const { user, progress, setProgress, courses, userTalent } = useAppContext();
   const navigate = useNavigate();
 
@@ -39,41 +38,52 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [user?.id, setProgress]); 
 
-  // Kalkulasi status roadmap secara otomatis dengan Kunci Talent
   const roadmapSteps = useMemo(() => {
     if (!rawRoadmaps || rawRoadmaps.length === 0) return [];
-    
-    const formattedRoadmap = rawRoadmaps.map((item, index) => {
-      const phaseId = `phase${index + 1}`;
-      const checklist = progress?.roadmapChecklist?.[phaseId] || [];
-      const isCompleted = checklist.length >= 2;
+
+    return rawRoadmaps.slice(0, 4).map((item, index) => {
+      const percent = Number(
+        item.progress_percentage ??
+        item.progressPercent ??
+        item.percentage ??
+        item.progress ??
+        item.completion ??
+        item.completion_percentage ??
+        0
+      );
+
+      const isCompleted =
+        percent >= 100 ||
+        item.isCompleted === true ||
+        item.is_completed === true ||
+        item.status === 'completed' ||
+        item.status === 'done';
+
+      const isActive =
+        item.status === 'active' ||
+        item.isActive === true ||
+        item.is_active === true ||
+        percent > 0;
 
       let status = 'Locked';
-      
-      // JIKA SUDAH DINILAI OLEH TALENT MAPPING
-      if (userTalent) {
-        if (index === 0) {
-          status = isCompleted ? 'Done' : 'Active';
-        } else {
-          const prevPhaseId = `phase${index}`;
-          const prevChecklist = progress?.roadmapChecklist?.[prevPhaseId] || [];
-          const prevCompleted = prevChecklist.length >= 2;
-          
-          // Logika Akselerasi di Mini Tracker
-          if (userTalent.potential === 'High' && index === 1) {
-             status = isCompleted ? 'Done' : 'Active';
-          } else if (prevCompleted) {
-             status = isCompleted ? 'Done' : 'Active';
-          }
-        }
+
+      if (isCompleted) {
+        status = 'Done';
+      } else if (isActive || index === 0) {
+        status = 'Active';
       }
 
-      const shortTitle = item.title.replace(/Step \d: /, '').replace(' Roadmap', '');
-      return { id: index + 1, title: shortTitle, status };
+      const shortTitle = item.title
+        ?.replace(/Step \d: /, '')
+        ?.replace(' Roadmap', '') || `Roadmap ${index + 1}`;
+
+      return {
+        id: item.id || item._id || index + 1,
+        title: shortTitle,
+        status
+      };
     });
-    
-    return formattedRoadmap.slice(0, 4);
-  }, [rawRoadmaps, progress?.roadmapChecklist, userTalent]);
+  }, [rawRoadmaps]);
 
   const stats = [
     { title: 'Current Streak', value: `${dashboardStats.streak} Days`, icon: Calendar, color: 'text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]', bg: 'bg-slate-800 shadow-md', border: 'border-slate-100' },
@@ -98,7 +108,6 @@ export default function Dashboard() {
   return (
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
-      {/* HERO BANNER */}
       <div className="relative bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 rounded-[2.5rem] p-8 md:p-12 text-white shadow-xl shadow-indigo-900/10 overflow-hidden">
         <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4 pointer-events-none">
           <Target size={300} />
@@ -129,7 +138,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* STATS CARDS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {stats.map((stat, index) => (
           <div key={index} className={`bg-white p-6 rounded-[1.5rem] border ${stat.border} shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col gap-4 group`}>
@@ -144,10 +152,8 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* MAIN GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Continue Learning Section */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex justify-between items-center px-2">
             <h2 className="text-xl md:text-2xl font-extrabold text-slate-800">Lanjutkan Belajar</h2>
@@ -220,7 +226,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Mini Roadmap Tracker */}
         <div className="lg:col-span-1">
           <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm sticky top-8">
             <div className="flex items-center gap-3 mb-8 border-b border-slate-100 pb-4">

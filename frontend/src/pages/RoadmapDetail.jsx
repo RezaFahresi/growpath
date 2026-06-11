@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Clock, BookOpen, Zap, CheckCircle2, PlayCircle, ExternalLink, Sparkles } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import API from '../api/axios'; 
+import Swal from 'sweetalert2';
 
 export default function RoadmapDetail() {
   const { id } = useParams();
@@ -94,18 +95,33 @@ export default function RoadmapDetail() {
   const handleToggleTask = async (itemId) => {
     const stringItemId = String(itemId);
     
-    // Update UI Lokal
     toggleRoadmapItem(id, stringItemId);
 
-    // Update ke Database Backend
     if (user) {
       try {
         await API.post('/roadmaps/progress', {
           phaseId: id,
           taskId: stringItemId
         });
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Progress Disimpan',
+          text: 'Progress roadmap berhasil diperbarui.',
+          timer: 1200,
+          showConfirmButton: false
+        });
+
       } catch (error) {
         console.error("Gagal sinkronisasi progress roadmap:", error.response?.data?.message || error.message);
+
+        toggleRoadmapItem(id, stringItemId);
+
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal Menyimpan Progress',
+          text: error.response?.data?.message || 'Progress gagal disimpan ke server.'
+        });
       }
     }
   };
@@ -125,7 +141,6 @@ export default function RoadmapDetail() {
   return (
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
-      {/* Tombol Kembali */}
       <button 
         onClick={() => navigate('/dashboard/roadmap')} 
         className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 mb-8 transition-colors text-sm font-semibold group w-max"
@@ -136,7 +151,6 @@ export default function RoadmapDetail() {
         Kembali ke Katalog Karir
       </button>
 
-      {/* HEADER INFO CARD */}
       <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 rounded-[2.5rem] p-8 md:p-12 shadow-xl shadow-indigo-900/10 relative overflow-hidden mb-12 text-white">
         <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4 pointer-events-none">
           <BookOpen size={250} />
@@ -179,17 +193,16 @@ export default function RoadmapDetail() {
         </div>
       </div>
 
-      {/* LEARNING ITEMS LIST */}
       <div className="bg-white border border-slate-100 rounded-[2.5rem] p-6 md:p-10 shadow-sm">
         
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 px-2">
-           <h2 className="text-2xl font-extrabold text-slate-800">Daftar Modul Kurikulum</h2>
-           <div className="flex items-center gap-3 text-slate-700 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm w-max">
-             <div className="p-1.5 bg-slate-800 rounded-md shadow-md">
-               <Zap size={16} className="text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
-             </div>
-             <span>Selesaikan modul untuk mendapatkan +10 XP</span>
-           </div>
+          <h2 className="text-2xl font-extrabold text-slate-800">Daftar Modul Kurikulum</h2>
+          <div className="flex items-center gap-3 text-slate-700 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm w-max">
+            <div className="p-1.5 bg-slate-800 rounded-md shadow-md">
+              <Zap size={16} className="text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
+            </div>
+            <span>Selesaikan modul untuk mendapatkan +10 XP</span>
+          </div>
         </div>
         
         <div className="space-y-4">
@@ -206,7 +219,6 @@ export default function RoadmapDetail() {
                 }`}
               >
                 
-                {/* Bagian Kiri: Ceklis & Judul */}
                 <div className="flex items-start md:items-center gap-4 md:gap-6">
                   <div 
                     onClick={() => handleToggleTask(item.id)}
@@ -234,7 +246,6 @@ export default function RoadmapDetail() {
                   </div>
                 </div>
 
-                {/* Bagian Kanan: Tombol Buka Materi */}
                 <div className="w-full md:w-auto pl-12 md:pl-0">
                   <button 
                     onClick={() => handleOpenMaterial(item.link)}

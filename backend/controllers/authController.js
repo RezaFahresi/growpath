@@ -2,33 +2,46 @@ const bcrypt = require('bcrypt');
 const UserModel = require('../models/userModel');
 const axios = require('axios');
 const jwt = require('jsonwebtoken'); 
-const db = require('../config/db'); // WAJIB DITAMBAHKAN untuk query ke talent_mappings
+const db = require('../config/db');
 
 // 1. REGISTER USER
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) return res.status(400).json({ message: 'Semua kolom wajib diisi.' });
+    const { name, email, password, role } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Semua kolom wajib diisi.' });
+    }
+
+    const finalRole = role || 'user';
 
     const userExists = await UserModel.findUserByEmail(email);
-    if (userExists) return res.status(400).json({ message: 'Email sudah terdaftar.' });
+    if (userExists) {
+      return res.status(400).json({ message: 'Email sudah terdaftar.' });
+    }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    const newUser = await UserModel.createUser(name, email, hashedPassword);
 
-    // Otomatis daftarkan user baru ke tabel talent_mappings
-    try {
-      await db.query(
-        `INSERT INTO talent_mappings (name, email, role, department, performance, potential) 
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [name, email, 'user', 'General', 'Medium', 'Medium']
-      );
-    } catch (mappingErr) {
-      console.error("Warning: Gagal menambahkan ke talent_mappings", mappingErr.message);
+    const newUser = await UserModel.createUser(name, email, hashedPassword, finalRole);
+
+    if (finalRole === 'user') {
+      try {
+        await db.query(
+          `INSERT INTO talent_mappings (name, email, role, department, performance, potential, image) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [name, email, 'user', 'General', 'Medium', 'Medium', null]
+        );
+      } catch (mappingErr) {
+        console.error("Warning: Gagal menambahkan ke talent_mappings", mappingErr);
+      }
     }
 
-    return res.status(201).json({ message: 'Registrasi berhasil', user: newUser });
+    return res.status(201).json({ 
+      message: 'Registrasi berhasil', 
+      user: newUser 
+    });
+
   } catch (error) {
     console.error("Register Error:", error);
     return res.status(500).json({ message: 'Server error: ' + error.message });
@@ -84,15 +97,14 @@ exports.googleLogin = async (req, res) => {
       const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-10), 10);
       user = await UserModel.createUser(name, email, randomPassword);
 
-      // Otomatis daftarkan user Google baru ke tabel talent_mappings
       try {
         await db.query(
-          `INSERT INTO talent_mappings (name, email, role, department, performance, potential) 
-           VALUES ($1, $2, $3, $4, $5, $6)`,
-          [name, email, 'user', 'General', 'Medium', 'Medium']
+          `INSERT INTO talent_mappings (name, email, role, department, performance, potential, image) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [name, email, 'user', 'General', 'Medium', 'Medium', null]
         );
       } catch (mappingErr) {
-        console.error("Warning: Gagal menambahkan Google User ke talent_mappings", mappingErr.message);
+        console.error("Warning: Gagal menambahkan Google User ke talent_mappings", mappingErr);
       }
     }
 
@@ -120,17 +132,14 @@ exports.loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    // Cari akun berdasarkan email saja terlebih dahulu
     const admin = await UserModel.findUserByEmail(email); 
 
     if (!admin) {
       return res.status(404).json({ message: 'Akun tidak ditemukan.' });
     }
 
-    // Bersihkan format string role (hindari error karena huruf kapital atau spasi berlebih)
     const userRole = (admin.role || '').toLowerCase().trim();
 
-    // Jika akun ditemukan tapi role-nya bukan admin/superadmin, tolak dengan 403 Forbidden
     if (userRole !== 'admin' && userRole !== 'superadmin') {
       return res.status(403).json({ message: 'Akses ditolak. Akun ini bukan Admin.' });
     }
