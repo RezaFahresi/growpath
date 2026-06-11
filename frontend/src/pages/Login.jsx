@@ -3,6 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { useGoogleLogin } from '@react-oauth/google'; 
 import API from '../api/axios';
+import Swal from 'sweetalert2';
 
 // IMPORT LOGO GAMBAR
 import LogoGrowPath from '../assets/logo-growpath.png'; 
@@ -18,20 +19,89 @@ export default function Login() {
   const location = useLocation();
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      const response = await API.post('/auth/login-user', { email, password });
-      const data = response.data;
+  e.preventDefault();
+  setIsLoading(true);
 
-      // PERBAIKAN: Gunakan key 'growpath_user' agar sinkron dengan AppContext
+  Swal.fire({
+    title: 'Sedang Masuk...',
+    text: 'Mohon tunggu...',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    showConfirmButton: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
+
+  try {
+    const response = await API.post('/auth/login-user', { email, password });
+    const data = response.data;
+
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('growpath_user', JSON.stringify(data.user));
+
+    await login(data.user);
+
+    Swal.close();
+
+    await Swal.fire({
+      icon: 'success',
+      title: 'Login Berhasil',
+      text: 'Selamat datang kembali!',
+      timer: 1500,
+      showConfirmButton: false
+    });
+
+    const role = (data.user.role || '').toLowerCase();
+
+    if (role === 'superadmin') {
+      navigate('/superadmin');
+    } else if (role === 'admin') {
+      navigate('/admin');
+    } else {
+      if (location.state && location.state.isNewUser) {
+        navigate('/dashboard/assessments/overview/1');
+      } else {
+        navigate('/dashboard');
+      }
+    }
+  } catch (error) {
+    console.log(error);
+
+    Swal.fire({
+      icon: 'error',
+      title: 'Login Gagal',
+      text: error.response?.data?.message || 'Email atau password salah!'
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+  const loginWithGoogle = useGoogleLogin({
+  onSuccess: async (tokenResponse) => {
+    try {
+      const res = await API.post('/auth/google', {
+        access_token: tokenResponse.access_token,
+      });
+
+      const data = res.data;
+
       localStorage.setItem('token', data.token);
       localStorage.setItem('growpath_user', JSON.stringify(data.user));
-      
+
       await login(data.user);
 
+      await Swal.fire({
+        icon: 'success',
+        title: 'Login Berhasil',
+        text: 'Berhasil masuk dengan Google',
+        timer: 1500,
+        showConfirmButton: false
+      });
+
       const role = (data.user.role || '').toLowerCase();
-      
+
       if (role === 'superadmin') {
         navigate('/superadmin');
       } else if (role === 'admin') {
@@ -43,51 +113,26 @@ export default function Login() {
           navigate('/dashboard');
         }
       }
-    } catch (error) {
-      console.log(error);
-      alert(error.response?.data?.message || 'Email atau password salah!');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const loginWithGoogle = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        const res = await API.post('/auth/google', {
-          access_token: tokenResponse.access_token,
-        });
-        
-        const data = res.data;
-        
-        // PERBAIKAN: Gunakan key 'growpath_user'
-        localStorage.setItem('token', data.token); 
-        localStorage.setItem('growpath_user', JSON.stringify(data.user));
-        
-        await login(data.user); 
-        
-        const role = (data.user.role || '').toLowerCase();
-        
-        if (role === 'superadmin') {
-          navigate('/superadmin');
-        } else if (role === 'admin') {
-          navigate('/admin');
-        } else {
-          if (location.state && location.state.isNewUser) {
-            navigate('/dashboard/assessments/overview/1');
-          } else {
-            navigate('/dashboard');
-          }
-        }
-      } catch (error) {
-        console.error("Google Login Error:", error);
-        alert(error.response?.data?.message || 'Gagal masuk dengan Google');
-      }
-    },
-    onError: () => {
-      alert('Login Google dibatalkan.');
+    } catch (error) {
+      console.error("Google Login Error:", error);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Google Login Gagal',
+        text: error.response?.data?.message || 'Gagal masuk dengan Google'
+      });
     }
-  });
+  },
+
+  onError: () => {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Dibatalkan',
+      text: 'Login Google dibatalkan.'
+    });
+  }
+});
 
 
   return (
