@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import { Target, Zap, Award, Star, Clock, TrendingUp, BookOpen, Trophy, Activity, Hexagon } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import API from '../api/axios';
@@ -30,12 +30,9 @@ export default function Progress() {
 
   useEffect(() => {
     const fetchProgressData = async () => {
-      // Kita tetap cek apakah user sudah ada dari context, 
-      // tetapi kita TIDAK PERLU mengirimkan id tersebut ke backend.
       if (!user) return; 
       
       try {
-        // 🔥 PERBAIKAN: Hapus /user/${user.id} dari path API
         const response = await API.get('/progress');
         setData(response.data);
       } catch (error) {
@@ -58,8 +55,21 @@ export default function Progress() {
     );
   }
 
+  // DATA CADANGAN JIKA DATABASE KOSONG
+  // Agar grafik jaring laba-laba tidak terlihat bolong/rusak untuk pengguna baru
+  const defaultSkillData = [
+    { subject: 'Teknologi', A: 0, fullMark: 100 },
+    { subject: 'Bisnis', A: 0, fullMark: 100 },
+    { subject: 'Marketing', A: 0, fullMark: 100 },
+    { subject: 'Kreatif', A: 0, fullMark: 100 },
+    { subject: 'Analisa', A: 0, fullMark: 100 },
+  ];
+
+  const displaySkillData = data.skillData && data.skillData.length > 0 
+    ? data.skillData 
+    : defaultSkillData;
+
   return (
-    // Margin diseragamkan: w-full max-w-7xl mx-auto agar fit in
     <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 p-4 md:p-8">
       
       {/* ========================================= */}
@@ -71,7 +81,7 @@ export default function Progress() {
       </div>
 
       {/* ========================================= */}
-      {/* STATS CARDS (DESAIN BARU: Ikon Background Abu-tua & Highlight) */}
+      {/* STATS CARDS */}
       {/* ========================================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <StatCard 
@@ -118,7 +128,6 @@ export default function Progress() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
-                {/* IKON HIGHLIGHT ABU-TUA */}
                 <div className="p-2 bg-slate-800 rounded-xl shadow-md">
                   <Activity size={18} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)]" />
                 </div>
@@ -140,7 +149,6 @@ export default function Progress() {
                 />
                 <Bar dataKey="hours" fill="url(#colorIndigo)" radius={[6, 6, 6, 6]} barSize={32} />
                 
-                {/* Custom Gradient untuk Bar Chart */}
                 <defs>
                   <linearGradient id="colorIndigo" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#6366f1" stopOpacity={1}/>
@@ -152,29 +160,62 @@ export default function Progress() {
           </div>
         </div>
 
-        {/* RADAR CHART: Skill Analysis */}
-        <div className="bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col">
-          <div className="mb-6">
+        {/* RADAR CHART: Skill Analysis (DIPERBARUI LEBIH BAGUS) */}
+        <div className="bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col relative overflow-hidden">
+          <div className="mb-6 relative z-10">
             <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
-              {/* IKON HIGHLIGHT ABU-TUA */}
               <div className="p-2 bg-slate-800 rounded-xl shadow-md">
                 <Hexagon size={18} className="text-pink-400 drop-shadow-[0_0_5px_rgba(244,114,182,0.6)]" />
               </div>
               Distribusi Keahlian
             </h2>
-            <p className="text-xs font-medium text-slate-400 mt-2">Pemetaan area kompetensi</p>
+            <p className="text-xs font-medium text-slate-400 mt-2">Pemetaan persentase area kompetensi</p>
           </div>
 
-          <div className="flex-1 w-full min-h-[250px] flex items-center justify-center">
+          <div className="flex-1 w-full min-h-[250px] flex items-center justify-center relative z-10">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data.skillData}>
-                <PolarGrid stroke="#e2e8f0" />
-                <PolarAngleAxis dataKey="subject" tick={{fill: '#475569', fontSize: 11, fontWeight: 600}} />
-                <Radar name="Keahlian" dataKey="A" stroke="#6366f1" strokeWidth={2} fill="#818cf8" fillOpacity={0.3} />
-                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
+              <RadarChart cx="50%" cy="50%" outerRadius="65%" data={displaySkillData}>
+                {/* Jaring Laba-laba & Skala Persentase */}
+                <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
+                <PolarAngleAxis dataKey="subject" tick={{fill: '#334155', fontSize: 11, fontWeight: 700}} />
+                
+                {/* Axis untuk memunculkan garis 0 - 100% di dalam chart */}
+                <PolarRadiusAxis 
+                  angle={30} 
+                  domain={[0, 100]} 
+                  tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 600}} 
+                  tickCount={5} 
+                  orientation="middle" 
+                />
+                
+                {/* Bentuk Area Kemampuan dengan Gradient */}
+                <Radar 
+                  name="Penguasaan" 
+                  dataKey="A" 
+                  stroke="#8b5cf6" 
+                  strokeWidth={3} 
+                  fill="url(#colorSkillGradient)" 
+                  fillOpacity={0.5} 
+                />
+                
+                <Tooltip 
+                  formatter={(value) => [`${value}%`, 'Penguasaan']}
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontWeight: 'bold', color: '#1e293b' }} 
+                />
+                
+                {/* Efek Warna Gradient untuk Radar */}
+                <defs>
+                  <linearGradient id="colorSkillGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#a855f7" stopOpacity={0.9}/>
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.7}/>
+                  </linearGradient>
+                </defs>
               </RadarChart>
             </ResponsiveContainer>
           </div>
+          
+          {/* Elemen Dekoratif Blur di belakang chart */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-indigo-400/10 rounded-full blur-3xl pointer-events-none"></div>
         </div>
       </div>
 
@@ -182,7 +223,6 @@ export default function Progress() {
       {/* RECENT ACHIEVEMENTS (BADGES) */}
       {/* ========================================= */}
       <div className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-sm relative overflow-hidden">
-        {/* Dekorasi Background */}
         <div className="absolute top-0 right-0 p-8 opacity-5 text-amber-500 pointer-events-none">
           <Award size={150} />
         </div>
@@ -190,7 +230,6 @@ export default function Progress() {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
           <div>
             <h2 className="text-2xl font-extrabold text-slate-800 flex items-center gap-3">
-              {/* IKON HIGHLIGHT ABU-TUA */}
               <div className="p-2.5 bg-slate-800 rounded-xl shadow-md">
                 <Award size={24} className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
               </div>
@@ -208,14 +247,10 @@ export default function Progress() {
               return (
                 <div key={idx} className="group flex flex-col items-center">
                   <div className="relative mb-4">
-                    {/* Efek Glow saat Hover */}
                     <div className="absolute inset-0 bg-indigo-500 blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300 rounded-full"></div>
                     
-                    {/* Badge Container */}
                     <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-[2rem] bg-gradient-to-br from-indigo-500 via-indigo-600 to-indigo-800 flex items-center justify-center shadow-lg shadow-indigo-200 border-4 border-white transform group-hover:-translate-y-2 group-hover:scale-105 transition-all duration-300 cursor-pointer">
                       <IconComponent size={40} className="text-white drop-shadow-md" />
-                      
-                      {/* Bintang Kecil Dekorasi */}
                       <Star size={12} className="absolute top-3 right-3 text-amber-300 fill-amber-300 opacity-80" />
                     </div>
                   </div>
@@ -226,7 +261,6 @@ export default function Progress() {
             })
           ) : (
             <div className="col-span-full flex flex-col items-center justify-center py-12 text-center bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
-              {/* IKON HIGHLIGHT ABU-TUA (Empty State) */}
               <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center shadow-lg mb-4">
                 <Trophy size={28} className="text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]" />
               </div>
@@ -242,17 +276,14 @@ export default function Progress() {
 }
 
 // =========================================
-// KOMPONEN PEMBANTU (STAT CARD) DIPERBARUI
+// KOMPONEN PEMBANTU (STAT CARD)
 // =========================================
 function StatCard({ label, value, icon: Icon, color, bg, border }) {
   return (
     <div className={`bg-white p-5 md:p-6 rounded-[1.5rem] border ${border} shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex items-center gap-4 group`}>
-      {/* Kotak Ikon di Kiri (Ditambah Shadow agar lebih elegan) */}
       <div className={`w-14 h-14 shrink-0 rounded-2xl ${bg} ${color} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300`}>
         <Icon size={26} strokeWidth={2.5} />
       </div>
-      
-      {/* Detail Teks di Kanan */}
       <div className="flex flex-col justify-center overflow-hidden">
         <h3 className="text-2xl lg:text-3xl font-black text-slate-800 leading-none mb-1.5 truncate">{value}</h3>
         <p className="text-[10px] sm:text-[11px] text-slate-500 font-bold uppercase tracking-wider leading-tight truncate">{label}</p>
