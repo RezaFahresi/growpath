@@ -4,6 +4,35 @@ const axios = require('axios');
 const jwt = require('jsonwebtoken'); 
 const db = require('../config/db');
 
+const ensureTalentMapping = async (user) => {
+  if (!user) return;
+
+  const userRole = (user.role || 'user').toLowerCase().trim();
+  if (userRole !== 'user') return;
+
+  const exists = await db.query(
+    `SELECT id FROM talent_mappings WHERE email = $1 LIMIT 1`,
+    [user.email]
+  );
+
+  if (exists.rows.length === 0) {
+    await db.query(
+      `INSERT INTO talent_mappings 
+      (name, email, role, department, performance, potential, image)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        user.name,
+        user.email,
+        'user',
+        'General',
+        'Medium',
+        'Medium',
+        null
+      ]
+    );
+  }
+};
+
 // 1. REGISTER USER
 exports.register = async (req, res) => {
   try {
@@ -13,7 +42,7 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Semua kolom wajib diisi.' });
     }
 
-    const finalRole = role || 'user';
+    const finalRole = (role || 'user').toLowerCase().trim();
 
     const userExists = await UserModel.findUserByEmail(email);
     if (userExists) {
@@ -25,16 +54,10 @@ exports.register = async (req, res) => {
 
     const newUser = await UserModel.createUser(name, email, hashedPassword, finalRole);
 
-    if (finalRole === 'user') {
-      try {
-        await db.query(
-          `INSERT INTO talent_mappings (name, email, role, department, performance, potential, image) 
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [name, email, 'user', 'General', 'Medium', 'Medium', null]
-        );
-      } catch (mappingErr) {
-        console.error("Warning: Gagal menambahkan ke talent_mappings", mappingErr);
-      }
+    try {
+      await ensureTalentMapping(newUser);
+    } catch (mappingErr) {
+      console.error("Warning: Gagal memastikan talent_mappings", mappingErr);
     }
 
     return res.status(201).json({ 
@@ -54,13 +77,26 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
     const user = await UserModel.findUserByEmailAndRoleCondition(email, false);
 
-    if (!user) return res.status(404).json({ message: 'Akun tidak ditemukan.' });
+    if (!user) {
+      return res.status(404).json({ message: 'Akun tidak ditemukan.' });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (isMatch) {
+      try {
+        await ensureTalentMapping(user);
+      } catch (mappingErr) {
+        console.error("Warning: Gagal memastikan talent_mappings saat login", mappingErr);
+      }
+
       const token = jwt.sign(
-        { id: user.id, role: user.role, adminId: user.id }, 
+        { 
+          id: user.id, 
+          email: user.email,
+          role: user.role, 
+          adminId: user.id 
+        }, 
         process.env.JWT_SECRET,
         { expiresIn: '1d' } 
       );
@@ -68,7 +104,12 @@ exports.login = async (req, res) => {
       return res.json({ 
         message: 'Login Berhasil', 
         token: token, 
-        user: { id: user.id, name: user.name, role: user.role } 
+        user: { 
+          id: user.id, 
+          name: user.name,
+          email: user.email,
+          role: user.role 
+        } 
       });
     } else {
       return res.status(401).json({ message: 'Password salah.' });
@@ -95,21 +136,22 @@ exports.googleLogin = async (req, res) => {
 
     if (!user) {
       const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-10), 10);
-      user = await UserModel.createUser(name, email, randomPassword);
+      user = await UserModel.createUser(name, email, randomPassword, 'user');
+    }
 
-      try {
-        await db.query(
-          `INSERT INTO talent_mappings (name, email, role, department, performance, potential, image) 
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [name, email, 'user', 'General', 'Medium', 'Medium', null]
-        );
-      } catch (mappingErr) {
-        console.error("Warning: Gagal menambahkan Google User ke talent_mappings", mappingErr);
-      }
+    try {
+      await ensureTalentMapping(user);
+    } catch (mappingErr) {
+      console.error("Warning: Gagal memastikan Google User ke talent_mappings", mappingErr);
     }
 
     const token = jwt.sign(
-      { id: user.id, role: user.role, adminId: user.id },
+      { 
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        adminId: user.id 
+      },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
@@ -118,7 +160,12 @@ exports.googleLogin = async (req, res) => {
     return res.json({
       message: 'Login Google berhasil',
       token: token, 
-      user: { id: user.id, name: user.name, role: user.role }
+      user: { 
+        id: user.id, 
+        name: user.name,
+        email: user.email,
+        role: user.role 
+      }
     });
 
   } catch (error) {
@@ -148,7 +195,12 @@ exports.loginAdmin = async (req, res) => {
 
     if (isMatch) {
       const token = jwt.sign(
-        { id: admin.id, role: userRole, adminId: admin.id },
+        { 
+          id: admin.id,
+          email: admin.email,
+          role: userRole,
+          adminId: admin.id 
+        },
         process.env.JWT_SECRET,
         { expiresIn: '1d' }
       );
@@ -156,7 +208,12 @@ exports.loginAdmin = async (req, res) => {
       return res.json({ 
         message: 'Login Admin Berhasil', 
         token: token, 
-        user: { id: admin.id, name: admin.name, role: userRole } 
+        user: { 
+          id: admin.id, 
+          name: admin.name,
+          email: admin.email,
+          role: userRole 
+        } 
       });
     } else {
       return res.status(401).json({ message: 'Password salah.' });
