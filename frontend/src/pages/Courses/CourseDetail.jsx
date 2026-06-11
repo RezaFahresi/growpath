@@ -13,13 +13,12 @@ export default function CourseDetail() {
   // Mencari data course berdasarkan ID dari parameter URL
   const course = courses?.find(c => String(c.id) === String(id) || String(c._id) === String(id));
 
-  // Pemetaan ID Course dari Database ke Video YouTube Edukasi Asli
-  // Menyesuaikan dengan urutan ID 1, 2, 3, 4 di database Supabase Anda
+  // PERBAIKAN: Semua ID YouTube di bawah ini sudah diverifikasi dan memiliki tepat 11 karakter.
   const courseVideoIds = {
-    1: 'PkZNo7MFNFg', // Fullstack Web Development
-    2: '8ZtInClXe1Q', // Business & Data Analytics
-    3: 'bixR-KIJKYM', // Digital Marketing Specialist
-    4: 'c9Wg6Cb_YlU', // UI/UX Design Masterclass
+    1: 'nu_pCVPKzTk', // Fullstack Web Development (FreeCodeCamp)
+    2: 'OvoFCEFkglw', // Business & Data Analytics (Data Analysis for Beginners)
+    3: 'bixR-KIJKYM', // Digital Marketing Specialist (Digital Marketing Course)
+    4: 'c9Wg6Cb_YlU', // UI/UX Design Masterclass (UX Design Basics)
   };
 
   const [completedLessons, setCompletedLessons] = useState([]);
@@ -77,7 +76,7 @@ export default function CourseDetail() {
     if (!course) return;
     const currentId = course.id || course._id;
     
-    // Mengambil video ID dari object mapping, jika tidak ada gunakan fallback
+    // Mengambil video ID dari object mapping, jika tidak ada gunakan fallback UI/UX
     const targetVideoId = courseVideoIds[String(currentId)] || 'c9Wg6Cb_YlU';
     
     playerRef.current = new window.YT.Player(`Youtubeer-${currentId}`, {
