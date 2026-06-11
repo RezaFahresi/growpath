@@ -126,7 +126,7 @@ export default function LoginAdmin() {
           <div className="mt-8 pt-6 border-t border-[#1E2D4A] text-center">
             <p className="text-slate-400 text-xs font-medium">
               Belum memiliki akun admin?{' '}
-              <Link to="/admin/register" className="text-blue-500 hover:text-blue-400 font-bold transition-colors">
+              <Link to="/register/admin" className="text-blue-500 hover:text-blue-400 font-bold transition-colors">
                 Daftar di sini
               </Link>
             </p>
