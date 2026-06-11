@@ -2,6 +2,7 @@ const AssessmentModel = require('../models/assessmentModel');
 
 // Helper untuk validasi role sederhana dari payload JWT
 const isAdmin = (user) => user && (user.role === 'admin' || user.role === 'superadmin');
+const isSuperAdmin = (user) => user && user.role === 'superadmin';
 
 exports.getAssessments = async (req, res) => {
   try {
@@ -13,13 +14,11 @@ exports.getAssessments = async (req, res) => {
   }
 };
 
-// TAMBAHAN BARU: Mengambil detail 1 Assessment beserta soal-soalnya
 exports.getAssessmentById = async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(400).json({ message: 'ID tidak valid' });
 
-    // Fungsi ini harus ada di assessmentModel Anda
     const data = await AssessmentModel.getAssessmentById(id);
     
     if (!data) {
@@ -35,14 +34,11 @@ exports.getAssessmentById = async (req, res) => {
 
 exports.createAssessment = async (req, res) => {
   try {
-    // 1. Cek dari req.user (hasil dari authMiddleware)
     if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak. Hanya Admin.' });
     
-    // PERBAIKAN: Menerima 'questions' dari body request yang dikirim Admin
     const { title, category, duration, description, questions } = req.body;
     if (!title || !category || !duration) return res.status(400).json({ message: 'Semua field wajib diisi.' });
 
-    // Melemparkan data questions ke model untuk disimpan ke database
     const newAsm = await AssessmentModel.createAssessment(title, category, duration, description, questions);
     res.status(201).json(newAsm);
   } catch (error) {
@@ -56,14 +52,11 @@ exports.updateAssessment = async (req, res) => {
     if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak.' });
     
     const id = parseInt(req.params.id, 10);
-    // PERBAIKAN: Menerima 'questions' dari body request yang dikirim Admin
     const { title, category, duration, description, questions } = req.body;
     if (!title || !category || !duration) return res.status(400).json({ message: 'Field wajib diisi.' });
 
-    // Melemparkan data questions ke model untuk diupdate di database
     const updatedAsm = await AssessmentModel.updateAssessment(id, title, category, duration, description, questions);
     
-    // Model harus mengembalikan null/undefined jika ID tidak ditemukan
     if (!updatedAsm) return res.status(404).json({ message: 'Assessment tidak ditemukan' });
     
     res.json(updatedAsm);
@@ -75,7 +68,11 @@ exports.updateAssessment = async (req, res) => {
 
 exports.deleteAssessment = async (req, res) => {
   try {
-    if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak.' });
+    // Pembatasan: Hanya Superadmin yang bisa menghapus
+    if (!isSuperAdmin(req.user)) {
+      return res.status(403).json({ message: 'Akses ditolak. Hanya Superadmin yang diizinkan menghapus data.' });
+    }
+
     const id = parseInt(req.params.id, 10);
     await AssessmentModel.deleteAssessment(id);
     res.json({ message: 'Assessment template berhasil dihapus.' });
@@ -87,7 +84,6 @@ exports.deleteAssessment = async (req, res) => {
 
 exports.submitAssessment = async (req, res) => {
   try {
-    // Gunakan req.user.id (user biasa)
     if (!req.user) return res.status(401).json({ message: 'Silakan login.' });
     if (isAdmin(req.user)) return res.status(403).json({ message: 'Admin tidak boleh mengerjakan kuis.' });
 
@@ -125,7 +121,6 @@ exports.getResultDetail = async (req, res) => {
 
     if (!req.user) return res.status(401).json({ message: 'Sesi tidak ditemukan.' });
 
-    // Kita berikan userId atau adminId berdasarkan req.user
     const userId = isAdmin(req.user) ? null : req.user.id;
     const adminId = isAdmin(req.user) ? req.user.id : null;
 
@@ -134,14 +129,18 @@ exports.getResultDetail = async (req, res) => {
     
     res.json(rows[0]);
   } catch (error) {
-    console.error("🚨 Error Detail:", error.message);
+    console.error("Error Detail:", error.message);
     res.status(500).json({ message: 'Server error detail.' });
   }
 };
 
 exports.deleteResult = async (req, res) => {
   try {
-    if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak!' });
+    // Pembatasan: Hanya Superadmin yang bisa menghapus riwayat
+    if (!isSuperAdmin(req.user)) {
+      return res.status(403).json({ message: 'Akses ditolak! Hanya Superadmin yang dapat menghapus data.' });
+    }
+
     const id = parseInt(req.params.id, 10);
     
     const rowCount = await AssessmentModel.deleteResult(id);
@@ -154,7 +153,6 @@ exports.deleteResult = async (req, res) => {
   }
 };
 
-// FUNGSI BARU UNTUK CEK RIWAYAT (ANTI-AMNESIA)
 exports.checkHistory = async (req, res) => {
   try {
     const userId = req.user.id; 
