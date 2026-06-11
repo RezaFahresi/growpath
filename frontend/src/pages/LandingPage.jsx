@@ -1,12 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowRight, Sparkles, Brain, BarChart3, ShieldCheck, BookOpen, Star, Menu, Code2, Database, Palette, Shield, Smartphone, LineChart, ChevronRight, Zap, Target, CheckCircle2
+  ArrowRight, Sparkles, Brain, BarChart3, ShieldCheck, BookOpen, Star, Menu, Code2, Database, Palette, Shield, Smartphone, LineChart, ChevronRight, Zap, Target, CheckCircle2, TrendingUp, Megaphone, Briefcase
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // IMPORT LOGO
-import LogoGrowPath from '../assets/logo-growpath.png'; // Pastikan path dan nama file sesuai
+import LogoGrowPath from '../assets/logo-growpath.png'; 
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -32,10 +32,10 @@ export default function LandingPage() {
 
           {/* MENU */}
           <div className="hidden md:flex items-center gap-8 text-sm text-slate-600 font-semibold">
-            <a href="#features" className="hover:text-indigo-600 transition-colors">Features</a>
-            <a href="#careers" className="hover:text-indigo-600 transition-colors">Careers</a>
-            <a href="#dashboard" className="hover:text-indigo-600 transition-colors">Dashboard</a>
-            <a href="#steps" className="hover:text-indigo-600 transition-colors">How it Works</a>
+            <a href="#features" className="hover:text-indigo-600 transition-colors">Fitur Platform</a>
+            <a href="#careers" className="hover:text-indigo-600 transition-colors">Eksplorasi Karir</a>
+            <a href="#dashboard" className="hover:text-indigo-600 transition-colors">Pusat Belajar</a>
+            <a href="#steps" className="hover:text-indigo-600 transition-colors">Cara Kerja</a>
           </div>
 
           {/* BUTTONS */}
@@ -44,13 +44,13 @@ export default function LandingPage() {
               onClick={() => navigate('/login')}
               className="text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors"
             >
-              Sign In
+              Masuk
             </button>
             <button
               onClick={() => navigate('/register')}
               className="px-6 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-bold shadow-lg shadow-slate-900/20 hover:bg-indigo-600 hover:-translate-y-0.5 transition-all"
             >
-              Get Started
+              Daftar Gratis
             </button>
           </div>
 
@@ -80,18 +80,18 @@ export default function LandingPage() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-100 text-xs font-bold tracking-[0.15em] uppercase text-indigo-600 mb-8 shadow-sm">
               <Sparkles size={14} className="text-amber-500 fill-amber-500" />
-              Discover Your Future
+              Wujudkan Potensi Terbaikmu
             </div>
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-black leading-[1.05] tracking-tight text-slate-900 mb-8">
               Peta Jalan Menuju
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-500">
-                Karir Teknologi Anda.
+                Karir Teknologi & Bisnis.
               </span>
             </h1>
 
             <p className="text-slate-500 leading-relaxed text-lg max-w-xl mb-10 font-medium">
-              GrowPath membantu Anda mengenali minat, kekuatan, dan mencocokkannya dengan karir IT terbaik melalui evaluasi AI dan roadmap belajar yang dipersonalisasi.
+              Dari Rekayasa Perangkat Lunak (IT), Pemasaran, hingga Manajemen Bisnis. GrowPath membantu mengenali minat dan kekuatan Anda untuk merancang jalur pembelajaran cerdas menuju karir impian.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-10">
@@ -99,7 +99,7 @@ export default function LandingPage() {
                 onClick={() => navigate('/register')}
                 className="px-8 py-4 rounded-2xl bg-indigo-600 text-white font-bold flex items-center justify-center gap-2 shadow-xl shadow-indigo-600/30 hover:bg-indigo-700 hover:-translate-y-1 transition-all"
               >
-                Mulai Sekarang Secara Gratis
+                Mulai Analisis Karir Anda
                 <ArrowRight size={18} />
               </button>
 
@@ -107,13 +107,13 @@ export default function LandingPage() {
                 onClick={() => document.getElementById('features').scrollIntoView({ behavior: 'smooth' })}
                 className="px-8 py-4 rounded-2xl bg-white text-slate-700 border border-slate-200 hover:border-indigo-300 font-bold shadow-sm hover:shadow-md transition-all"
               >
-                Pelajari Lebih Lanjut
+                Pelajari Cara Kerjanya
               </button>
             </div>
 
             <div className="flex flex-wrap items-center gap-6 text-sm font-semibold text-slate-500">
-              <span className="flex items-center gap-2"><CheckCircle2 size={16} className="text-emerald-500" /> Personalized AI</span>
-              <span className="flex items-center gap-2"><CheckCircle2 size={16} className="text-emerald-500" /> Career Discovery</span>
+              <span className="flex items-center gap-2"><CheckCircle2 size={16} className="text-emerald-500" /> Evaluasi Minat AI</span>
+              <span className="flex items-center gap-2"><CheckCircle2 size={16} className="text-emerald-500" /> IT & Sektor Manajerial</span>
             </div>
           </motion.div>
 
@@ -132,18 +132,18 @@ export default function LandingPage() {
                 <div>
                   <h3 className="font-extrabold text-slate-800 text-xl mb-1 flex items-center gap-2">
                     <Target size={20} className="text-indigo-600" />
-                    Career Match Analytics
+                    Rekomendasi Kecocokan Karir
                   </h3>
-                  <p className="text-sm text-slate-500 font-medium">AI recommendation dashboard</p>
+                  <p className="text-sm text-slate-500 font-medium">Berdasarkan hasil analisis bakat</p>
                 </div>
                 <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-lg">98%</div>
               </div>
 
               {/* PROGRESS BARS */}
               <div className="space-y-6">
-                <ProgressItem title="Frontend Development" percent="92%" width="92%" color="from-indigo-500 to-indigo-400" icon={<Code2 size={16} />} />
-                <ProgressItem title="UI/UX Design" percent="84%" width="84%" color="from-fuchsia-500 to-pink-400" icon={<Palette size={16} />} />
-                <ProgressItem title="Data Analytics" percent="76%" width="76%" color="from-cyan-500 to-sky-400" icon={<LineChart size={16} />} />
+                <ProgressItem title="Software Development" percent="92%" width="92%" color="from-indigo-500 to-indigo-400" icon={<Code2 size={16} />} />
+                <ProgressItem title="Business Analytics" percent="84%" width="84%" color="from-fuchsia-500 to-pink-400" icon={<TrendingUp size={16} />} />
+                <ProgressItem title="Digital Marketing" percent="76%" width="76%" color="from-cyan-500 to-sky-400" icon={<Megaphone size={16} />} />
               </div>
             </div>
           </motion.div>
@@ -157,10 +157,10 @@ export default function LandingPage() {
       <section className="py-16 bg-white border-y border-slate-200/60 relative z-20">
         <div className="max-w-6xl mx-auto px-5 md:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
-            <StatCard value="10K+" label="Active Learners" />
-            <StatCard value="500+" label="Tech Roadmaps" />
-            <StatCard value="95%" label="Success Rate" />
-            <StatCard value="50+" label="Tech Careers" />
+            <StatCard value="25K+" label="Pengguna Aktif" />
+            <StatCard value="120+" label="Peta Jalan Belajar" />
+            <StatCard value="96%" label="Tingkat Kecocokan Karir" />
+            <StatCard value="80+" label="Bidang Industri" />
           </div>
         </div>
       </section>
@@ -171,20 +171,20 @@ export default function LandingPage() {
       <section id="features" className="py-32 px-5 md:px-8 relative">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <p className="text-indigo-600 text-sm font-bold tracking-[0.2em] uppercase mb-4">Powerful Features</p>
+            <p className="text-indigo-600 text-sm font-bold tracking-[0.2em] uppercase mb-4">Keunggulan Platform</p>
             <h2 className="text-4xl md:text-5xl font-black leading-tight text-slate-900 mb-6 tracking-tight">
-              Semua yang Anda butuhkan <br className="hidden md:block" /> untuk memulai karir IT.
+              Akselerasi Pertumbuhan Kompetensi <br className="hidden md:block" /> di Era Modern.
             </h2>
             <p className="text-slate-500 max-w-2xl mx-auto text-lg font-medium">
-              Bangun roadmap pembelajaran, eksplorasi karir teknologi, dan analisis keterampilan Anda dengan panduan kecerdasan buatan.
+              Sistem manajemen talenta yang dirancang untuk memandu pengembangan diri dari level fundamental hingga tingkat mahir sesuai permintaan industri terkini.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            <FeatureCard icon={<Brain size={28} />} title="AI Interest Assessment" desc="Temukan kekuatan dan minat terpendam Anda melalui analisis pintar berbasis AI." />
-            <FeatureCard icon={<BookOpen size={28} />} title="Personalized Roadmap" desc="Dapatkan jalur pembelajaran yang disusun khusus untuk mencapai tujuan karir Anda." />
-            <FeatureCard icon={<BarChart3 size={28} />} title="Skill Tracking" desc="Pantau progres belajar dan lihat analitik perkembangan kompetensi Anda secara real-time." />
-            <FeatureCard icon={<ShieldCheck size={28} />} title="Career Matching" desc="Temukan posisi karir yang paling selaras dengan kelebihan dan profil keterampilan Anda." />
+            <FeatureCard icon={<Brain size={28} />} title="Analisis Potensi Pintar" desc="Pahami kekuatan alami Anda melalui asesmen berbasis logika yang dirancang oleh ahli karir." />
+            <FeatureCard icon={<BookOpen size={28} />} title="Kurikulum Adaptif" desc="Materi pelatihan dan studi kasus nyata yang disusun berdasarkan target profesi yang spesifik." />
+            <FeatureCard icon={<BarChart3 size={28} />} title="Pelacakan Kompetensi" desc="Lihat metrik perkembangan belajar Anda dalam bentuk dasbor statistik yang mudah dipahami." />
+            <FeatureCard icon={<Briefcase size={28} />} title="Pemetaan Industri" desc="Hubungkan keahlian yang baru Anda peroleh dengan standar kualifikasi pasar kerja global." />
           </div>
         </div>
       </section>
@@ -196,22 +196,22 @@ export default function LandingPage() {
         <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-600/10 blur-[120px] pointer-events-none"></div>
         <div className="max-w-7xl mx-auto px-5 md:px-8 relative z-10">
           <div className="text-center mb-20">
-            <p className="text-fuchsia-400 text-sm font-bold tracking-[0.2em] uppercase mb-4">Explore Career Paths</p>
+            <p className="text-fuchsia-400 text-sm font-bold tracking-[0.2em] uppercase mb-4">Eksplorasi Profil Profesi</p>
             <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">
-              Jelajahi Karir Teknologi <br className="hidden md:block" /> Masa Depan
+              Sektor Teknologi, Bisnis, <br className="hidden md:block" /> dan Industri Kreatif
             </h2>
             <p className="text-slate-400 max-w-2xl mx-auto text-lg font-medium">
-              Kenali berbagai peluang karir, ekspektasi gaji rata-rata, dan kemampuan spesifik yang dibutuhkan oleh industri.
+              Dapatkan gambaran jelas tentang tugas, proyeksi pendapatan rata-rata untuk level junior hingga menengah, dan kemampuan fundamental yang dibutuhkan.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <CareerCard icon={<Code2 />} title="Frontend Developer" salary="$5k - $8k/mo" />
-            <CareerCard icon={<Database />} title="Backend Developer" salary="$6k - $10k/mo" />
-            <CareerCard icon={<Palette />} title="UI/UX Designer" salary="$4k - $7k/mo" />
-            <CareerCard icon={<LineChart />} title="Data Analyst" salary="$7k - $11k/mo" />
-            <CareerCard icon={<Shield />} title="Cyber Security" salary="$8k - $12k/mo" />
-            <CareerCard icon={<Smartphone />} title="Mobile Developer" salary="$6k - $9k/mo" />
+            <CareerCard icon={<Code2 />} title="Software Engineer" salary="IDR 7M - 18M/mo" />
+            <CareerCard icon={<TrendingUp />} title="Business Analyst" salary="IDR 6M - 15M/mo" />
+            <CareerCard icon={<Megaphone />} title="Marketing Specialist" salary="IDR 5M - 12M/mo" />
+            <CareerCard icon={<Database />} title="Data Scientist" salary="IDR 8M - 20M/mo" />
+            <CareerCard icon={<Briefcase />} title="Project Manager" salary="IDR 8M - 18M/mo" />
+            <CareerCard icon={<Palette />} title="UI/UX Designer" salary="IDR 6M - 15M/mo" />
           </div>
         </div>
       </section>
@@ -222,20 +222,19 @@ export default function LandingPage() {
       <section id="steps" className="py-32 px-5 md:px-8 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-24">
-            <p className="text-indigo-600 text-sm font-bold tracking-[0.2em] uppercase mb-4">How It Works</p>
+            <p className="text-indigo-600 text-sm font-bold tracking-[0.2em] uppercase mb-4">Metode Kami</p>
             <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight text-slate-900">
-              3 Langkah Membangun Karir
+              3 Langkah Memulai Perjalananmu
             </h2>
-            <p className="text-slate-500 text-lg font-medium">Sistem pintar yang dirancang untuk memandu kesuksesan Anda.</p>
+            <p className="text-slate-500 text-lg font-medium">Sistem terstruktur yang menghilangkan kebingungan dalam memilih arah masa depan.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 relative">
-            {/* Connecting Line for Desktop */}
             <div className="hidden md:block absolute top-12 left-[10%] right-[10%] h-1 bg-slate-100 -z-10"></div>
             
-            <StepCard number="1" title="Take Assessment" desc="Selesaikan tes kepribadian dan evaluasi logika dasar." />
-            <StepCard number="2" title="Get Your Roadmap" desc="Terima kurikulum dan peta jalan karir yang dipersonalisasi." />
-            <StepCard number="3" title="Learn & Conquer" desc="Ikuti materi, selesaikan tantangan, dan capai tujuanmu." />
+            <StepCard number="1" title="Ikuti Asesmen Karakter" desc="Jawab rangkaian pertanyaan situasi dan logika untuk memetakan kecenderungan bakat Anda." />
+            <StepCard number="2" title="Terima Arahan Khusus" desc="Dapatkan cetak biru rencana studi yang diatur sistem sesuai target bidang industri Anda." />
+            <StepCard number="3" title="Selesaikan Tantangan" desc="Tingkatkan metrik keahlian dengan menguasai modul demi modul di dasbor belajar Anda." />
           </div>
         </div>
       </section>
@@ -246,40 +245,36 @@ export default function LandingPage() {
       <section id="dashboard" className="py-32 bg-[#F8FAFC]">
         <div className="max-w-6xl mx-auto px-5 md:px-8">
           <div className="text-center mb-20">
-            <p className="text-fuchsia-500 text-sm font-bold tracking-[0.2em] uppercase mb-4">Dashboard Showcase</p>
+            <p className="text-fuchsia-500 text-sm font-bold tracking-[0.2em] uppercase mb-4">Pusat Pembelajaran</p>
             <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">
-              Pusat Kontrol Belajarmu
+              Kontrol Penuh Kemajuan Anda
             </h2>
-            <p className="text-slate-500 text-lg font-medium">Pantau pertumbuhan dan analitik keahlian dalam satu layar interaktif.</p>
+            <p className="text-slate-500 text-lg font-medium">Satu platform ringkas untuk mengakses materi, evaluasi, dan rekapitulasi pencapaian mingguan.</p>
           </div>
 
           <div className="bg-white rounded-[2.5rem] p-4 md:p-8 border border-slate-200 shadow-2xl shadow-slate-200/50">
             <div className="bg-slate-50 rounded-[2rem] border border-slate-100 p-6 md:p-10 relative overflow-hidden">
               
-              {/* Efek Cahaya di Belakang Gambar */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-indigo-500/20 blur-[120px] pointer-events-none"></div>
 
               <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-6 relative z-10">
                 <div>
-                  <h3 className="font-extrabold text-2xl text-slate-800 mb-1">Performance Analytics</h3>
-                  <p className="text-sm font-medium text-slate-500">Pemetaan keahlian berbasis modul yang diselesaikan.</p>
+                  <h3 className="font-extrabold text-2xl text-slate-800 mb-1">Ruang Kerja Profesional</h3>
+                  <p className="text-sm font-medium text-slate-500">Antarmuka visual dari daftar tugas dan kelas yang harus dikuasai.</p>
                 </div>
                 <div className="flex gap-3">
-                  <button className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold shadow-md shadow-indigo-200 hover:bg-indigo-700 transition-all">Skill Level</button>
-                  <button className="px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 text-sm font-bold hover:bg-slate-100 transition-all">Daily Goal</button>
+                  <button className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold shadow-md shadow-indigo-200 hover:bg-indigo-700 transition-all">Statistik</button>
+                  <button className="px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 text-sm font-bold hover:bg-slate-100 transition-all">Modul Terakhir</button>
                 </div>
               </div>
 
               {/* AREA GAMBAR (FOTO) */}
               <div className="relative z-10 rounded-2xl overflow-hidden shadow-xl border border-slate-200/80 group bg-slate-100">
                 <img 
-                  // Kamu bisa mengganti URL gambar ini dengan Screenshot halaman "Progress" aplikasimu nanti!
                   src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop" 
-                  alt="Dashboard Analytics Preview" 
+                  alt="Dashboard Platform Preview" 
                   className="w-full h-auto max-h-[400px] object-cover object-top group-hover:scale-105 transition-transform duration-700"
                 />
-                
-                {/* Gradient transparan agar gambar terlihat menyatu */}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/10 to-transparent pointer-events-none"></div>
               </div>
 
@@ -294,15 +289,15 @@ export default function LandingPage() {
       <section className="py-32 px-5 md:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-24">
-            <p className="text-indigo-600 text-sm font-bold tracking-[0.2em] uppercase mb-4">Success Stories</p>
-            <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">Dipercaya Ribuan Talenta</h2>
-            <p className="text-slate-500 text-lg font-medium">Lihat bagaimana GrowPath membantu mereka menemukan karir impian.</p>
+            <p className="text-indigo-600 text-sm font-bold tracking-[0.2em] uppercase mb-4">Kisah Keberhasilan</p>
+            <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">Menghubungkan Potensi dengan Realita</h2>
+            <p className="text-slate-500 text-lg font-medium">Banyak talenta telah mengasah keterampilannya sebelum terjun ke industri.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <TestimonialCard name="Sarah Chen" role="Frontend Developer" initial="S" quote="GrowPath memberiku arah yang jelas. Aku tadinya bingung harus mulai dari mana, sekarang aku sudah bekerja sebagai Frontend Dev!" />
-            <TestimonialCard name="Michael Rodriguez" role="Data Analyst" initial="M" quote="Tes AI-nya sangat akurat membaca potensiku. Roadmap yang diberikan sangat terstruktur dan mudah diikuti untuk pemula." />
-            <TestimonialCard name="Emily Thompson" role="UI/UX Designer" initial="E" quote="Akhirnya aku menemukan platform yang menggabungkan talent mapping dan course secara bersamaan. Sangat direkomendasikan!" />
+            <TestimonialCard name="Ayu Kartika" role="Marketing Strategist" initial="A" quote="Dulu bingung cara memahami analisis pasar. Modul dan penentuan alurnya sangat terperinci. Kini saya lebih percaya diri merancang strategi kampanye." />
+            <TestimonialCard name="Bima Prakasa" role="Software Engineer" initial="B" quote="Platform ini sangat mengerti kebutuhan pemula di IT. Dari algoritma dasar hingga arsitektur backend, semuanya disusun dengan roadmap yang logis." />
+            <TestimonialCard name="Diana Larasati" role="Operation Manager" initial="D" quote="Materi yang disajikan platform ini aplikatif untuk tata kelola perusahaan modern. Antarmuka pelacakannya membuat progres belajar saya tidak terputus." />
           </div>
         </div>
       </section>
@@ -314,18 +309,18 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 rounded-[3rem] px-8 py-24 text-center text-white shadow-2xl relative overflow-hidden">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
           <div className="relative z-10">
-            <p className="uppercase tracking-[0.2em] text-sm font-bold mb-6 text-indigo-300">Siap Mengubah Masa Depan?</p>
+            <p className="uppercase tracking-[0.2em] text-sm font-bold mb-6 text-indigo-300">Siapkan Diri Anda Memasuki Dunia Kerja</p>
             <h2 className="text-4xl md:text-6xl font-black leading-tight mb-8 tracking-tight">
-              Mulai Perjalanan Karir <br className="hidden md:block"/> Teknologi Anda Hari Ini.
+              Mulai Perjalanan Karir <br className="hidden md:block"/> Profesional Anda Hari Ini.
             </h2>
             <p className="max-w-2xl mx-auto text-indigo-100/80 mb-12 text-lg font-medium">
-              Bergabunglah dengan komunitas pembelajar kami dan buka potensi penuh Anda melalui panduan AI yang revolusioner.
+              Bergabunglah dengan ribuan pelajar dan profesional lainnya untuk merancang kelancaran transisi karir Anda hari ini.
             </p>
             <button
               onClick={() => navigate('/register')}
               className="px-10 py-5 rounded-2xl bg-white text-indigo-900 font-extrabold text-lg hover:scale-105 transition-all shadow-[0_0_40px_rgba(255,255,255,0.3)] flex items-center justify-center gap-3 mx-auto"
             >
-              Daftar Sekarang Gratis <ChevronRight size={20} />
+              Coba Sekarang Gratis <ChevronRight size={20} />
             </button>
           </div>
         </div>
@@ -344,19 +339,19 @@ export default function LandingPage() {
               <h2 className="font-black text-2xl text-white tracking-tight">GrowPath</h2>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed font-medium">
-              Platform edukasi cerdas yang membantu siswa menemukan dan mengejar jalur karir IT ideal mereka menggunakan panduan berbasis Artificial Intelligence.
+              Sistem manajemen pembelajaran cerdas yang membantu kandidat menemukan dan menguasai tuntutan profesi spesifik di berbagai industri.
             </p>
           </div>
 
-          <FooterColumn title="Platform" links={['Features', 'Career Roadmaps', 'AI Assessment', 'Pricing']} />
-          <FooterColumn title="Company" links={['About Us', 'Careers', 'Contact', 'Blog']} />
-          <FooterColumn title="Legal" links={['Privacy Policy', 'Terms of Service', 'Cookie Policy']} />
+          <FooterColumn title="Pusat Layanan" links={['Keunggulan Platform', 'Pilihan Profesi', 'Asesmen Minat', 'Sistem Poin']} />
+          <FooterColumn title="Perusahaan" links={['Tentang Kami', 'Peluang Karir', 'Hubungi Tim', 'Pembaruan Blog']} />
+          <FooterColumn title="Kebijakan" links={['Keamanan Privasi', 'Ketentuan Layanan', 'Panduan Penggunaan']} />
         </div>
 
         <div className="max-w-7xl mx-auto mt-20 pt-8 border-t border-slate-800/60 flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-medium">
-          <p>© {new Date().getFullYear()} GrowPath. Hak Cipta Dilindungi.</p>
+          <p>© {new Date().getFullYear()} GrowPath Edukasi. Seluruh Hak Cipta Dilindungi.</p>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-white transition-colors">Twitter</a>
+            <a href="#" className="hover:text-white transition-colors">Twitter X</a>
             <a href="#" className="hover:text-white transition-colors">LinkedIn</a>
             <a href="#" className="hover:text-white transition-colors">Instagram</a>
           </div>
@@ -422,9 +417,13 @@ function CareerCard({ icon, title, salary }) {
         {icon}
       </div>
       <h3 className="font-extrabold text-xl mb-2 text-white">{title}</h3>
-      <p className="text-slate-400 text-sm mb-6 font-medium">Jalur Karir Direkomendasikan</p>
-      <div className="inline-flex px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-bold tracking-wide">
-        Est: {salary}
+      <p className="text-slate-400 text-sm mb-4 font-medium">Spesialisasi Direkomendasikan</p>
+      
+      <div className="flex flex-col items-start gap-1">
+        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Potensi Gaji (Junior - Mid)</span>
+        <div className="inline-flex px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-bold tracking-wide">
+          Est: {salary}
+        </div>
       </div>
     </motion.div>
   );

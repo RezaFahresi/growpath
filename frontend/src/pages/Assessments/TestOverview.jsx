@@ -7,10 +7,8 @@ export default function TestOverview() {
   const navigate = useNavigate();
   const { id } = useParams(); 
   
-  // 🔥 AMBIL DATA DARI CONTEXT
   const { availableAssessments } = useAppContext();
   
-  // 🔥 CARI DATA UJIAN BERDASARKAN ID
   const assessmentData = availableAssessments?.find(a => String(a.id) === String(id)) || {};
 
   const handleStartTest = () => {
@@ -20,20 +18,16 @@ export default function TestOverview() {
   return (
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
-      {/* Tombol Kembali */}
       <button 
-        onClick={() => navigate(-1)}
+        onClick={() => navigate('/dashboard/assessments')}
         className="flex items-center gap-2 text-slate-400 hover:text-indigo-600 font-semibold transition-colors mb-6 group"
       >
         <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-        <span>Kembali</span>
+        <span>Kembali ke Daftar</span>
       </button>
 
       <div className="bg-white rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
         
-        {/* ========================================= */}
-        {/* HEADER / HERO SECTION */}
-        {/* ========================================= */}
         <div className="relative bg-gradient-to-br from-slate-900 via-indigo-950 to-indigo-900 p-8 md:p-12 overflow-hidden">
           <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4 pointer-events-none">
             <Brain size={300} />
@@ -48,21 +42,16 @@ export default function TestOverview() {
               </span>
             </div>
             
-            {/* 🔥 JUDUL DINAMIS */}
             <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-4 tracking-tight">
               {assessmentData.title || 'Talent Mapping Assessment'}
             </h1>
             
-            {/* 🔥 DESKRIPSI DINAMIS */}
             <p className="text-indigo-200/90 leading-relaxed max-w-2xl text-sm md:text-base">
-              {assessmentData.description || 'Sebelum memulai perjalanan belajarmu, mari temukan jalur karir yang paling sesuai dengan pola pikir dan minatmu. Tes ini dirancang khusus untuk memetakan logika dasar dan insting problem-solving kamu.'}
+              {assessmentData.description || 'Sebelum memulai perjalanan belajarmu, mari evaluasi kemampuan dasar dan minat profesi Anda di sini. Tes ini dirancang khusus untuk memetakan logika dan insting Anda.'}
             </p>
           </div>
         </div>
 
-        {/* ========================================= */}
-        {/* KONTEN UTAMA */}
-        {/* ========================================= */}
         <div className="p-8 md:p-12">
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
@@ -72,7 +61,6 @@ export default function TestOverview() {
               </div>
               <div>
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Durasi</p>
-                {/* 🔥 DURASI DINAMIS */}
                 <p className="text-slate-800 font-extrabold">{assessmentData.duration ? `${assessmentData.duration} Menit` : '15 Menit'}</p>
               </div>
             </div>
@@ -83,7 +71,7 @@ export default function TestOverview() {
               </div>
               <div>
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Tujuan</p>
-                <p className="text-slate-800 font-extrabold">Evaluasi Kemampuan</p>
+                <p className="text-slate-800 font-extrabold">Evaluasi Kompetensi</p>
               </div>
             </div>
 
@@ -98,29 +86,22 @@ export default function TestOverview() {
             </div>
           </div>
 
-          {/* Kotak Peringatan / Aturan Main */}
           <div className="bg-amber-50 border border-amber-200/60 rounded-2xl p-6 md:p-8 mb-2">
             <h3 className="text-amber-900 font-bold mb-4 flex items-center gap-2 text-lg">
               <AlertCircle size={20} className="text-amber-500" />
-              Sebelum kamu memulai
+              Persiapan Sebelum Memulai
             </h3>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <CheckCircle2 size={18} className="text-amber-500 shrink-0 mt-0.5" />
                 <p className="text-sm text-amber-800/80 leading-relaxed">
-                  <strong className="text-amber-900">Jawab dengan teliti.</strong> Baca setiap pertanyaan dengan seksama. Pilihlah jawaban yang paling tepat menurut pemahamanmu.
+                  <strong className="text-amber-900">Fokus Penuh.</strong> Baca setiap pertanyaan dengan seksama dan pastikan Anda berada di lingkungan yang kondusif.
                 </p>
               </div>
               <div className="flex items-start gap-3">
                 <CheckCircle2 size={18} className="text-amber-500 shrink-0 mt-0.5" />
                 <p className="text-sm text-amber-800/80 leading-relaxed">
-                  <strong className="text-amber-900">Cari tempat yang nyaman.</strong> Pastikan kamu berada di lingkungan yang kondusif agar dapat fokus penuh menyelesaikan tes ini.
-                </p>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 size={18} className="text-amber-500 shrink-0 mt-0.5" />
-                <p className="text-sm text-amber-800/80 leading-relaxed">
-                  <strong className="text-amber-900">Koneksi stabil.</strong> Pastikan perangkatmu terhubung ke internet yang stabil selama waktu pengerjaan.
+                  <strong className="text-amber-900">Koneksi Internet.</strong> Pastikan perangkat Anda memiliki jaringan yang stabil selama waktu pengerjaan ujian.
                 </p>
               </div>
             </div>
@@ -128,19 +109,16 @@ export default function TestOverview() {
           
         </div>
 
-        {/* ========================================= */}
-        {/* FOOTER / ACTION AREA */}
-        {/* ========================================= */}
         <div className="bg-slate-50 p-6 md:p-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-slate-500 font-medium text-center md:text-left">
-            Sudah siap? Waktu akan mulai dihitung saat kamu melihat soal pertama.
+            Waktu akan mulai dihitung secara otomatis saat Anda masuk ke halaman soal pertama.
           </p>
           <button 
             onClick={handleStartTest}
             className="w-full md:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-200 group"
           >
             <Play size={20} className="fill-current group-hover:scale-110 transition-transform" />
-            Mulai Tes Sekarang
+            Mulai Ujian Sekarang
           </button>
         </div>
 

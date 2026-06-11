@@ -18,51 +18,65 @@ export default function RoadmapDetail() {
       setLoading(true);
       
       const allRoadmaps = {
-        phase1: {
-          phase: "PHASE 1",
-          title: "Step 1: Frontend Developer Roadmap",
-          description: "Kuasai fondasi utama web: HTML untuk struktur, CSS untuk tampilan, dan JavaScript untuk logika dasar serta React untuk UI modern.",
-          estTime: "4 Weeks",
+        'web-dev-101': {
+          phase: "TEKNOLOGI",
+          title: "Fullstack Web Development",
+          description: "Kuasai fondasi utama web secara menyeluruh. Dari desain antarmuka, interaksi klien, hingga membangun server arsitektur di belakang layar.",
+          estTime: "12 Minggu",
           topicsCount: 5,
           items: [
-            { id: "1", title: "HTML5: Semantic & Web Structure", subtitle: "12 Video", link: "https://www.youtube.com/watch?v=NBZ0YisXG_M" },
-            { id: "2", title: "CSS3: Flexbox, Grid, & Responsive Design", subtitle: "15 Video", link: "https://www.youtube.com/watch?v=OXGznpKZ_sA" },
-            { id: "3", title: "Modern JavaScript (ES6+)", subtitle: "20 Video", link: "https://www.youtube.com/watch?v=PkZNo7MFNFg" },
-            { id: "4", title: "React Fundamentals & Hooks", subtitle: "25 Video", link: "https://www.youtube.com/watch?v=hQAHSlTtcmY" },
-            { id: "5", title: "Git, GitHub & Deployment", subtitle: "8 Video", link: "https://www.youtube.com/watch?v=RGOj5yH7evk" },
+            { id: "wd1", title: "HTML5 & CSS3: Semantic & Styling", subtitle: "Fondasi Struktur Web", link: "https://www.youtube.com/watch?v=NBZ0YisXG_M" },
+            { id: "wd2", title: "Modern JavaScript (ES6+)", subtitle: "Logika Pemrograman", link: "https://www.youtube.com/watch?v=PkZNo7MFNFg" },
+            { id: "wd3", title: "React.js & Hooks", subtitle: "Membangun UI Interaktif", link: "https://www.youtube.com/watch?v=hQAHSlTtcmY" },
+            { id: "wd4", title: "Node.js & Express API", subtitle: "Backend Server", link: "https://www.youtube.com/watch?v=Oe421EPjeBE" },
+            { id: "wd5", title: "PostgreSQL & Database Design", subtitle: "Manajemen Basis Data", link: "https://www.youtube.com/watch?v=qw--VYLpxG4" },
           ]
         },
-        phase2: {
-          phase: "PHASE 2",
-          title: "Step 2: Backend Developer Roadmap",
-          description: "Pelajari cara membangun server, mengelola database SQL, dan membuat API yang aman untuk mendukung aplikasi skala besar.",
-          estTime: "6 Weeks",
+        'marketing-101': {
+          phase: "MARKETING",
+          title: "Digital Marketing Specialist",
+          description: "Pelajari cara menjangkau jutaan pelanggan secara online, memaksimalkan mesin pencari, dan merancang kampanye iklan yang terukur.",
+          estTime: "8 Minggu",
           topicsCount: 5,
           items: [
-            { id: "1", title: "Node.js & Express.js Basics", subtitle: "15 Video", link: "https://www.youtube.com/watch?v=Oe421EPjeBE" },
-            { id: "2", title: "Relational Databases (PostgreSQL/MySQL)", subtitle: "12 Video", link: "https://www.youtube.com/watch?v=qw--VYLpxG4" },
-            { id: "3", title: "RESTful API Design", subtitle: "10 Video", link: "https://www.youtube.com/watch?v=lsMQRaeKNDk" },
-            { id: "4", title: "Authentication with JWT", subtitle: "14 Video", link: "https://www.youtube.com/watch?v=7nafaH9SddU" },
-            { id: "5", title: "SQL Advanced Logic", subtitle: "8 Video", link: "https://www.youtube.com/watch?v=HXV3zeQKqGY" },
+            { id: "mk1", title: "Digital Marketing Fundamentals", subtitle: "Pengantar Pemasaran Online", link: "https://www.youtube.com/watch?v=bixR-KIJKYM" },
+            { id: "mk2", title: "Search Engine Optimization (SEO)", subtitle: "Optimasi Mesin Pencari", link: "https://www.youtube.com/watch?v=DvwHLJQEGME" },
+            { id: "mk3", title: "Social Media Strategy", subtitle: "Manajemen Merek Digital", link: "https://www.youtube.com/watch?v=P_bB29tJ-vM" },
+            { id: "mk4", title: "Copywriting & Content Creation", subtitle: "Seni Menulis Menjual", link: "https://www.youtube.com/watch?v=fK1K0_Wj1o4" },
+            { id: "mk5", title: "Google Analytics & Data Tracking", subtitle: "Evaluasi Performa Kampanye", link: "https://www.youtube.com/watch?v=mQyBvIq4t5g" },
           ]
         },
-        phase3: {
-          phase: "PHASE 3",
-          title: "Step 3: UI/UX Designer Roadmap",
-          description: "Asah kreativitas Anda dalam merancang pengalaman pengguna yang intuitif dan antarmuka visual menggunakan Figma dan prinsip desain modern.",
-          estTime: "5 Weeks",
+        'ui-ux-101': {
+          phase: "KREATIF",
+          title: "UI/UX Design Masterclass",
+          description: "Asah empati Anda. Pelajari riset pengguna, wireframing, dan desain prototipe visual menggunakan standar industri modern.",
+          estTime: "6 Minggu",
           topicsCount: 5,
           items: [
-            { id: "1", title: "User Research & Empathy Mapping", subtitle: "8 Video", link: "https://www.youtube.com/watch?v=68Wf9YI_Wqg" },
-            { id: "2", title: "Wireframing & Low-Fi Prototyping", subtitle: "10 Video", link: "https://www.youtube.com/watch?v=fS3HIdN_uIc" },
-            { id: "3", title: "Mastering Figma: High-Fi Design", subtitle: "20 Video", link: "https://www.youtube.com/watch?v=FTFaQW9z764" },
-            { id: "4", title: "Design Systems & Style Guides", subtitle: "12 Video", link: "https://www.youtube.com/watch?v=7_50O5Xv_90" },
-            { id: "5", title: "Usability Testing", subtitle: "7 Video", link: "https://www.youtube.com/watch?v=T_8N_8XN-uI" },
+            { id: "ux1", title: "UX Research & Empathy Mapping", subtitle: "Memahami Pengguna", link: "https://www.youtube.com/watch?v=c9Wg6Cb_YlU" },
+            { id: "ux2", title: "Wireframing & Information Architecture", subtitle: "Kerangka Dasar Aplikasi", link: "https://www.youtube.com/watch?v=fS3HIdN_uIc" },
+            { id: "ux3", title: "Figma Fundamentals", subtitle: "Alat Desain UI Modern", link: "https://www.youtube.com/watch?v=FTFaQW9z764" },
+            { id: "ux4", title: "Design Systems & Visual Hierarchy", subtitle: "Konsistensi Komponen", link: "https://www.youtube.com/watch?v=7_50O5Xv_90" },
+            { id: "ux5", title: "Prototyping & Usability Testing", subtitle: "Simulasi Interaksi", link: "https://www.youtube.com/watch?v=T_8N_8XN-uI" },
+          ]
+        },
+        'business-101': {
+          phase: "BISNIS",
+          title: "Business & Data Analytics",
+          description: "Pelajari manajemen perusahaan tingkat tinggi, pemodelan proyeksi keuangan, serta visualisasi data untuk keputusan strategis.",
+          estTime: "10 Minggu",
+          topicsCount: 5,
+          items: [
+            { id: "bs1", title: "Business Strategy Fundamentals", subtitle: "Administrasi & Strategi", link: "https://www.youtube.com/watch?v=8ZtInClXe1Q" },
+            { id: "bs2", title: "Financial Modeling Basics", subtitle: "Keuangan Perusahaan", link: "https://www.youtube.com/watch?v=_a5IEA-O-IA" },
+            { id: "bs3", title: "Project Management (Agile/Scrum)", subtitle: "Manajemen Tim", link: "https://www.youtube.com/watch?v=50RVL71m5B4" },
+            { id: "bs4", title: "Data Analysis with Excel/SQL", subtitle: "Pengolahan Data Kasar", link: "https://www.youtube.com/watch?v=OvoFCEFkglw" },
+            { id: "bs5", title: "Data Visualization (Tableau/PowerBI)", subtitle: "Presentasi Bisnis", link: "https://www.youtube.com/watch?v=TPzE_V32jLQ" },
           ]
         }
       };
 
-      setModuleData(allRoadmaps[id] || allRoadmaps.phase1);
+      setModuleData(allRoadmaps[id]);
       setTimeout(() => setLoading(false), 500);
     };
 
@@ -86,7 +100,6 @@ export default function RoadmapDetail() {
     // Update ke Database Backend
     if (user) {
       try {
-        // 🔥 PERBAIKAN: Hapus userId dari payload
         await API.post('/roadmaps/progress', {
           phaseId: id,
           taskId: stringItemId
@@ -97,16 +110,17 @@ export default function RoadmapDetail() {
     }
   };
 
-  if (loading) {
+  if (loading || !moduleData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] bg-slate-50/50">
         <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-        <p className="font-bold text-slate-500 animate-pulse tracking-widest text-sm uppercase">Menyiapkan Modul...</p>
+        <p className="font-bold text-slate-500 animate-pulse tracking-widest text-sm uppercase">Menyiapkan Kurikulum...</p>
       </div>
     );
   }
 
   const currentPhaseChecklist = progress?.roadmapChecklist?.[id] || [];
+  const isCompleted = currentPhaseChecklist.length === moduleData.items.length;
 
   return (
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -119,7 +133,7 @@ export default function RoadmapDetail() {
         <div className="p-1.5 bg-white border border-slate-200 rounded-lg group-hover:border-indigo-300 transition-colors">
           <ChevronLeft size={16} />
         </div>
-        Kembali ke Peta Belajar
+        Kembali ke Katalog Karir
       </button>
 
       {/* HEADER INFO CARD */}
@@ -131,11 +145,13 @@ export default function RoadmapDetail() {
         <div className="relative z-10">
           <div className="flex flex-wrap items-center gap-3 mb-6">
             <span className="bg-indigo-500/30 text-indigo-200 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest border border-indigo-400/30 backdrop-blur-sm">
-              {moduleData.phase}
+              KATEGORI: {moduleData.phase}
             </span>
-            <span className="bg-emerald-500/20 text-emerald-300 text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1.5 border border-emerald-400/20">
-              <Sparkles size={14} className="text-emerald-400 drop-shadow-[0_0_5px_rgba(52,211,153,0.8)]" /> Active Module
-            </span>
+            {isCompleted && (
+              <span className="bg-emerald-500/20 text-emerald-300 text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1.5 border border-emerald-400/20">
+                <Sparkles size={14} className="text-emerald-400 drop-shadow-[0_0_5px_rgba(52,211,153,0.8)]" /> Roadmap Selesai
+              </span>
+            )}
           </div>
 
           <h1 className="text-3xl md:text-5xl font-black mb-4 tracking-tight leading-tight">
@@ -151,7 +167,7 @@ export default function RoadmapDetail() {
               <div className="p-1.5 bg-slate-800 rounded-lg shadow-md">
                 <Clock size={16} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]" />
               </div>
-              <span>Estimasi: {moduleData.estTime}</span>
+              <span>Estimasi Waktu: {moduleData.estTime}</span>
             </div>
             <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 text-white text-sm font-semibold shadow-inner">
               <div className="p-1.5 bg-slate-800 rounded-lg shadow-md">
@@ -167,12 +183,12 @@ export default function RoadmapDetail() {
       <div className="bg-white border border-slate-100 rounded-[2.5rem] p-6 md:p-10 shadow-sm">
         
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 px-2">
-           <h2 className="text-2xl font-extrabold text-slate-800">Daftar Materi</h2>
+           <h2 className="text-2xl font-extrabold text-slate-800">Daftar Modul Kurikulum</h2>
            <div className="flex items-center gap-3 text-slate-700 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm w-max">
              <div className="p-1.5 bg-slate-800 rounded-md shadow-md">
                <Zap size={16} className="text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
              </div>
-             <span>Dapatkan +10 XP per Topik</span>
+             <span>Selesaikan modul untuk mendapatkan +10 XP</span>
            </div>
         </div>
         
@@ -233,7 +249,7 @@ export default function RoadmapDetail() {
                     ) : (
                       <ExternalLink size={18} />
                     )}
-                    Buka Materi
+                    Buka Modul Belajar
                   </button>
                 </div>
 
