@@ -72,13 +72,13 @@ export default function Progress() {
     );
   }
 
-  // Menggunakan nilai default agar Radar Chart terbentuk sempurna saat awal
+  // Diperbarui menjadi 6 item agar membentuk Hexagon (Segienam) sempurna
   const defaultSkillData = [
     { subject: 'Frontend', A: 85, fullMark: 100 },
     { subject: 'Web Dev', A: 70, fullMark: 100 },
-    { subject: 'Teknologi', A: 90, fullMark: 100 },
-    { subject: 'Marketing', A: 55, fullMark: 100 },
-    { subject: 'Bisnis', A: 65, fullMark: 100 },
+    { subject: 'Teknologi', A: 50, fullMark: 100 },
+    { subject: 'Marketing', A: 75, fullMark: 100 },
+    { subject: 'Bisnis', A: 90, fullMark: 100 },
   ];
 
   const displaySkillData = data?.skillData?.length > 0
@@ -131,6 +131,8 @@ export default function Progress() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+        
+        {/* AKTIVITAS BELAJAR */}
         <div className="lg:col-span-2 bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -174,11 +176,12 @@ export default function Progress() {
           </div>
         </div>
 
+        {/* DISTRIBUSI KEAHLIAN (RADAR CHART) */}
         <div className="bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col relative overflow-hidden">
-          <div className="mb-6 relative z-10">
+          <div className="mb-4 relative z-10">
             <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
               <div className="p-2 bg-slate-800 rounded-xl shadow-md">
-                <Hexagon size={18} className="text-pink-400 drop-shadow-[0_0_5px_rgba(244,114,182,0.6)]" />
+                <Hexagon size={18} className="text-blue-400 drop-shadow-[0_0_5px_rgba(96,165,250,0.6)]" />
               </div>
               Distribusi Keahlian
             </h2>
@@ -187,45 +190,48 @@ export default function Progress() {
             </p>
           </div>
 
-          {/* Di sinilah komponen Radar Chart dipasang */}
-          <div className="flex-1 w-full min-h-[280px] relative z-10 flex items-center justify-center">
+          {/* Kotak gelap khusus untuk mempertegas radar chart seperti referensi */}
+          <div className="flex-1 w-full min-h-[300px] bg-[#0f172a] rounded-3xl p-4 mt-2 relative z-10 flex items-center justify-center border border-slate-800 shadow-inner">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="65%" data={displaySkillData}>
-                <PolarGrid stroke="#cbd5e1" strokeDasharray="3 3" />
+                {/* Menghapus strokeDasharray agar garis solid dan mengubah warna lebih terang */}
+                <PolarGrid gridType="polygon" stroke="#334155" strokeWidth={1} />
                 <PolarAngleAxis 
                   dataKey="subject" 
-                  tick={{ fill: '#334155', fontSize: 12, fontWeight: 700 }} 
+                  tick={{ fill: '#cbd5e1', fontSize: 11, fontWeight: 600 }} 
                 />
                 <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                 <Radar
                   name="Penguasaan"
                   dataKey="A"
-                  stroke="#f472b6"
+                  stroke="#3b82f6" /* Biru terang */
                   strokeWidth={3}
-                  fill="#fbcfe8"
-                  fillOpacity={0.6}
+                  fill="#2563eb" /* Biru solid */
+                  fillOpacity={0.45}
                 />
                 <Tooltip
-                  formatter={(value) => [`${value}%`, 'Tingkat Penguasaan']}
+                  formatter={(value) => [`${value}%`, 'Penguasaan']}
                   contentStyle={{
+                    backgroundColor: '#1e293b',
                     borderRadius: '12px',
-                    border: '1px solid #f1f5f9',
-                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+                    border: '1px solid #334155',
+                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)',
                     fontWeight: 'bold',
-                    color: '#1e293b'
+                    color: '#f8fafc'
                   }}
+                  itemStyle={{ color: '#60a5fa' }}
                 />
               </RadarChart>
             </ResponsiveContainer>
           </div>
           
-          <div className="mt-4 text-xs text-slate-400 font-medium text-center">
+          <div className="mt-5 text-xs text-slate-400 font-medium text-center relative z-10">
             Area yang lebih luas menunjukkan tingkat penguasaan yang lebih tinggi.
           </div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-indigo-400/10 rounded-full blur-3xl pointer-events-none"></div>
         </div>
       </div>
 
+      {/* KOLEKSI LENCANA */}
       <div className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-5 text-amber-500 pointer-events-none">
           <Award size={150} />

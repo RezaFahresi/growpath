@@ -15,7 +15,8 @@ exports.findUserByEmailAndRoleCondition = async (email, isForAdmin = false) => {
 };
 
 exports.findUserById = async (id) => {
-  const result = await db.query("SELECT id, name, email, role FROM users WHERE id = $1", [id]);
+  // UPDATE: Tambahkan kolom image
+  const result = await db.query("SELECT id, name, email, role, image FROM users WHERE id = $1", [id]);
   return result.rows[0];
 };
 
@@ -23,7 +24,7 @@ exports.createUser = async (name, email, password, role = 'user') => {
   const result = await db.query(
     `INSERT INTO users (name, email, password, role)
      VALUES ($1, $2, $3, $4)
-     RETURNING id, name, email, role`,
+     RETURNING id, name, email, role, image`,
     [name, email, password, role]
   );
 
@@ -31,7 +32,8 @@ exports.createUser = async (name, email, password, role = 'user') => {
 };
 
 exports.getAllUsers = async () => {
-  const result = await db.query("SELECT id, name, email, role FROM users ORDER BY id ASC");
+  //UPDATE: Tambahkan kolom image
+  const result = await db.query("SELECT id, name, email, role, image FROM users ORDER BY id ASC");
   return result.rows;
 };
 
@@ -41,10 +43,10 @@ exports.getAllUsers = async () => {
 
 exports.updateUser = async (id, name, email, role) => {
   const result = await db.query(
-    "UPDATE users SET name = $1, email = $2, role = $3, updated_at = NOW() WHERE id = $4 RETURNING id, name, email, role",
+    "UPDATE users SET name = $1, email = $2, role = $3, updated_at = NOW() WHERE id = $4 RETURNING id, name, email, role, image",
     [name, email, role, id]
   );
-  return result.rows[0]; // Mengembalikan data user yang baru di-update
+  return result.rows[0]; 
 };
 
 exports.deleteUser = async (id) => {
@@ -52,5 +54,14 @@ exports.deleteUser = async (id) => {
     "DELETE FROM users WHERE id = $1 RETURNING id",
     [id]
   );
-  return result.rows[0]; // Jika undefined, berarti user tidak ditemukan
+  return result.rows[0]; 
+};
+
+// FUNGSI BARU KHUSUS UNTUK MENYIMPAN URL FOTO PROFIL
+exports.updateUserImage = async (id, imageUrl) => {
+  const result = await db.query(
+    "UPDATE users SET image = $1, updated_at = NOW() WHERE id = $2 RETURNING id, name, email, role, image",
+    [imageUrl, id]
+  );
+  return result.rows[0];
 };

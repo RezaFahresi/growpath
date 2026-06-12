@@ -110,13 +110,14 @@ export default function LoginAdmin() {
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold tracking-wider text-slate-400 ml-1 uppercase">Admin Email</label>
               <div className="relative">
-                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 z-10" />
                 <input
                   type="email" 
                   name="email"
                   value={formData.email} 
                   onChange={handleChange}
-                  className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 rounded-xl focus:outline-none focus:border-blue-500 text-sm"
+                  // 🔥 FIX AUTOFILL: Menambahkan override class khusus webkit
+                  className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 rounded-xl focus:outline-none focus:border-blue-500 text-sm [&:-webkit-autofill]:shadow-[0_0_0_50px_#090E17_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:#e2e8f0]"
                   placeholder="admin@growpath.com"
                 />
               </div>
@@ -125,16 +126,17 @@ export default function LoginAdmin() {
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold tracking-wider text-slate-400 ml-1 uppercase">Password</label>
               <div className="relative">
-                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 z-10" />
                 <input
                   type={showPassword ? "text" : "password"} 
                   name="password"
                   value={formData.password} 
                   onChange={handleChange}
-                  className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 pr-12 rounded-xl focus:outline-none focus:border-blue-500 text-sm"
+                  //FIX AUTOFILL: Menambahkan override class khusus webkit
+                  className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 pr-12 rounded-xl focus:outline-none focus:border-blue-500 text-sm [&:-webkit-autofill]:shadow-[0_0_0_50px_#090E17_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:#e2e8f0]"
                   placeholder="••••••••"
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-400 p-1">
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-400 p-1 z-10">
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>

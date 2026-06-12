@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, X, User, Mail, MapPin, AlignLeft, Check } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
+import API from '../../api/axios';
+import Swal from 'sweetalert2';
 
 export default function EditProfile() {
-  const { user, updateProfile } = useAppContext();
+  const { user, updateProfile, login } = useAppContext();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -14,29 +16,105 @@ export default function EditProfile() {
     bio: user?.bio || '',
   });
 
+  // State untuk penanganan foto
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(user?.image || null);
+  const fileInputRef = useRef(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  // Handler saat file dipilih dari komputer
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validasi ukuran (Maksimal 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        return Swal.fire({
+          icon: 'warning',
+          title: 'File Terlalu Besar',
+          text: 'Ukuran foto maksimal adalah 2MB.',
+          confirmButtonColor: '#071226'
+        });
+      }
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file)); // Tampilkan preview instan
+    }
+  };
+
+  // Handler untuk tombol "Hapus" foto
+  const handleRemovePhoto = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // Handler utama saat tombol "Simpan Perubahan" diklik
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSaving(true);
-    
-    // Simulasi loading sebentar agar feel-nya lebih natural
-    setTimeout(() => {
-      updateProfile(formData);
-      setIsSaving(false);
+
+    try {
+      let finalImageUrl = user?.image;
+
+      // 1. Jika ada foto baru yang dipilih, upload dulu ke server (ImgBB)
+      if (selectedFile) {
+        const imageFormData = new FormData();
+        imageFormData.append('profile_image', selectedFile);
+
+        const uploadRes = await API.post('/users/upload-photo', imageFormData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        
+        finalImageUrl = uploadRes.data.imageUrl;
+      } else if (!previewUrl) {
+        // Jika user sengaja menghapus foto, pastikan url kosong
+        finalImageUrl = null; 
+      }
+
+      // 2. Gabungkan data teks dengan URL foto terbaru
+      const finalData = { ...formData, image: finalImageUrl };
+
+      // 3. Simpan data ke context / database
+      if (updateProfile) {
+        await updateProfile(finalData);
+      } else if (login) {
+        // Fallback jika tidak ada fungsi updateProfile khusus
+        const updatedUser = { ...user, ...finalData };
+        localStorage.setItem('growpath_user', JSON.stringify(updatedUser));
+        await login(updatedUser);
+      }
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Berhasil Disimpan!',
+        text: 'Profil Anda telah diperbarui.',
+        confirmButtonColor: '#071226',
+        timer: 2000,
+        showConfirmButton: false
+      });
+
       navigate('/dashboard/profile');
-    }, 800);
+
+    } catch (error) {
+      console.error('Update Error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal Menyimpan',
+        text: error.response?.data?.message || 'Terjadi kesalahan sistem.',
+        confirmButtonColor: '#dc2626'
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
-    // Margin diseragamkan: w-full max-w-7xl mx-auto agar fit in
     <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10 p-4 md:p-8">
       
-      {/* Header Modal-like */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-8 max-w-4xl mx-auto">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Edit Profile</h1>
@@ -59,34 +137,49 @@ export default function EditProfile() {
           <h2 className="text-lg font-bold text-slate-800 mb-6">Profile Picture</h2>
           
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8">
-            <div className="relative group cursor-pointer">
-              {/* Warna Avatar disamakan dengan dark navy solid seperti ProfileView */}
-              <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-[#071226] to-slate-800 flex items-center justify-center text-white shadow-xl group-hover:shadow-slate-800/50 transition-all duration-300">
-                <User size={56} strokeWidth={2} className="text-slate-300" />
+            <div className="relative group cursor-pointer" onClick={() => fileInputRef.current.click()}>
+              <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-[#071226] to-slate-800 flex items-center justify-center text-white shadow-xl group-hover:shadow-slate-800/50 transition-all duration-300 overflow-hidden">
+                {previewUrl ? (
+                  <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <User size={56} strokeWidth={2} className="text-slate-300" />
+                )}
               </div>
               <div className="absolute -bottom-3 -right-3 w-12 h-12 bg-white rounded-2xl border-4 border-white flex items-center justify-center text-[#071226] shadow-md group-hover:scale-110 transition-transform">
                 <Camera size={20} />
               </div>
             </div>
 
+            {/* Hidden File Input */}
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              accept="image/png, image/jpeg, image/jpg" 
+              className="hidden" 
+            />
+
             <div className="space-y-4 text-center sm:text-left mt-2">
               <p className="text-sm text-slate-500 leading-relaxed max-w-sm">
                 Unggah foto profil baru. Kami merekomendasikan gambar dengan rasio 1:1, berukuran setidaknya <strong>400x400px</strong>.
               </p>
               <div className="flex flex-wrap justify-center sm:justify-start gap-3">
-                {/* Warna tombol serasi dengan tema dark navy */}
                 <button 
                   type="button" 
+                  onClick={() => fileInputRef.current.click()}
                   className="px-6 py-2.5 bg-[#071226] text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors shadow-md"
                 >
                   Pilih Foto
                 </button>
-                <button 
-                  type="button" 
-                  className="px-6 py-2.5 bg-white text-slate-500 border border-slate-200 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors"
-                >
-                  Hapus
-                </button>
+                {(previewUrl || selectedFile) && (
+                  <button 
+                    type="button" 
+                    onClick={handleRemovePhoto}
+                    className="px-6 py-2.5 bg-white text-slate-500 border border-slate-200 rounded-xl font-bold text-sm hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
+                  >
+                    Hapus
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -131,7 +224,8 @@ export default function EditProfile() {
                   placeholder="user@example.com"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-700 font-semibold"
+                  readOnly // Email biasanya readOnly agar tidak konflik dengan auth
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-100 opacity-70 cursor-not-allowed transition-all text-slate-700 font-semibold"
                 />
               </div>
             </div>

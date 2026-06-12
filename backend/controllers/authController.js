@@ -4,32 +4,37 @@ const axios = require('axios');
 const jwt = require('jsonwebtoken'); 
 const db = require('../config/db');
 
+// PERBAIKAN: Fungsi ini sekarang akan berhasil karena kolom 'image' dihapus
 const ensureTalentMapping = async (user) => {
-  if (!user) return;
+  if (!user || !user.email) return;
 
   const userRole = (user.role || 'user').toLowerCase().trim();
   if (userRole !== 'user') return;
 
-  const exists = await db.query(
-    `SELECT id FROM talent_mappings WHERE email = $1 LIMIT 1`,
-    [user.email]
-  );
-
-  if (exists.rows.length === 0) {
-    await db.query(
-      `INSERT INTO talent_mappings 
-      (name, email, role, department, performance, potential, image)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [
-        user.name,
-        user.email,
-        'user',
-        'General',
-        'Medium',
-        'Medium',
-        null
-      ]
+  try {
+    const exists = await db.query(
+      `SELECT id FROM talent_mappings WHERE email = $1 LIMIT 1`,
+      [user.email]
     );
+
+    if (exists.rows.length === 0) {
+      await db.query(
+        `INSERT INTO talent_mappings 
+        (name, email, role, department, performance, potential)
+        VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          user.name || 'User Baru',
+          user.email,
+          'user',
+          'Belum Ditentukan',
+          '0',
+          '0'
+        ]
+      );
+      console.log(`✅ Profil Talent Mapping otomatis dibuat untuk: ${user.email}`);
+    }
+  } catch (err) {
+    console.error("❌ Gagal insert otomatis ke talent_mappings:", err.message);
   }
 };
 
@@ -54,15 +59,18 @@ exports.register = async (req, res) => {
 
     const newUser = await UserModel.createUser(name, email, hashedPassword, finalRole);
 
-    try {
-      await ensureTalentMapping(newUser);
-    } catch (mappingErr) {
-      console.error("Warning: Gagal memastikan talent_mappings", mappingErr);
-    }
+    // Panggil fungsi agar nama user baru langsung masuk ke tabel Admin
+    await ensureTalentMapping(newUser);
 
     return res.status(201).json({ 
       message: 'Registrasi berhasil', 
-      user: newUser 
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        image: newUser.image // Tambahkan image
+      } 
     });
 
   } catch (error) {
@@ -84,11 +92,7 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (isMatch) {
-      try {
-        await ensureTalentMapping(user);
-      } catch (mappingErr) {
-        console.error("Warning: Gagal memastikan talent_mappings saat login", mappingErr);
-      }
+      await ensureTalentMapping(user);
 
       const token = jwt.sign(
         { 
@@ -108,7 +112,8 @@ exports.login = async (req, res) => {
           id: user.id, 
           name: user.name,
           email: user.email,
-          role: user.role 
+          role: user.role,
+          image: user.image // Tambahkan image agar foto tampil saat login
         } 
       });
     } else {
@@ -130,20 +135,22 @@ exports.googleLogin = async (req, res) => {
       { headers: { Authorization: `Bearer ${access_token}` } }
     );
     
-    const { email, name } = googleResponse.data;
+    const { email, name, picture } = googleResponse.data;
 
     let user = await UserModel.findUserByEmail(email);
 
     if (!user) {
       const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-10), 10);
       user = await UserModel.createUser(name, email, randomPassword, 'user');
+      
+      // Jika user baru dari Google, kita bisa langsung simpan foto profil Google-nya
+      if (picture) {
+        await db.query(`UPDATE users SET image = $1 WHERE email = $2`, [picture, email]);
+        user.image = picture;
+      }
     }
 
-    try {
-      await ensureTalentMapping(user);
-    } catch (mappingErr) {
-      console.error("Warning: Gagal memastikan Google User ke talent_mappings", mappingErr);
-    }
+    await ensureTalentMapping(user);
 
     const token = jwt.sign(
       { 
@@ -156,7 +163,6 @@ exports.googleLogin = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    console.log(`[GOOGLE AUTH SUKSES] Email: ${user.email}`);
     return res.json({
       message: 'Login Google berhasil',
       token: token, 
@@ -164,7 +170,8 @@ exports.googleLogin = async (req, res) => {
         id: user.id, 
         name: user.name,
         email: user.email,
-        role: user.role 
+        role: user.role,
+        image: user.image // Tambahkan image
       }
     });
 
@@ -212,7 +219,8 @@ exports.loginAdmin = async (req, res) => {
           id: admin.id, 
           name: admin.name,
           email: admin.email,
-          role: userRole 
+          role: userRole,
+          image: admin.image // Tambahkan image
         } 
       });
     } else {
@@ -227,6 +235,7 @@ exports.loginAdmin = async (req, res) => {
 // 5. CHECK AUTH 
 exports.checkAuth = async (req, res) => {
   if (req.user) {
+    // req.user biasanya diisi dari token atau database, pastikan jika mengambil dari DB, field image disertakan.
     return res.json({ isAuthenticated: true, user: req.user });
   } else {
     return res.status(401).json({ isAuthenticated: false, message: 'Tidak terautentikasi' });
