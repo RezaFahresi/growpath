@@ -76,10 +76,15 @@ export default function Header({ onOpenSidebar }) {
             onClick={() => setIsProfileOpen(!isProfileOpen)}
             className="flex items-center gap-2 lg:gap-3 hover:bg-slate-50 p-1 lg:p-1.5 lg:pr-3 rounded-full border border-transparent hover:border-slate-200 transition-all group focus:outline-none"
           >
-            <div className="h-8 w-8 lg:h-9 lg:w-9 rounded-full bg-gradient-to-tr from-[#5D5FEF] to-indigo-400 flex items-center justify-center text-white font-bold shadow-sm group-hover:shadow-md transition-shadow shrink-0">
-              <span className="text-sm">
-                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-              </span>
+            {/*PERBAIKAN: Menampilkan Foto User Terbaru */}
+            <div className="h-8 w-8 lg:h-9 lg:w-9 rounded-full bg-gradient-to-tr from-[#5D5FEF] to-indigo-400 flex items-center justify-center text-white font-bold shadow-sm group-hover:shadow-md transition-shadow shrink-0 overflow-hidden">
+              {user?.image ? (
+                <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </span>
+              )}
             </div>
             
             <div className="hidden sm:block text-left">

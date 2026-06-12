@@ -23,7 +23,6 @@ export default function ProfileView() {
       if (!user) return; 
       
       try {
-        // 🔥 PERBAIKAN: Hapus /user/${user.id} karena backend sudah ambil ID dari Token JWT
         const response = await API.get('/progress');
         const result = response.data;
         
@@ -77,10 +76,14 @@ export default function ProfileView() {
           <div className="relative flex flex-col lg:flex-row justify-between items-center lg:items-end -mt-20 lg:-mt-24 mb-10 gap-6">
             <div className="flex flex-col lg:flex-row items-center lg:items-end gap-6 w-full lg:w-auto text-center lg:text-left">
               
-              {/* Avatar Box (Border putih tebal, isian dark navy solid) */}
+              {/* 🔥 PERBAIKAN: Menampilkan Foto Profil jika ada, jika tidak pakai Ikon User */}
               <div className="relative z-10 w-36 h-36 md:w-44 md:h-44 rounded-3xl bg-white p-2 shadow-2xl shrink-0">
                 <div className="w-full h-full rounded-2xl bg-gradient-to-br from-[#071226] to-slate-800 flex items-center justify-center text-white relative overflow-hidden">
-                  <User size={64} strokeWidth={2} className="relative z-10 text-slate-300" />
+                  {user?.image ? (
+                    <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={64} strokeWidth={2} className="relative z-10 text-slate-300" />
+                  )}
                 </div>
               </div>
               
@@ -126,7 +129,6 @@ export default function ProfileView() {
           <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
             <TrendingUp size={100} />
           </div>
-          {/* Ikon dengan background abu-tua (slate-800) dan highlight Cyan persis seperti Dashboard */}
           <div className="w-14 h-14 rounded-2xl bg-slate-800 shadow-md flex items-center justify-center mb-6">
             <TrendingUp size={24} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
           </div>
@@ -139,7 +141,6 @@ export default function ProfileView() {
           <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
             <BookOpen size={100} />
           </div>
-          {/* Ikon dengan background abu-tua dan highlight Emerald */}
           <div className="w-14 h-14 rounded-2xl bg-slate-800 shadow-md flex items-center justify-center mb-6">
             <BookOpen size={24} className="text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
           </div>
@@ -152,7 +153,6 @@ export default function ProfileView() {
           <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
             <Clock size={100} />
           </div>
-          {/* Ikon dengan background abu-tua dan highlight Indigo */}
           <div className="w-14 h-14 rounded-2xl bg-slate-800 shadow-md flex items-center justify-center mb-6">
             <Clock size={24} className="text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]" />
           </div>
