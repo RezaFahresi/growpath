@@ -56,3 +56,27 @@ exports.deleteTalentMapping = async (id) => {
 
   return result.rows[0];
 };
+
+// Menambahkan fungsi ini di bagian bawah file talentMappingModel.js
+exports.createTalentMapping = async (data) => {
+  // Berikan nilai default (kosong/0) untuk user baru
+  const { 
+    name, 
+    email, 
+    role = 'User Baru', 
+    department = 'Belum Ditentukan', 
+    performance = 0, 
+    potential = 0 
+  } = data;
+
+  const result = await db.query(
+    `
+    INSERT INTO talent_mappings (name, email, role, department, performance, potential)
+    VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING *
+    `,
+    [name, email, role, department, performance, potential]
+  );
+
+  return result.rows[0];
+};

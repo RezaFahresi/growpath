@@ -1,4 +1,6 @@
 const AssessmentModel = require('../models/assessmentModel');
+//TAMBAHAN: Import TalentModel untuk sinkronisasi data Admin
+const TalentModel = require('../models/talentMappingModel'); 
 
 // Helper untuk validasi role sederhana dari payload JWT
 const isAdmin = (user) => user && (user.role === 'admin' || user.role === 'superadmin');
@@ -82,18 +84,63 @@ exports.deleteAssessment = async (req, res) => {
   }
 };
 
+// ==============================================================
+// FUNGSI UTAMA YANG DIPERBARUI: SUBMIT ASSESSTMENT
+// ==============================================================
 exports.submitAssessment = async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ message: 'Silakan login.' });
     if (isAdmin(req.user)) return res.status(403).json({ message: 'Admin tidak boleh mengerjakan kuis.' });
 
     const userId = parseInt(req.user.id, 10);
+    const userEmail = req.user.email; // Email untuk identifikasi di tabel Talent Mapping
+    
     const { assessment_id, score, timeSpentHours } = req.body;
     const hours = timeSpentHours || 0.5;
 
+    // 1. Simpan riwayat ujian ke tabel 'assessment_results'
     const skillCategory = await AssessmentModel.getAssessmentCategory(assessment_id);
     const result = await AssessmentModel.submitAssessmentResult(userId, assessment_id, score, hours, skillCategory);
     
+    // 2. OTOMATIS UPDATE/BUAT TALENT MAPPING UNTUK ADMIN DAN ROADMAP
+    if (userEmail) {
+      try {
+        const existingTalent = await TalentModel.getTalentMappingByEmail(userEmail);
+        
+        // Kalkulasi Potensi berdasarkan skor ujian
+        let calculatedPotential = 50;
+        if (score >= 80) calculatedPotential = 90;
+        else if (score >= 60) calculatedPotential = 75;
+
+        if (existingTalent) {
+          // Jika User sudah terdaftar, update jurusan dan nilainya
+          await TalentModel.updateTalentMapping(existingTalent.id, {
+            name: existingTalent.name,
+            role: existingTalent.role || 'user',
+            department: skillCategory || 'General', // Jurusan berubah sesuai ujian yang dikerjakan!
+            performance: score, 
+            potential: calculatedPotential
+          });
+          console.log(`✅ [Talent Mapping Updated] Email: ${userEmail} | Kategori: ${skillCategory}`);
+        } else {
+          // Fallback: Jika profil belum ada, buatkan otomatis
+          if (TalentModel.createTalentMapping) {
+            await TalentModel.createTalentMapping({
+              name: req.user.name || 'User Baru',
+              email: userEmail,
+              role: 'user',
+              department: skillCategory || 'General',
+              performance: score,
+              potential: calculatedPotential
+            });
+            console.log(`✅ [Talent Mapping Created] Email: ${userEmail}`);
+          }
+        }
+      } catch (talentErr) {
+        console.error("❌ Gagal sinkronisasi Talent Mapping:", talentErr);
+      }
+    }
+
     res.json({ message: 'Hasil berhasil disimpan!', data: result });
   } catch (error) {
     console.error("Error submitAssessment:", error);
