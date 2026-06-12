@@ -44,7 +44,11 @@ export default function Progress() {
 
       try {
         const response = await API.get('/progress');
-        setData(response.data);
+        // Pastikan response.data memiliki struktur yang aman sebelum di-set
+        setData((prevData) => ({
+          ...prevData,
+          ...response.data
+        }));
       } catch (error) {
         console.error("Gagal mengambil data progress:", error.response?.data?.message || error.message);
       } finally {
@@ -72,7 +76,7 @@ export default function Progress() {
     { subject: 'Analisa', A: 0, fullMark: 100 },
   ];
 
-  const displaySkillData = data.skillData && data.skillData.length > 0
+  const displaySkillData = data?.skillData?.length > 0
     ? data.skillData
     : defaultSkillData;
 
@@ -89,7 +93,7 @@ export default function Progress() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <StatCard 
           label="Total Jam Belajar" 
-          value={`${data.stats.totalHours}h`} 
+          value={`${data?.stats?.totalHours || 0}h`} 
           icon={Clock} 
           color="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" 
           bg="bg-slate-800" 
@@ -97,7 +101,7 @@ export default function Progress() {
         />
         <StatCard 
           label="Runtutan Belajar" 
-          value={`${data.stats.streak} Hari`} 
+          value={`${data?.stats?.streak || 0} Hari`} 
           icon={TrendingUp} 
           color="text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]" 
           bg="bg-slate-800" 
@@ -105,7 +109,7 @@ export default function Progress() {
         />
         <StatCard 
           label="Modul Selesai" 
-          value={data.stats.completed} 
+          value={data?.stats?.completed || 0} 
           icon={BookOpen} 
           color="text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.6)]" 
           bg="bg-slate-800" 
@@ -113,7 +117,7 @@ export default function Progress() {
         />
         <StatCard 
           label="Pencapaian Diraih" 
-          value={data.stats.achievements} 
+          value={data?.stats?.achievements || 0} 
           icon={Trophy} 
           color="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" 
           bg="bg-slate-800" 
@@ -122,7 +126,6 @@ export default function Progress() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-
         <div className="lg:col-span-2 bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -140,7 +143,7 @@ export default function Progress() {
 
           <div className="flex-1 w-full min-h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.activityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={data?.activityData || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
@@ -155,7 +158,6 @@ export default function Progress() {
                   }}
                 />
                 <Bar dataKey="hours" fill="url(#colorIndigo)" radius={[6, 6, 6, 6]} barSize={32} />
-
                 <defs>
                   <linearGradient id="colorIndigo" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
@@ -188,7 +190,6 @@ export default function Progress() {
                 margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
               >
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-
                 <XAxis
                   type="number"
                   domain={[0, 100]}
@@ -197,7 +198,6 @@ export default function Progress() {
                   tickLine={false}
                   tickFormatter={(value) => `${value}%`}
                 />
-
                 <YAxis
                   type="category"
                   dataKey="subject"
@@ -206,7 +206,6 @@ export default function Progress() {
                   axisLine={false}
                   tickLine={false}
                 />
-
                 <Tooltip
                   formatter={(value) => [`${value}%`, 'Penguasaan']}
                   contentStyle={{
@@ -217,7 +216,6 @@ export default function Progress() {
                     color: '#1e293b'
                   }}
                 />
-
                 <Bar
                   dataKey="A"
                   fill="#6366f1"
@@ -228,14 +226,11 @@ export default function Progress() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-
           <div className="mt-4 text-xs text-slate-400 font-medium text-center">
             Semakin panjang bar, semakin tinggi tingkat penguasaan skill.
           </div>
-
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-indigo-400/10 rounded-full blur-3xl pointer-events-none"></div>
         </div>
-
       </div>
 
       <div className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-sm relative overflow-hidden">
@@ -258,21 +253,19 @@ export default function Progress() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 md:gap-8 relative z-10">
-          {data.badges && data.badges.length > 0 ? (
+          {data?.badges?.length > 0 ? (
             data.badges.map((badge, idx) => {
               const IconComponent = iconMap[badge.icon_name] || Award;
-
+              // Gunakan badge.id jika ada, jika tidak fallback ke idx
               return (
-                <div key={idx} className="group flex flex-col items-center">
+                <div key={badge.id || idx} className="group flex flex-col items-center">
                   <div className="relative mb-4">
                     <div className="absolute inset-0 bg-indigo-500 blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300 rounded-full"></div>
-
                     <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-[2rem] bg-gradient-to-br from-indigo-500 via-indigo-600 to-indigo-800 flex items-center justify-center shadow-lg shadow-indigo-200 border-4 border-white transform group-hover:-translate-y-2 group-hover:scale-105 transition-all duration-300 cursor-pointer">
                       <IconComponent size={40} className="text-white drop-shadow-md" />
                       <Star size={12} className="absolute top-3 right-3 text-amber-300 fill-amber-300 opacity-80" />
                     </div>
                   </div>
-
                   <h3 className="font-bold text-slate-800 text-sm text-center group-hover:text-indigo-600 transition-colors">
                     {badge.title}
                   </h3>
@@ -293,7 +286,6 @@ export default function Progress() {
           )}
         </div>
       </div>
-
     </div>
   );
 }
