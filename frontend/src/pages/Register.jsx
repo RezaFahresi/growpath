@@ -76,6 +76,7 @@ export default function Register() {
         text: 'Silakan login untuk memulai.'
       });
 
+      // Mengirim status isNewUser ke halaman login
       navigate('/login', {
         state: { isNewUser: true }
       });
@@ -135,7 +136,8 @@ export default function Register() {
         } else if (role === 'admin') {
           navigate('/admin');
         } else {
-          navigate('/dashboard/assessments/1');
+          // PERBAIKAN: Arahkan ke daftar assessment
+          navigate('/dashboard/assessments');
         }
       } catch (error) {
         console.error("Google Auth Error:", error);

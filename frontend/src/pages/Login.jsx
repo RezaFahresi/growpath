@@ -23,8 +23,9 @@ export default function Login() {
     } else if (role === 'admin') {
       navigate('/admin');
     } else {
+      // 🔥 PERBAIKAN: Arahkan ke daftar assessment, BUKAN ke id 1
       if (location.state && location.state.isNewUser) {
-        navigate('/dashboard/assessments/1');
+        navigate('/dashboard/assessments'); 
       } else {
         navigate('/dashboard');
       }
@@ -56,6 +57,7 @@ export default function Login() {
     });
 
     try {
+      // Pastikan endpoint backend Anda benar (login-user atau login)
       const response = await API.post('/auth/login-user', { email, password });
       const data = response.data;
 

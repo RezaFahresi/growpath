@@ -6,7 +6,12 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis
 } from 'recharts';
 import { Target, Zap, Award, Star, Clock, TrendingUp, BookOpen, Trophy, Activity, Hexagon } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
@@ -44,7 +49,6 @@ export default function Progress() {
 
       try {
         const response = await API.get('/progress');
-        // Pastikan response.data memiliki struktur yang aman sebelum di-set
         setData((prevData) => ({
           ...prevData,
           ...response.data
@@ -68,12 +72,13 @@ export default function Progress() {
     );
   }
 
+  // Menggunakan nilai default agar Radar Chart terbentuk sempurna saat awal
   const defaultSkillData = [
-    { subject: 'Teknologi', A: 0, fullMark: 100 },
-    { subject: 'Bisnis', A: 0, fullMark: 100 },
-    { subject: 'Marketing', A: 0, fullMark: 100 },
-    { subject: 'Kreatif', A: 0, fullMark: 100 },
-    { subject: 'Analisa', A: 0, fullMark: 100 },
+    { subject: 'Frontend', A: 85, fullMark: 100 },
+    { subject: 'Web Dev', A: 70, fullMark: 100 },
+    { subject: 'Teknologi', A: 90, fullMark: 100 },
+    { subject: 'Marketing', A: 55, fullMark: 100 },
+    { subject: 'Bisnis', A: 65, fullMark: 100 },
   ];
 
   const displaySkillData = data?.skillData?.length > 0
@@ -182,52 +187,40 @@ export default function Progress() {
             </p>
           </div>
 
-          <div className="flex-1 w-full min-h-[280px] relative z-10">
+          {/* Di sinilah komponen Radar Chart dipasang */}
+          <div className="flex-1 w-full min-h-[280px] relative z-10 flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={displaySkillData}
-                layout="vertical"
-                margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                <XAxis
-                  type="number"
-                  domain={[0, 100]}
-                  tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(value) => `${value}%`}
+              <RadarChart cx="50%" cy="50%" outerRadius="65%" data={displaySkillData}>
+                <PolarGrid stroke="#cbd5e1" strokeDasharray="3 3" />
+                <PolarAngleAxis 
+                  dataKey="subject" 
+                  tick={{ fill: '#334155', fontSize: 12, fontWeight: 700 }} 
                 />
-                <YAxis
-                  type="category"
-                  dataKey="subject"
-                  width={80}
-                  tick={{ fill: '#334155', fontSize: 12, fontWeight: 700 }}
-                  axisLine={false}
-                  tickLine={false}
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                <Radar
+                  name="Penguasaan"
+                  dataKey="A"
+                  stroke="#f472b6"
+                  strokeWidth={3}
+                  fill="#fbcfe8"
+                  fillOpacity={0.6}
                 />
                 <Tooltip
-                  formatter={(value) => [`${value}%`, 'Penguasaan']}
+                  formatter={(value) => [`${value}%`, 'Tingkat Penguasaan']}
                   contentStyle={{
                     borderRadius: '12px',
-                    border: 'none',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                    border: '1px solid #f1f5f9',
+                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
                     fontWeight: 'bold',
                     color: '#1e293b'
                   }}
                 />
-                <Bar
-                  dataKey="A"
-                  fill="#6366f1"
-                  radius={[0, 10, 10, 0]}
-                  barSize={22}
-                  background={{ fill: '#f1f5f9', radius: 10 }}
-                />
-              </BarChart>
+              </RadarChart>
             </ResponsiveContainer>
           </div>
+          
           <div className="mt-4 text-xs text-slate-400 font-medium text-center">
-            Semakin panjang bar, semakin tinggi tingkat penguasaan skill.
+            Area yang lebih luas menunjukkan tingkat penguasaan yang lebih tinggi.
           </div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-indigo-400/10 rounded-full blur-3xl pointer-events-none"></div>
         </div>
@@ -256,7 +249,6 @@ export default function Progress() {
           {data?.badges?.length > 0 ? (
             data.badges.map((badge, idx) => {
               const IconComponent = iconMap[badge.icon_name] || Award;
-              // Gunakan badge.id jika ada, jika tidak fallback ke idx
               return (
                 <div key={badge.id || idx} className="group flex flex-col items-center">
                   <div className="relative mb-4">
