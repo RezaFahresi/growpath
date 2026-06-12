@@ -4,32 +4,37 @@ const axios = require('axios');
 const jwt = require('jsonwebtoken'); 
 const db = require('../config/db');
 
+// PERBAIKAN: Fungsi ini sekarang akan berhasil karena kolom 'image' dihapus
 const ensureTalentMapping = async (user) => {
-  if (!user) return;
+  if (!user || !user.email) return;
 
   const userRole = (user.role || 'user').toLowerCase().trim();
   if (userRole !== 'user') return;
 
-  const exists = await db.query(
-    `SELECT id FROM talent_mappings WHERE email = $1 LIMIT 1`,
-    [user.email]
-  );
-
-  if (exists.rows.length === 0) {
-    await db.query(
-      `INSERT INTO talent_mappings 
-      (name, email, role, department, performance, potential, image)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [
-        user.name,
-        user.email,
-        'user',
-        'General',
-        'Medium',
-        'Medium',
-        null
-      ]
+  try {
+    const exists = await db.query(
+      `SELECT id FROM talent_mappings WHERE email = $1 LIMIT 1`,
+      [user.email]
     );
+
+    if (exists.rows.length === 0) {
+      await db.query(
+        `INSERT INTO talent_mappings 
+        (name, email, role, department, performance, potential)
+        VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          user.name || 'User Baru',
+          user.email,
+          'user',
+          'Belum Ditentukan',
+          '0',
+          '0'
+        ]
+      );
+      console.log(`✅ Profil Talent Mapping otomatis dibuat untuk: ${user.email}`);
+    }
+  } catch (err) {
+    console.error("❌ Gagal insert otomatis ke talent_mappings:", err.message);
   }
 };
 
@@ -54,11 +59,8 @@ exports.register = async (req, res) => {
 
     const newUser = await UserModel.createUser(name, email, hashedPassword, finalRole);
 
-    try {
-      await ensureTalentMapping(newUser);
-    } catch (mappingErr) {
-      console.error("Warning: Gagal memastikan talent_mappings", mappingErr);
-    }
+    // Panggil fungsi agar nama user baru langsung masuk ke tabel Admin
+    await ensureTalentMapping(newUser);
 
     return res.status(201).json({ 
       message: 'Registrasi berhasil', 
@@ -84,11 +86,7 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (isMatch) {
-      try {
-        await ensureTalentMapping(user);
-      } catch (mappingErr) {
-        console.error("Warning: Gagal memastikan talent_mappings saat login", mappingErr);
-      }
+      await ensureTalentMapping(user);
 
       const token = jwt.sign(
         { 
@@ -139,11 +137,7 @@ exports.googleLogin = async (req, res) => {
       user = await UserModel.createUser(name, email, randomPassword, 'user');
     }
 
-    try {
-      await ensureTalentMapping(user);
-    } catch (mappingErr) {
-      console.error("Warning: Gagal memastikan Google User ke talent_mappings", mappingErr);
-    }
+    await ensureTalentMapping(user);
 
     const token = jwt.sign(
       { 
@@ -156,7 +150,6 @@ exports.googleLogin = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    console.log(`[GOOGLE AUTH SUKSES] Email: ${user.email}`);
     return res.json({
       message: 'Login Google berhasil',
       token: token, 
