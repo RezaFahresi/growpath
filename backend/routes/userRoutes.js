@@ -2,6 +2,19 @@ const express = require('express');
 const router = express.Router();
 const userModel = require('../models/userModel'); 
 const authMiddleware = require('../middleware/authMiddleware');
+//IMPORT CONTROLLER & MULTER UNTUK UPLOAD FOTO
+const userController = require('../controllers/userController');
+const multer = require('multer');
+
+// Konfigurasi multer menggunakan memori sementara (Aman untuk Vercel)
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 } // Batas ukuran 2MB
+});
+
+// UTE BARU KHUSUS UPLOAD FOTO
+router.post('/upload-photo', authMiddleware, upload.single('profile_image'), userController.uploadPhoto);
+
 
 router.get('/', authMiddleware, async (req, res) => {
     try {

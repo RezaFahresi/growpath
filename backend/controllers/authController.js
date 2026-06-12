@@ -64,7 +64,13 @@ exports.register = async (req, res) => {
 
     return res.status(201).json({ 
       message: 'Registrasi berhasil', 
-      user: newUser 
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        image: newUser.image // Tambahkan image
+      } 
     });
 
   } catch (error) {
@@ -106,7 +112,8 @@ exports.login = async (req, res) => {
           id: user.id, 
           name: user.name,
           email: user.email,
-          role: user.role 
+          role: user.role,
+          image: user.image // Tambahkan image agar foto tampil saat login
         } 
       });
     } else {
@@ -128,13 +135,19 @@ exports.googleLogin = async (req, res) => {
       { headers: { Authorization: `Bearer ${access_token}` } }
     );
     
-    const { email, name } = googleResponse.data;
+    const { email, name, picture } = googleResponse.data;
 
     let user = await UserModel.findUserByEmail(email);
 
     if (!user) {
       const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-10), 10);
       user = await UserModel.createUser(name, email, randomPassword, 'user');
+      
+      // Jika user baru dari Google, kita bisa langsung simpan foto profil Google-nya
+      if (picture) {
+        await db.query(`UPDATE users SET image = $1 WHERE email = $2`, [picture, email]);
+        user.image = picture;
+      }
     }
 
     await ensureTalentMapping(user);
@@ -157,7 +170,8 @@ exports.googleLogin = async (req, res) => {
         id: user.id, 
         name: user.name,
         email: user.email,
-        role: user.role 
+        role: user.role,
+        image: user.image // Tambahkan image
       }
     });
 
@@ -205,7 +219,8 @@ exports.loginAdmin = async (req, res) => {
           id: admin.id, 
           name: admin.name,
           email: admin.email,
-          role: userRole 
+          role: userRole,
+          image: admin.image // Tambahkan image
         } 
       });
     } else {
@@ -220,6 +235,7 @@ exports.loginAdmin = async (req, res) => {
 // 5. CHECK AUTH 
 exports.checkAuth = async (req, res) => {
   if (req.user) {
+    // req.user biasanya diisi dari token atau database, pastikan jika mengambil dari DB, field image disertakan.
     return res.json({ isAuthenticated: true, user: req.user });
   } else {
     return res.status(401).json({ isAuthenticated: false, message: 'Tidak terautentikasi' });
