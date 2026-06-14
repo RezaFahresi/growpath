@@ -1,10 +1,12 @@
 const bcrypt = require('bcrypt');
 const UserModel = require('../models/userModel');
-const axios = require('axios');
 const jwt = require('jsonwebtoken'); 
 const db = require('../config/db');
 
-// PERBAIKAN: Fungsi ini sekarang akan berhasil karena kolom 'image' dihapus
+//IMPORT BARU UNTUK GOOGLE ONE TAP
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 const ensureTalentMapping = async (user) => {
   if (!user || !user.email) return;
 
@@ -59,7 +61,6 @@ exports.register = async (req, res) => {
 
     const newUser = await UserModel.createUser(name, email, hashedPassword, finalRole);
 
-    // Panggil fungsi agar nama user baru langsung masuk ke tabel Admin
     await ensureTalentMapping(newUser);
 
     return res.status(201).json({ 
@@ -69,7 +70,7 @@ exports.register = async (req, res) => {
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
-        image: newUser.image // Tambahkan image
+        image: newUser.image
       } 
     });
 
@@ -113,7 +114,7 @@ exports.login = async (req, res) => {
           name: user.name,
           email: user.email,
           role: user.role,
-          image: user.image // Tambahkan image agar foto tampil saat login
+          image: user.image 
         } 
       });
     } else {
@@ -125,17 +126,20 @@ exports.login = async (req, res) => {
   }
 };
 
-// 3. GOOGLE AUTH 
+// 3. GOOGLE AUTH (DIPERBARUI UNTUK ONE TAP)
 exports.googleLogin = async (req, res) => {
-  const { access_token } = req.body;
+  const { access_token } = req.body; // Ini sekarang adalah ID Token JWT dari frontend
 
   try {
-    const googleResponse = await axios.get(
-      'https://www.googleapis.com/oauth2/v3/userinfo',
-      { headers: { Authorization: `Bearer ${access_token}` } }
-    );
+    //Verifikasi token langsung ke Google menggunakan Google Auth Library
+    const ticket = await googleClient.verifyIdToken({
+      idToken: access_token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
     
-    const { email, name, picture } = googleResponse.data;
+    // Mengekstrak payload dari token yang sudah diverifikasi
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
 
     let user = await UserModel.findUserByEmail(email);
 
@@ -143,7 +147,6 @@ exports.googleLogin = async (req, res) => {
       const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-10), 10);
       user = await UserModel.createUser(name, email, randomPassword, 'user');
       
-      // Jika user baru dari Google, kita bisa langsung simpan foto profil Google-nya
       if (picture) {
         await db.query(`UPDATE users SET image = $1 WHERE email = $2`, [picture, email]);
         user.image = picture;
@@ -171,7 +174,7 @@ exports.googleLogin = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        image: user.image // Tambahkan image
+        image: user.image 
       }
     });
 
@@ -220,7 +223,7 @@ exports.loginAdmin = async (req, res) => {
           name: admin.name,
           email: admin.email,
           role: userRole,
-          image: admin.image // Tambahkan image
+          image: admin.image 
         } 
       });
     } else {
@@ -235,7 +238,6 @@ exports.loginAdmin = async (req, res) => {
 // 5. CHECK AUTH 
 exports.checkAuth = async (req, res) => {
   if (req.user) {
-    // req.user biasanya diisi dari token atau database, pastikan jika mengambil dari DB, field image disertakan.
     return res.json({ isAuthenticated: true, user: req.user });
   } else {
     return res.status(401).json({ isAuthenticated: false, message: 'Tidak terautentikasi' });

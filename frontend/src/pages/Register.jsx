@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
-import { useGoogleLogin } from '@react-oauth/google'; 
 import API from '../api/axios'; 
 import Swal from 'sweetalert2';
 
@@ -94,70 +93,100 @@ export default function Register() {
     }
   };
 
-  const loginWithGoogle = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        Swal.fire({
-          title: 'Memproses...',
-          text: 'Mohon tunggu...',
-          allowOutsideClick: false,
-          allowEscapeKey: false,
-          showConfirmButton: false,
-          didOpen: () => {
-            Swal.showLoading();
-          }
-        });
-
-        const res = await API.post('/auth/google', {
-          access_token: tokenResponse.access_token
-        });
-
-        const data = res.data;
-
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('growpath_user', JSON.stringify(data.user));
-
-        await login(data.user);
-
-        Swal.close();
-
-        await Swal.fire({
-          icon: 'success',
-          title: 'Registrasi Berhasil',
-          text: 'Berhasil masuk dengan Google',
-          timer: 1500,
-          showConfirmButton: false
-        });
-
-        const role = (data.user.role || '').toLowerCase();
-
-        if (role === 'superadmin') {
-          navigate('/superadmin');
-        } else if (role === 'admin') {
-          navigate('/admin');
-        } else {
-          // PERBAIKAN: Arahkan ke daftar assessment
-          navigate('/dashboard/assessments');
-        }
-      } catch (error) {
-        console.error("Google Auth Error:", error);
-
-        Swal.fire({
-          icon: 'error',
-          title: 'Registrasi Google Gagal',
-          text: error.response?.data?.message || 'Gagal registrasi dengan Google'
-        });
-      }
-    },
-
-    onError: () => {
+  // FUNGSI BARU: Menangani respons dari Google One Tap & Tombol Direct
+  const handleGoogleResponse = async (response) => {
+    try {
       Swal.fire({
-        icon: 'warning',
-        title: 'Dibatalkan',
-        text: 'Registrasi Google dibatalkan.'
+        title: 'Memproses...',
+        text: 'Mendaftarkan akun dengan Google...',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const res = await API.post('/auth/google', {
+        access_token: response.credential
+      });
+
+      const data = res.data;
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('growpath_user', JSON.stringify(data.user));
+
+      await login(data.user);
+
+      Swal.close();
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Registrasi Berhasil',
+        text: 'Berhasil mendaftar dengan akun Google',
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      const role = (data.user.role || '').toLowerCase();
+
+      if (role === 'superadmin') {
+        navigate('/superadmin');
+      } else if (role === 'admin') {
+        navigate('/admin');
+      } else {
+        // Arahkan ke daftar assessment untuk user baru
+        navigate('/dashboard/assessments');
+      }
+
+    } catch (error) {
+      console.error("Google Auth Error:", error);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Registrasi Google Gagal',
+        text: error.response?.data?.message || 'Gagal registrasi dengan Google'
       });
     }
-  });
+  };
+
+  // EFEK BARU: Memuat Script Google Identity Services secara otomatis
+  useEffect(() => {
+    const initializeGoogleOneTap = () => {
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          client_id: "4913593618-u6om07sp5dd6vsngp3ek7f8761s662ur.apps.googleusercontent.com", 
+          callback: handleGoogleResponse,
+          auto_select: false, 
+        });
+
+        window.google.accounts.id.prompt();
+
+        const btnContainer = document.getElementById("googleSignUpButton");
+        if (btnContainer) {
+          window.google.accounts.id.renderButton(btnContainer, {
+            theme: "outline",
+            size: "large",
+            width: btnContainer.offsetWidth,
+            shape: "rectangular",
+            logo_alignment: "center",
+            text: "signup_with" 
+          });
+        }
+      }
+    };
+
+    if (typeof window.google === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = initializeGoogleOneTap;
+      document.head.appendChild(script);
+    } else {
+      initializeGoogleOneTap();
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex w-full font-sans bg-slate-50">
@@ -211,7 +240,7 @@ export default function Register() {
               <div className="relative">
                 <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full border border-slate-200 px-5 py-3.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm pr-12 bg-slate-50 hover:bg-slate-100/50 focus:bg-white font-medium text-slate-800" placeholder="••••••••" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1">
-                  Lihat
+                  {showPassword ? 'Sembunyi' : 'Lihat'}
                 </button>
               </div>
             </div>
@@ -221,7 +250,7 @@ export default function Register() {
               <div className="relative">
                 <input type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full border border-slate-200 px-5 py-3.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm pr-12 bg-slate-50 hover:bg-slate-100/50 focus:bg-white font-medium text-slate-800" placeholder="••••••••" />
                 <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1">
-                  Lihat
+                  {showConfirmPassword ? 'Sembunyi' : 'Lihat'}
                 </button>
               </div>
             </div>
@@ -250,9 +279,10 @@ export default function Register() {
             <div className="flex-grow border-t border-slate-200"></div>
           </div>
 
-          <button type="button" onClick={() => loginWithGoogle()} className="w-full flex items-center justify-center gap-3 border-2 border-slate-100 py-3.5 rounded-2xl hover:bg-slate-50 hover:border-slate-200 transition-all text-sm font-bold text-slate-700 bg-white">
-            Google
-          </button>
+          {/* WADAH TOMBOL GOOGLE DIRECT UNTUK REGISTER */}
+          <div className="w-full flex justify-center">
+            <div id="googleSignUpButton" className="w-full overflow-hidden rounded-[16px]"></div>
+          </div>
 
           <p className="text-center mt-8 text-sm text-slate-500 font-medium">
             Sudah punya akun? <Link to="/login" className="text-indigo-600 hover:text-indigo-800 font-bold transition-colors">Sign In</Link>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import { Trash2, Plus, Edit2, X, BookOpen, Clock, Layers, Search } from 'lucide-react';
+import { Trash2, Plus, Edit2, X, BookOpen, Clock, Layers, Search, Youtube } from 'lucide-react'; // 🔥 Tambah icon Youtube
 import API from '../../api/axios';
 
 export default function ManageCourses() {
@@ -11,10 +11,12 @@ export default function ManageCourses() {
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // PERBAIKAN: Tambahkan video_id ke state awal
   const [courseData, setCourseData] = useState({
     title: '',
     description: '',
     image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600',
+    video_id: '', 
     category: '',
     duration: '',
     lessons: 0
@@ -25,17 +27,28 @@ export default function ManageCourses() {
     : [];
 
   const openAddForm = () => {
-    setCourseData({ title: '', description: '', image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600', category: '', duration: '', lessons: 0 });
+    // PERBAIKAN: Reset video_id saat tambah baru
+    setCourseData({ 
+      title: '', 
+      description: '', 
+      image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600', 
+      video_id: '',
+      category: '', 
+      duration: '', 
+      lessons: 0 
+    });
     setIsEditing(false);
     setEditId(null);
     setIsFormOpen(true);
   };
 
   const openEditForm = (course) => {
+    // PERBAIKAN: Masukkan video_id saat mau mengedit
     setCourseData({
       title: course.title || '',
       description: course.description || '',
       image: course.image || '',
+      video_id: course.video_id || '',
       category: course.category || '',
       duration: course.duration || '',
       lessons: course.lessons || 0
@@ -74,6 +87,7 @@ export default function ManageCourses() {
   const handleDelete = async (id) => {
     if (!window.confirm("Yakin ingin menghapus kelas ini?")) return;
     try {
+      // Pastikan untuk menghapus di backend juga
       await API.delete(`/courses/${id}`);
       deleteCourse(id);
     } catch (error) {
@@ -82,7 +96,6 @@ export default function ManageCourses() {
   };
 
   return (
-    // Margin diseragamkan dengan menambahkan w-full max-w-7xl mx-auto p-4 md:p-8 agar fit in
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
       
       {/* ================= HEADER ================= */}
@@ -109,7 +122,6 @@ export default function ManageCourses() {
           
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl font-bold text-white flex items-center gap-3">
-              {/* Ikon Form Diperbarui dengan background & highlight */}
               <div className="p-2.5 bg-[#071226] border border-[#1E2A45] rounded-xl shadow-md">
                 <BookOpen className="text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)]" size={20} />
               </div>
@@ -177,22 +189,45 @@ export default function ManageCourses() {
 
             {/* Input Kanan / Bawah */}
             <div className="space-y-6 flex flex-col">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">URL Thumbnail</label>
-                <input 
-                  type="text" 
-                  placeholder="https://..." 
-                  className="w-full border border-[#1E2A45] bg-[#071226] text-white px-5 py-3.5 rounded-xl focus:outline-none focus:border-blue-500 transition-colors placeholder:text-slate-600 font-medium text-sm" 
-                  value={courseData.image} 
-                  onChange={e => setCourseData({...courseData, image: e.target.value})} 
-                />
+              
+              <div className="grid grid-cols-1 gap-6">
+                 {/* Input Thumbnail */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">URL Thumbnail</label>
+                  <input 
+                    type="text" 
+                    placeholder="https://images.unsplash..." 
+                    className="w-full border border-[#1E2A45] bg-[#071226] text-white px-5 py-3.5 rounded-xl focus:outline-none focus:border-blue-500 transition-colors placeholder:text-slate-600 font-medium text-sm truncate" 
+                    value={courseData.image} 
+                    onChange={e => setCourseData({...courseData, image: e.target.value})} 
+                  />
+                </div>
+
+                {/* PERBAIKAN: Input ID Video YouTube */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>ID Video YouTube</span>
+                    <span className="text-[10px] text-slate-500 lowercase normal-case font-normal">(11 karakter)</span>
+                  </label>
+                  <div className="relative">
+                    <Youtube size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-red-500 opacity-80" />
+                    <input 
+                      type="text" 
+                      placeholder="Ex: dQw4w9WgXcQ" 
+                      className="w-full border border-[#1E2A45] bg-[#071226] text-white pl-11 pr-4 py-3.5 rounded-xl focus:outline-none focus:border-blue-500 transition-colors placeholder:text-slate-600 font-medium font-mono text-sm" 
+                      value={courseData.video_id} 
+                      onChange={e => setCourseData({...courseData, video_id: e.target.value})} 
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">Hanya masukkan kode ID-nya saja, bukan URL penuh (cth: <strong>mU6anWqZJcc</strong>).</p>
+                </div>
               </div>
 
               <div className="space-y-2 flex-1 flex flex-col">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Deskripsi Kelas</label>
                 <textarea 
                   placeholder="Jelaskan apa saja yang akan dipelajari di kelas ini..." 
-                  className="w-full flex-1 min-h-[120px] border border-[#1E2A45] bg-[#071226] text-white px-5 py-4 rounded-xl focus:outline-none focus:border-blue-500 transition-colors placeholder:text-slate-600 font-medium resize-none" 
+                  className="w-full flex-1 min-h-[100px] border border-[#1E2A45] bg-[#071226] text-white px-5 py-4 rounded-xl focus:outline-none focus:border-blue-500 transition-colors placeholder:text-slate-600 font-medium resize-none" 
                   value={courseData.description} 
                   onChange={e => setCourseData({...courseData, description: e.target.value})} 
                 />
@@ -217,7 +252,6 @@ export default function ManageCourses() {
         {/* Table Header Wrapper */}
         <div className="p-6 border-b border-[#1E2A45] flex items-center justify-between bg-[#0F1B33]">
           <h2 className="font-bold text-white flex items-center gap-3">
-            {/* Ikon Table Diperbarui dengan background & highlight */}
             <div className="p-2 bg-[#071226] border border-[#1E2A45] rounded-lg shadow-sm">
               <Layers size={18} className="text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)]" />
             </div>
@@ -229,11 +263,13 @@ export default function ManageCourses() {
         </div>
 
         <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left text-sm border-collapse min-w-[800px]">
+          <table className="w-full text-left text-sm border-collapse min-w-[900px]">
             <thead className="bg-[#0B172E]">
               <tr>
                 <th className="px-8 py-5 font-bold text-slate-400 uppercase text-xs tracking-wider border-b border-[#1E2A45]">Informasi Kelas</th>
                 <th className="px-6 py-5 font-bold text-slate-400 uppercase text-xs tracking-wider border-b border-[#1E2A45]">Kategori</th>
+                {/* Info Video ID ditambahkan ke tabel */}
+                <th className="px-6 py-5 font-bold text-slate-400 uppercase text-xs tracking-wider border-b border-[#1E2A45]">Media</th> 
                 <th className="px-6 py-5 font-bold text-slate-400 uppercase text-xs tracking-wider border-b border-[#1E2A45]">Struktur</th>
                 <th className="px-8 py-5 font-bold text-slate-400 uppercase text-xs tracking-wider text-right border-b border-[#1E2A45]">Aksi</th>
               </tr>
@@ -245,16 +281,16 @@ export default function ManageCourses() {
                     
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#071226] border border-[#1E2A45] flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#071226] border border-[#1E2A45] flex items-center justify-center relative">
                           {c.image && c.image !== '[null]' ? (
-                            <img src={c.image} alt={c.title} className="w-full h-full object-cover" />
+                            <img src={c.image} alt={c.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                           ) : (
                             <BookOpen size={20} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
                           )}
                         </div>
                         <div>
-                          <p className="font-bold text-white text-base mb-1 group-hover:text-blue-400 transition-colors">{c.title}</p>
-                          <p className="text-slate-500 text-xs truncate max-w-[250px]">{c.description || 'Tidak ada deskripsi.'}</p>
+                          <p className="font-bold text-white text-base mb-1 group-hover:text-blue-400 transition-colors truncate max-w-[200px]">{c.title}</p>
+                          <p className="text-slate-500 text-xs truncate max-w-[200px]">{c.description || 'Tidak ada deskripsi.'}</p>
                         </div>
                       </div>
                     </td>
@@ -263,6 +299,20 @@ export default function ManageCourses() {
                       <span className="inline-flex px-3 py-1 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold border border-slate-700">
                         {c.category || 'General'}
                       </span>
+                    </td>
+
+                    {/* Info Video ID */}
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2">
+                        {c.video_id ? (
+                          <>
+                            <Youtube size={16} className="text-red-500" />
+                            <span className="text-slate-300 font-mono text-xs">{c.video_id}</span>
+                          </>
+                        ) : (
+                          <span className="text-slate-500 text-xs italic">Belum ada video</span>
+                        )}
+                      </div>
                     </td>
                     
                     <td className="px-6 py-5">
@@ -286,7 +336,7 @@ export default function ManageCourses() {
                           <Edit2 size={16}/>
                         </button>
                         <button 
-                          onClick={() => deleteCourse(c.id || c._id)} 
+                          onClick={() => handleDelete(c.id || c._id)} 
                           className="p-2.5 bg-[#0F1B33] text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all border border-[#1E2A45] hover:border-red-500/30"
                           title="Hapus Kelas"
                         >
@@ -299,9 +349,8 @@ export default function ManageCourses() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="px-6 py-20 text-center">
+                  <td colSpan="5" className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center justify-center">
-                      {/* Ikon Empty State Diperbarui */}
                       <div className="w-20 h-20 bg-[#071226] rounded-2xl flex items-center justify-center mb-5 border border-[#1E2A45] shadow-lg">
                         <Search size={32} className="text-slate-400 drop-shadow-[0_0_8px_rgba(148,163,184,0.4)]" />
                       </div>

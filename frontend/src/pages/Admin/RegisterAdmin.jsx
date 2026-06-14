@@ -90,7 +90,7 @@ export default function RegisterAdmin() {
 
       <div className="flex w-full lg:w-1/2 flex-col items-center justify-center p-6 sm:p-12 relative z-10 overflow-y-auto">
         <div className="w-full max-w-[420px] flex flex-col items-center my-auto py-10">
-          <div className="w-full bg-[#131C2F] p-8 sm:p-10 rounded-3xl border border-[#1E2D4A] shadow-2xl relative mt-10">
+          <div className="w-full bg-[#131C2F] p-10 rounded-3xl border border-[#1E2D4A] shadow-2xl relative mt-10">
             <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-2xl overflow-hidden bg-[#090E17] border border-[#1E2D4A] shadow-lg flex items-center justify-center">
               <img src={LogoGrowPath} alt="GrowPath Logo" className="w-full h-full object-cover scale-110" />
             </div>
@@ -107,17 +107,17 @@ export default function RegisterAdmin() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold tracking-wider text-slate-400 ml-1 uppercase">Full Name</label>
                 <div className="relative">
-                  <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 z-10" />
                   <input 
                     type="text" 
                     name="name"
                     value={formData.name} 
                     onChange={handleChange} 
-                    className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm placeholder:text-slate-600 [color-scheme:dark]" 
+                    className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm placeholder:text-slate-600 [color-scheme:dark] [&:-webkit-autofill]:shadow-[0_0_0_50px_#090E17_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:#e2e8f0]" 
                     placeholder="Admin Name" 
                   />
                 </div>
@@ -126,13 +126,13 @@ export default function RegisterAdmin() {
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold tracking-wider text-slate-400 ml-1 uppercase">Email Address</label>
                 <div className="relative">
-                  <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 z-10" />
                   <input 
                     type="email" 
                     name="email"
                     value={formData.email} 
                     onChange={handleChange} 
-                    className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm placeholder:text-slate-600 [color-scheme:dark]" 
+                    className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm placeholder:text-slate-600 [color-scheme:dark] [&:-webkit-autofill]:shadow-[0_0_0_50px_#090E17_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:#e2e8f0]" 
                     placeholder="admin@growpath.com" 
                   />
                 </div>
@@ -141,16 +141,16 @@ export default function RegisterAdmin() {
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold tracking-wider text-slate-400 ml-1 uppercase">Password</label>
                 <div className="relative">
-                  <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 z-10" />
                   <input 
                     type={showPassword ? "text" : "password"} 
                     name="password"
                     value={formData.password} 
                     onChange={handleChange} 
-                    className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 pr-12 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm placeholder:text-slate-600 [color-scheme:dark]" 
+                    className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 pr-12 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm placeholder:text-slate-600 [color-scheme:dark] [&:-webkit-autofill]:shadow-[0_0_0_50px_#090E17_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:#e2e8f0]" 
                     placeholder="••••••••" 
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-400 transition-colors p-1">
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-400 transition-colors p-1 z-10">
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
