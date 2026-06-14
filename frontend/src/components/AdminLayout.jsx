@@ -15,6 +15,8 @@ export default function AdminLayout() {
 
   const userName = user?.name || 'Administrator';
   const userRole = user?.role || 'Admin';
+  // PERBAIKAN: Ambil gambar atau gunakan fallback UI Avatar
+  const userImage = user?.image || `https://ui-avatars.com/api/?name=${userName}&background=2563eb&color=fff`;
 
   const navItems = [
     { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
@@ -114,8 +116,9 @@ export default function AdminLayout() {
             {/* Profil Dropdown */}
             <div className="relative">
               <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-2 lg:gap-3 cursor-pointer hover:bg-[#0F1B33] p-1 lg:p-1.5 lg:pr-3 rounded-full transition-all">
+                {/*PERBAIKAN: Menampilkan foto User */}
                 <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full overflow-hidden border border-slate-700 shrink-0">
-                  <img src={`https://ui-avatars.com/api/?name=${userName}&background=2563eb&color=fff`} alt={userName} className="w-full h-full object-cover" />
+                  <img src={userImage} alt={userName} className="w-full h-full object-cover" />
                 </div>
                 <ChevronDown size={16} className={`hidden lg:block text-slate-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-white' : ''}`} />
               </div>

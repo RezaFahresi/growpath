@@ -34,10 +34,12 @@ exports.createCourse = async (req, res) => {
   try {
     if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak. Hanya Admin.' });
     
-    const { title, description, image, category, duration, lessons } = req.body;
+    //PERBAIKAN: Tangkap video_id dari form
+    const { title, description, image, category, duration, lessons, video_id } = req.body;
     if (!title) return res.status(400).json({ message: 'Course Title wajib diisi.' });
 
-    const newCourse = await CourseModel.createCourse(title, description, image, category, duration, lessons);
+    //PERBAIKAN: Masukkan video_id ke argumen fungsi
+    const newCourse = await CourseModel.createCourse(title, description, image, category, duration, lessons, video_id);
     res.status(201).json(newCourse);
   } catch (error) {
     console.error("Error createCourse:", error);
@@ -50,9 +52,11 @@ exports.updateCourse = async (req, res) => {
     if (!isAdmin(req.user)) return res.status(403).json({ message: 'Akses ditolak.' });
     
     const id = parseInt(req.params.id, 10);
-    const { title, description, image, category, duration, lessons } = req.body;
+    //PERBAIKAN: Tangkap video_id dari form edit
+    const { title, description, image, category, duration, lessons, video_id } = req.body;
 
-    const rows = await CourseModel.updateCourse(id, title, description, image, category, duration, lessons);
+    //PERBAIKAN: Masukkan video_id ke argumen fungsi
+    const rows = await CourseModel.updateCourse(id, title, description, image, category, duration, lessons, video_id);
     if (rows.length === 0) return res.status(404).json({ message: 'Course tidak ditemukan.' });
     
     res.json(rows[0]);

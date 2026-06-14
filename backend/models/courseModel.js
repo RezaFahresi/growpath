@@ -11,21 +11,23 @@ exports.getCourseById = async (id) => {
   return result.rows[0];
 };
 
-exports.createCourse = async (title, description, image, category, duration, lessons) => {
+//PERBAIKAN: Menambahkan parameter video_id
+exports.createCourse = async (title, description, image, category, duration, lessons, video_id) => {
   const result = await db.query(
-    `INSERT INTO courses (title, description, image, category, duration, lessons, created_at) 
-     VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING *`,
-    [title, description, image, category || 'General', duration || 'Self-paced', lessons || 0]
+    `INSERT INTO courses (title, description, image, category, duration, lessons, video_id, created_at) 
+     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) RETURNING *`,
+    [title, description, image, category || 'General', duration || 'Self-paced', lessons || 0, video_id || null]
   );
   return result.rows[0];
 };
 
-exports.updateCourse = async (id, title, description, image, category, duration, lessons) => {
+//PERBAIKAN: Menambahkan parameter video_id
+exports.updateCourse = async (id, title, description, image, category, duration, lessons, video_id) => {
   const result = await db.query(
     `UPDATE courses 
-     SET title = $1, description = $2, image = $3, category = $4, duration = $5, lessons = $6 
-     WHERE id = $7 RETURNING *`,
-    [title, description, image, category, duration, lessons, id]
+     SET title = $1, description = $2, image = $3, category = $4, duration = $5, lessons = $6, video_id = $7 
+     WHERE id = $8 RETURNING *`,
+    [title, description, image, category, duration, lessons, video_id, id]
   );
   return result.rows;
 };
