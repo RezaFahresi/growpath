@@ -3,14 +3,17 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const crypto = require('crypto'); 
 const nodemailer = require('nodemailer'); 
-const axios = require('axios'); 
-const jwt = require('jsonwebtoken'); // <-- TAMBAHAN WAJIB
+const jwt = require('jsonwebtoken'); 
 const db = require('../config/db'); 
+
+// IMPORT BARU UNTUK GOOGLE ONE TAP
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Import authMiddleware (Pastikan path folder ini sesuai dengan proyek Anda)
 const authMiddleware = require('../middleware/authMiddleware');
 
-// 1. ENDPOINT REGISTRASI (/register) - TETAP
+// 1. ENDPOINT REGISTRASI (/register)
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -39,7 +42,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// 2. ENDPOINT KHUSUS USER BIASA (/login-user) - DIUBAH KE JWT
+// 2. ENDPOINT KHUSUS USER BIASA (/login-user)
 router.post('/login-user', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -63,19 +66,18 @@ router.post('/login-user', async (req, res) => {
       });
     }
 
-    // 🔥 BUAT TOKEN JWT
     const token = jwt.sign(
       { id: user.id, role: safeRole, email: user.email }, 
       process.env.JWT_SECRET,
-      { expiresIn: '1d' } // Berlaku 1 Hari
+      { expiresIn: '1d' }
     );
 
     console.log(`\n👨‍🎓 [USER LOGIN SUKSES] Email: ${user.email}`);
 
     res.json({ 
       message: 'Login berhasil', 
-      token: token, // <-- Kirim token ke React
-      user: { id: user.id, name: user.name, email: user.email, role: safeRole }
+      token: token, 
+      user: { id: user.id, name: user.name, email: user.email, role: safeRole, image: user.image }
     });
 
   } catch (error) {
@@ -85,18 +87,21 @@ router.post('/login-user', async (req, res) => {
 });
 
 // ==========================================
-// ENDPOINT BARU: GOOGLE AUTH (/google) - DIUBAH KE JWT
+// 3. ENDPOINT BARU: GOOGLE AUTH (/google) - MENGGUNAKAN ONE TAP
 // ==========================================
 router.post('/google', async (req, res) => {
-  const { access_token } = req.body;
+  const { access_token } = req.body; // Ini sekarang adalah ID Token JWT dari frontend
 
   try {
-    const googleResponse = await axios.get(
-      'https://www.googleapis.com/oauth2/v3/userinfo',
-      { headers: { Authorization: `Bearer ${access_token}` } }
-    );
+    //Verifikasi token langsung ke Google menggunakan Google Auth Library
+    const ticket = await googleClient.verifyIdToken({
+      idToken: access_token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
     
-    const { email, name } = googleResponse.data;
+    // Mengekstrak payload dari token yang sudah diverifikasi
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
 
     let userResult = await db.query('SELECT * FROM users WHERE email = $1', [email]);
     let user = userResult.rows[0];
@@ -106,15 +111,18 @@ router.post('/google', async (req, res) => {
       const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-10), salt);
       
       const insertResult = await db.query(
-        "INSERT INTO users (name, email, password, role, created_at) VALUES ($1, $2, $3, 'user', NOW()) RETURNING id, name, email, role",
-        [name, email, randomPassword]
+        "INSERT INTO users (name, email, password, role, image, created_at) VALUES ($1, $2, $3, 'user', $4, NOW()) RETURNING *",
+        [name, email, randomPassword, picture || null]
       );
       user = insertResult.rows[0];
+    } else if (picture && !user.image) {
+      // Update foto profil jika user login dengan Google dan belum punya foto
+      await db.query('UPDATE users SET image = $1 WHERE email = $2', [picture, email]);
+      user.image = picture;
     }
 
     const safeRole = user.role ? user.role.toLowerCase() : 'user';
 
-    // 🔥 BUAT TOKEN JWT
     const token = jwt.sign(
       { id: user.id, role: safeRole, email: user.email },
       process.env.JWT_SECRET,
@@ -125,8 +133,8 @@ router.post('/google', async (req, res) => {
 
     res.json({ 
       message: 'Login Google berhasil', 
-      token: token, // <-- Kirim token ke React
-      user: { id: user.id, name: user.name, email: user.email, role: safeRole }
+      token: token,
+      user: { id: user.id, name: user.name, email: user.email, role: safeRole, image: user.image }
     });
 
   } catch (error) {
@@ -135,7 +143,7 @@ router.post('/google', async (req, res) => {
   }
 });
 
-// 3. ENDPOINT KHUSUS ADMIN (/login-admin) - DIUBAH KE JWT
+// 4. ENDPOINT KHUSUS ADMIN (/login-admin)
 router.post('/login-admin', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -159,7 +167,6 @@ router.post('/login-admin', async (req, res) => {
       });
     }
 
-    // 🔥 BUAT TOKEN JWT KHUSUS ADMIN
     const token = jwt.sign(
       { id: user.id, role: safeRole, adminId: user.id, email: user.email }, 
       process.env.JWT_SECRET,
@@ -170,8 +177,8 @@ router.post('/login-admin', async (req, res) => {
 
     res.json({ 
       message: 'Login Admin berhasil', 
-      token: token, // <-- Kirim token ke React
-      user: { id: user.id, name: user.name, email: user.email, role: safeRole }
+      token: token,
+      user: { id: user.id, name: user.name, email: user.email, role: safeRole, image: user.image }
     });
 
   } catch (error) {
@@ -180,23 +187,19 @@ router.post('/login-admin', async (req, res) => {
   }
 });
 
-// 4. ENDPOINT LOGOUT - DIUBAH KE JWT (LEBIH SEDERHANA)
+// 5. ENDPOINT LOGOUT
 router.post('/logout', (req, res) => {
-  // Dengan JWT, backend tidak perlu menghapus memori apa-apa.
   console.log(`\n🚪 [LOGOUT BERHASIL] Frontend akan menghapus token.`);
   res.json({ message: 'Logout berhasil, silakan hapus token di Frontend' });
 });
 
-// 5. ENDPOINT CEK STATUS AUTH - DIUBAH KE JWT
-// 🔥 PERHATIKAN: Route ini disisipkan authMiddleware!
+// 6. ENDPOINT CEK STATUS AUTH
 router.get('/check-auth', authMiddleware, async (req, res) => {
   try {
-    // Jika lolos authMiddleware, artinya token valid dan datanya ada di req.user
     const userId = req.user.id;
 
-    // Opsional: Cek ke database untuk memastikan akun belum dihapus
     const result = await db.query(
-      'SELECT id, name, email, role FROM users WHERE id = $1', 
+      'SELECT id, name, email, role, image FROM users WHERE id = $1', 
       [userId]
     );
 
@@ -220,7 +223,7 @@ router.get('/check-auth', authMiddleware, async (req, res) => {
 });
 
 // ==========================================
-// 6. ENDPOINT FORGOT PASSWORD (Kirim Email)
+// 7. ENDPOINT FORGOT PASSWORD (Kirim Email)
 // ==========================================
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
@@ -247,7 +250,6 @@ router.post('/forgot-password', async (req, res) => {
       },
     });
 
-    // Sesuaikan link ini dengan URL Vercel Frontend Anda jika sudah di-deploy
     const frontendURL = process.env.FRONTEND_URL || 'http://localhost:5173';
     const resetLink = `${frontendURL}/reset-password?token=${resetToken}`;
 
@@ -278,7 +280,7 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 // ==========================================
-// 7. ENDPOINT RESET PASSWORD (Simpan Sandi)
+// 8. ENDPOINT RESET PASSWORD (Simpan Sandi)
 // ==========================================
 router.post('/reset-password', async (req, res) => {
   const { token, newPassword } = req.body;

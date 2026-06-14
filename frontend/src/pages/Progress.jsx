@@ -75,8 +75,12 @@ export default function Progress() {
     { subject: 'Bisnis', A: 90, fullMark: 100 },
   ];
 
+  // Pemetaan data yang lebih aman agar kebal dari error struktur backend
   const displaySkillData = data?.skillData?.length > 0
-    ? data.skillData
+    ? data.skillData.map(item => ({
+        subject: item.subject || item.name || item.kategori || 'Unknown',
+        A: item.A || item.score || item.value || item.nilai || item.level || 0 
+      }))
     : defaultSkillData;
 
   return (
@@ -158,19 +162,14 @@ export default function Progress() {
                     color: '#1e293b'
                   }}
                 />
-                <Bar dataKey="hours" fill="url(#colorIndigo)" radius={[6, 6, 6, 6]} barSize={32} />
-                <defs>
-                  <linearGradient id="colorIndigo" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
-                    <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.8} />
-                  </linearGradient>
-                </defs>
+                {/* Pewarnaan solid agar tidak error di Safari/React Router */}
+                <Bar dataKey="hours" fill="#6366f1" radius={[6, 6, 6, 6]} barSize={32} isAnimationActive={true} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* DISTRIBUSI KEAHLIAN (KINI MENGGUNAKAN BAR CHART SERAGAM) */}
+        {/* DISTRIBUSI KEAHLIAN */}
         <div className="bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -203,13 +202,8 @@ export default function Progress() {
                     color: '#1e293b'
                   }}
                 />
-                <Bar dataKey="A" fill="url(#colorIndigoSkill)" radius={[6, 6, 6, 6]} barSize={32} />
-                <defs>
-                  <linearGradient id="colorIndigoSkill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
-                    <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.8} />
-                  </linearGradient>
-                </defs>
+                {/* Pewarnaan solid agar tidak error di Safari/React Router */}
+                <Bar dataKey="A" fill="#4f46e5" radius={[6, 6, 6, 6]} barSize={32} isAnimationActive={true} />
               </BarChart>
             </ResponsiveContainer>
           </div>

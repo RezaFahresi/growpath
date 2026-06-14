@@ -116,8 +116,7 @@ export default function LoginAdmin() {
                   name="email"
                   value={formData.email} 
                   onChange={handleChange}
-                  // 🔥 FIX AUTOFILL: Menambahkan override class khusus webkit
-                  className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 rounded-xl focus:outline-none focus:border-blue-500 text-sm [&:-webkit-autofill]:shadow-[0_0_0_50px_#090E17_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:#e2e8f0]"
+                  className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm placeholder:text-slate-600 [color-scheme:dark] [&:-webkit-autofill]:shadow-[0_0_0_50px_#090E17_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:#e2e8f0]"
                   placeholder="admin@growpath.com"
                 />
               </div>
@@ -132,8 +131,7 @@ export default function LoginAdmin() {
                   name="password"
                   value={formData.password} 
                   onChange={handleChange}
-                  //FIX AUTOFILL: Menambahkan override class khusus webkit
-                  className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 pr-12 rounded-xl focus:outline-none focus:border-blue-500 text-sm [&:-webkit-autofill]:shadow-[0_0_0_50px_#090E17_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:#e2e8f0]"
+                  className="w-full bg-[#090E17] border border-[#1E2D4A] text-slate-200 px-4 py-3.5 pl-11 pr-12 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm placeholder:text-slate-600 [color-scheme:dark] [&:-webkit-autofill]:shadow-[0_0_0_50px_#090E17_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:#e2e8f0]"
                   placeholder="••••••••"
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-400 p-1 z-10">

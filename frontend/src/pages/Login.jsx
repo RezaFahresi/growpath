@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
-import { useGoogleLogin } from '@react-oauth/google'; 
 import API from '../api/axios';
 import Swal from 'sweetalert2';
 
@@ -23,7 +22,6 @@ export default function Login() {
     } else if (role === 'admin') {
       navigate('/admin');
     } else {
-      // 🔥 PERBAIKAN: Arahkan ke daftar assessment, BUKAN ke id 1
       if (location.state && location.state.isNewUser) {
         navigate('/dashboard/assessments'); 
       } else {
@@ -57,7 +55,6 @@ export default function Login() {
     });
 
     try {
-      // Pastikan endpoint backend Anda benar (login-user atau login)
       const response = await API.post('/auth/login-user', { email, password });
       const data = response.data;
 
@@ -92,63 +89,96 @@ export default function Login() {
     }
   };
 
-  const loginWithGoogle = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        Swal.fire({
-          title: 'Memproses...',
-          text: 'Mohon tunggu...',
-          allowOutsideClick: false,
-          allowEscapeKey: false,
-          showConfirmButton: false,
-          didOpen: () => {
-            Swal.showLoading();
-          }
-        });
-
-        const res = await API.post('/auth/google', {
-          access_token: tokenResponse.access_token,
-        });
-
-        const data = res.data;
-
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('growpath_user', JSON.stringify(data.user));
-
-        await login(data.user);
-
-        Swal.close();
-
-        await Swal.fire({
-          icon: 'success',
-          title: 'Login Berhasil',
-          text: 'Berhasil masuk dengan Google',
-          timer: 1500,
-          showConfirmButton: false
-        });
-
-        const role = (data.user.role || '').toLowerCase();
-        goAfterLogin(role);
-
-      } catch (error) {
-        console.error("Google Login Error:", error);
-
-        Swal.fire({
-          icon: 'error',
-          title: 'Google Login Gagal',
-          text: error.response?.data?.message || 'Gagal masuk dengan Google'
-        });
-      }
-    },
-
-    onError: () => {
+  // FUNGSI BARU: Menangani respons dari Google One Tap & Tombol Direct
+  const handleGoogleResponse = async (response) => {
+    try {
       Swal.fire({
-        icon: 'warning',
-        title: 'Dibatalkan',
-        text: 'Login Google dibatalkan.'
+        title: 'Memproses...',
+        text: 'Autentikasi dengan Google...',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // Mengirimkan response.credential (JWT Token) ke backend
+      const res = await API.post('/auth/google', {
+        access_token: response.credential,
+      });
+
+      const data = res.data;
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('growpath_user', JSON.stringify(data.user));
+
+      await login(data.user);
+
+      Swal.close();
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Login Berhasil',
+        text: 'Berhasil masuk dengan Google',
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      const role = (data.user.role || '').toLowerCase();
+      goAfterLogin(role);
+
+    } catch (error) {
+      console.error("Google Login Error:", error);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Google Login Gagal',
+        text: error.response?.data?.message || 'Gagal masuk dengan akun Google'
       });
     }
-  });
+  };
+
+  // EFEK BARU: Memuat Script Google Identity Services secara otomatis
+  useEffect(() => {
+    const initializeGoogleOneTap = () => {
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          // GANTI DENGAN CLIENT ID ANDA 👇
+          client_id: "4913593618-u6om07sp5dd6vsngp3ek7f8761s662ur.apps.googleusercontent.com", 
+          callback: handleGoogleResponse,
+          auto_select: false, // Jangan ubah ini agar user bisa memilih akun
+        });
+
+        // Memunculkan Pop-up One Tap di pojok layar
+        window.google.accounts.id.prompt();
+
+        // Me-render tombol bawaan Google untuk menggantikan tombol manual Anda
+        const btnContainer = document.getElementById("googleSignInButton");
+        if (btnContainer) {
+          window.google.accounts.id.renderButton(btnContainer, {
+            theme: "outline",
+            size: "large",
+            width: btnContainer.offsetWidth,
+            shape: "rectangular",
+            logo_alignment: "center"
+          });
+        }
+      }
+    };
+
+    // Pengecekan apakah script Google sudah dimuat
+    if (typeof window.google === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = initializeGoogleOneTap;
+      document.head.appendChild(script);
+    } else {
+      initializeGoogleOneTap();
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex w-full font-sans bg-slate-50">
@@ -240,13 +270,10 @@ export default function Login() {
             <div className="flex-grow border-t border-slate-200"></div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => loginWithGoogle()}
-            className="w-full flex items-center justify-center gap-3 border-2 border-slate-100 py-3.5 rounded-2xl hover:bg-slate-50 hover:border-slate-200 transition-all text-sm font-bold text-slate-700 bg-white"
-          >
-            Google
-          </button>
+          {/*WADAH TOMBOL GOOGLE DIRECT (Akan diisi otomatis oleh script Google) */}
+          <div className="w-full flex justify-center">
+            <div id="googleSignInButton" className="w-full overflow-hidden rounded-[16px]"></div>
+          </div>
 
           <p className="text-center mt-8 text-sm text-slate-500 font-medium">
             Belum punya akun? <Link to="/register" className="text-indigo-600 hover:text-indigo-800 font-bold transition-colors">Daftar sekarang</Link>
