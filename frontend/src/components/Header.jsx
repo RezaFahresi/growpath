@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, User, Settings, LogOut, Menu, Search, Bell } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom'; //Tambahkan useLocation
 import { useAppContext } from '../context/AppContext';
 
-//Menerima fungsi onOpenSidebar dari Layout
 export default function Header({ onOpenSidebar }) {
   const { user, logout } = useAppContext();
   const navigate = useNavigate();
+  const location = useLocation(); //Untuk membaca posisi halaman saat ini
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -22,19 +22,28 @@ export default function Header({ onOpenSidebar }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // FUNGSI SEARCH PINTAR (CONTEXT-AWARE)
   const handleSearch = (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-    console.log("Mencari:", searchQuery);
+    
+    const currentPath = location.pathname;
+    const encodedQuery = encodeURIComponent(searchQuery);
+
+    // Cek pengguna sedang berada di halaman mana
+    if (currentPath.includes('/dashboard/assessments')) {
+      navigate(`/dashboard/assessments?search=${encodedQuery}`);
+    } else if (currentPath.includes('/dashboard/roadmap')) {
+      navigate(`/dashboard/roadmap?search=${encodedQuery}`);
+    } else {
+      // Default: Lempar ke halaman Courses
+      navigate(`/dashboard/courses?search=${encodedQuery}`);
+    }
   };
 
   return (
-    // Penyesuaian padding px-4 untuk HP agar muat tombol menu
     <header className="h-16 lg:h-20 bg-white/80 backdrop-blur-md flex items-center justify-between px-4 lg:px-8 sticky top-0 z-30 border-b border-slate-100 w-full">
-      
       <div className="flex items-center gap-3 w-full max-w-md">
-        
-        {/*TOMBOL HAMBURGER (Hanya tampil di HP) */}
         <button 
           onClick={onOpenSidebar}
           className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors focus:outline-none"
@@ -42,7 +51,6 @@ export default function Header({ onOpenSidebar }) {
           <Menu size={24} />
         </button>
 
-        {/* Search Input */}
         <form onSubmit={handleSearch} className="relative w-full group hidden sm:block">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#5D5FEF] transition-colors" size={18} />
           <input
@@ -55,10 +63,7 @@ export default function Header({ onOpenSidebar }) {
         </form>
       </div>
 
-      {/* Right Side Icons & Profile */}
       <div className="flex items-center gap-2 sm:gap-6 shrink-0">
-        
-        {/* Ikon Pencarian Khusus HP (menggantikan form search besar) */}
         <button className="sm:hidden p-2 text-slate-400 hover:text-[#5D5FEF] hover:bg-indigo-50 rounded-full transition-all">
           <Search size={20} />
         </button>
@@ -70,13 +75,11 @@ export default function Header({ onOpenSidebar }) {
         
         <div className="w-px h-8 bg-slate-200 hidden sm:block"></div>
 
-        {/* Profile Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button 
             onClick={() => setIsProfileOpen(!isProfileOpen)}
             className="flex items-center gap-2 lg:gap-3 hover:bg-slate-50 p-1 lg:p-1.5 lg:pr-3 rounded-full border border-transparent hover:border-slate-200 transition-all group focus:outline-none"
           >
-            {/*PERBAIKAN: Menampilkan Foto User Terbaru */}
             <div className="h-8 w-8 lg:h-9 lg:w-9 rounded-full bg-gradient-to-tr from-[#5D5FEF] to-indigo-400 flex items-center justify-center text-white font-bold shadow-sm group-hover:shadow-md transition-shadow shrink-0 overflow-hidden">
               {user?.image ? (
                 <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
