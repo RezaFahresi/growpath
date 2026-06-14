@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import { Trash2, Plus, Edit2, X, BookOpen, Clock, Layers, Search, Youtube } from 'lucide-react'; // 🔥 Tambah icon Youtube
+import { Trash2, Plus, Edit2, X, BookOpen, Clock, Layers, Search, PlaySquare } from 'lucide-react'; 
 import API from '../../api/axios';
 
 export default function ManageCourses() {
@@ -203,14 +203,14 @@ export default function ManageCourses() {
                   />
                 </div>
 
-                {/* PERBAIKAN: Input ID Video YouTube */}
+                {/* PERBAIKAN: Input ID Video YouTube diganti ikonnya ke PlaySquare */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
                     <span>ID Video YouTube</span>
                     <span className="text-[10px] text-slate-500 lowercase normal-case font-normal">(11 karakter)</span>
                   </label>
                   <div className="relative">
-                    <Youtube size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-red-500 opacity-80" />
+                    <PlaySquare size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-red-500 opacity-80" />
                     <input 
                       type="text" 
                       placeholder="Ex: dQw4w9WgXcQ" 
@@ -301,12 +301,12 @@ export default function ManageCourses() {
                       </span>
                     </td>
 
-                    {/* Info Video ID */}
+                    {/* Info Video ID diganti ikonnya ke PlaySquare */}
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-2">
                         {c.video_id ? (
                           <>
-                            <Youtube size={16} className="text-red-500" />
+                            <PlaySquare size={16} className="text-red-500" />
                             <span className="text-slate-300 font-mono text-xs">{c.video_id}</span>
                           </>
                         ) : (
