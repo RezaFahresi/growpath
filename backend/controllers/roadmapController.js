@@ -10,18 +10,49 @@ exports.getRoadmaps = async (req, res) => {
   }
 };
 
+// FUNGSI BARU UNTUK ADMIN
+exports.createRoadmap = async (req, res) => {
+  try {
+    const newRoadmap = await RoadmapModel.createRoadmap(req.body);
+    res.status(201).json({ message: 'Roadmap berhasil ditambahkan', data: newRoadmap });
+  } catch (error) {
+    console.error("Error createRoadmap:", error);
+    res.status(500).json({ message: 'Gagal menambah roadmap' });
+  }
+};
+
+exports.addModule = async (req, res) => {
+  try {
+    const { roadmapId } = req.params;
+    const newModule = await RoadmapModel.addModule(roadmapId, req.body);
+    res.status(201).json({ message: 'Modul berhasil ditambahkan', data: newModule });
+  } catch (error) {
+    console.error("Error addModule:", error);
+    res.status(500).json({ message: 'Gagal menambah modul' });
+  }
+};
+
+exports.deleteRoadmap = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await RoadmapModel.deleteRoadmap(id);
+    res.json({ message: 'Roadmap berhasil dihapus' });
+  } catch (error) {
+    console.error("Error deleteRoadmap:", error);
+    res.status(500).json({ message: 'Gagal menghapus roadmap' });
+  }
+};
+
+// FUNGSI BAWAAN USER PROGRESS (TIDAK DIUBAH)
 exports.toggleProgress = async (req, res) => {
   try {
-    // 1. Pastikan user login via JWT
     if (!req.user) {
       return res.status(401).json({ message: 'Silakan login terlebih dahulu.' });
     }
 
-    // 2. Ambil userId dari token JWT (req.user.id)
     const userId = req.user.id;
     const { phaseId, taskId } = req.body;
 
-    // 3. Simpan progress
     const result = await RoadmapModel.toggleRoadmapProgress(userId, phaseId, taskId);
     
     if (result.status === 'removed') {

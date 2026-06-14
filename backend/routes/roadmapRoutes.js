@@ -1,13 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const roadmapController = require('../controllers/roadmapController');
-const authMiddleware = require('../middleware/authMiddleware'); // Wajib Import
+const authMiddleware = require('../middleware/authMiddleware');
 
-// 🌟 PERBAIKAN: Gunakan authMiddleware
+// Route GET untuk mengambil data
 router.get('/', authMiddleware, roadmapController.getRoadmaps);
 
-// Menyediakan 2 rute untuk mencegah error typo dari frontend
+// Route POST bawaan user
 router.post('/progress', authMiddleware, roadmapController.toggleProgress);
 router.post('/toggle-progress', authMiddleware, roadmapController.toggleProgress);
+
+// ROUTE BARU KHUSUS ADMIN
+router.post('/', authMiddleware, roadmapController.createRoadmap); // Tambah Roadmap
+router.post('/:roadmapId/modules', authMiddleware, roadmapController.addModule); // Tambah Modul ke Roadmap tertentu
+router.delete('/:id', authMiddleware, roadmapController.deleteRoadmap); // Hapus Roadmap
 
 module.exports = router;
