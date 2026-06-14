@@ -75,11 +75,12 @@ export default function Progress() {
     { subject: 'Bisnis', A: 90, fullMark: 100 },
   ];
 
-  // Pemetaan data yang lebih aman agar kebal dari error struktur backend
+  // PERBAIKAN: Mengambil data ASLI dari properti 'a' (huruf kecil) sesuai database Anda
   const displaySkillData = data?.skillData?.length > 0
     ? data.skillData.map(item => ({
-        subject: item.subject || item.name || item.kategori || 'Unknown',
-        A: item.A || item.score || item.value || item.nilai || item.level || 0 
+        subject: item.subject || 'Unknown',
+        // Memprioritaskan item.a, jika tidak ada baru mundur ke yang lain atau 0
+        A: item.a !== undefined && item.a !== null ? item.a : (item.A || 0) 
       }))
     : defaultSkillData;
 
@@ -146,7 +147,8 @@ export default function Progress() {
             </div>
           </div>
 
-          <div className="flex-1 w-full min-h-[250px]">
+          {/* PERBAIKAN: Mengunci tinggi menjadi h-[300px] agar render di Safari/Flexbox aman */}
+          <div className="w-full h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data?.activityData || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -162,7 +164,6 @@ export default function Progress() {
                     color: '#1e293b'
                   }}
                 />
-                {/* Pewarnaan solid agar tidak error di Safari/React Router */}
                 <Bar dataKey="hours" fill="#6366f1" radius={[6, 6, 6, 6]} barSize={32} isAnimationActive={true} />
               </BarChart>
             </ResponsiveContainer>
@@ -185,7 +186,8 @@ export default function Progress() {
             </div>
           </div>
 
-          <div className="flex-1 w-full min-h-[250px]">
+          {/* PERBAIKAN: Mengunci tinggi menjadi h-[300px] agar render aman */}
+          <div className="w-full h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={displaySkillData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -202,7 +204,6 @@ export default function Progress() {
                     color: '#1e293b'
                   }}
                 />
-                {/* Pewarnaan solid agar tidak error di Safari/React Router */}
                 <Bar dataKey="A" fill="#4f46e5" radius={[6, 6, 6, 6]} barSize={32} isAnimationActive={true} />
               </BarChart>
             </ResponsiveContainer>
