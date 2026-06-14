@@ -34,6 +34,8 @@ const ManageCourses = lazy(() => import('./pages/Admin/ManageCourses'));
 const ManageAssessments = lazy(() => import('./pages/Admin/ManageAssessments'));
 const UserInsights = lazy(() => import('./pages/Admin/UserInsights'));
 const ManageTalentMapping = lazy(() => import('./pages/Admin/ManageTalentMapping'));
+//IMPORT HALAMAN MANAGE ROADMAP BARU
+const ManageRoadmaps = lazy(() => import('./pages/Admin/ManageRoadmaps')); 
 const Reports = lazy(() => import('./pages/Admin/Reports'));
 const Settings = lazy(() => import('./pages/Admin/Settings'));
 
@@ -60,7 +62,7 @@ export default function App() {
             <Route path="/dashboard" element={<UserRoute><Layout /></UserRoute>}>
               <Route index element={<Dashboard />} />
               
-              {/* RUTE ASSESSMENTS (Sudah Diperbaiki) */}
+              {/* RUTE ASSESSMENTS */}
               <Route path="assessments" element={<AssessmentList />} />
               <Route path="assessments/:id" element={<TestOverview />} />
               <Route path="assessments/take/:id" element={<TakeAssessment />} />
@@ -83,6 +85,8 @@ export default function App() {
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="courses" element={<ManageCourses />} />
               <Route path="assessments" element={<ManageAssessments />} />
+              {/* RUTE BARU MANAGE ROADMAP */}
+              <Route path="roadmaps" element={<ManageRoadmaps />} /> 
               <Route path="users" element={<UserInsights />} />
               <Route path="talent-mapping" element={<ManageTalentMapping />} />
               <Route path="reports" element={<Reports />} />
