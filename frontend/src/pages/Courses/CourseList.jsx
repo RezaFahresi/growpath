@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom'; // 🔥 Tambahkan useLocation
 import { useAppContext } from '../../context/AppContext';
 import { PlayCircle, Clock, BookOpen, Search, Sparkles, SlidersHorizontal, Lock } from 'lucide-react';
 import API from '../../api/axios'; 
@@ -7,13 +7,26 @@ import API from '../../api/axios';
 export default function CourseList() {
   const [activeTab, setActiveTab] = useState('Semua');
   const [dbCompletedIds, setDbCompletedIds] = useState([]); 
-  const navigate = useNavigate();
   
+  const navigate = useNavigate();
+  const location = useLocation(); // 🔥 Untuk membaca URL
   const { courses, progress } = useAppContext();
   const dbCourses = courses || [];
-  
+
+  // 1. AMBIL KATA KUNCI DARI URL (DARI HEADER)
+  const searchParams = new URLSearchParams(location.search);
+  const urlSearchQuery = searchParams.get('search') || '';
+
+  // 2. STATE UNTUK KOTAK SEARCH LOKAL
+  const [searchQuery, setSearchQuery] = useState(urlSearchQuery);
+
+  // Jika user mencari dari Header saat sudah berada di halaman ini, perbarui state-nya
+  useEffect(() => {
+    setSearchQuery(urlSearchQuery);
+  }, [urlSearchQuery]);
+
   // ========================================================
-  // 1. TARIK DATA PROGRESS DARI DATABASE SAAT HALAMAN DIBUKA
+  // TARIK DATA PROGRESS DARI DATABASE SAAT HALAMAN DIBUKA
   // ========================================================
   useEffect(() => {
     const fetchRealProgress = async () => {
@@ -34,7 +47,6 @@ export default function CourseList() {
     fetchRealProgress();
   }, []);
 
-  // 2. GABUNGKAN DATA (Context + Database) AGAR AKURAT 100%
   const contextCompletedIds = (progress?.completedCourses || []).map(id => String(id));
   const completedCourses = Array.from(new Set([...contextCompletedIds, ...dbCompletedIds]));
 
@@ -50,23 +62,39 @@ export default function CourseList() {
       })
   );
 
-  // Logic filter kategori
+  // ========================================================
+  //  LOGIKA FILTER GABUNGAN (KATEGORI + SEARCH)
+  // ========================================================
   const filteredCourses = uniqueCourses.filter(course => {
-    if (activeTab === 'Semua') return true;
-    
-    // Pemetaan filter untuk berbagai bidang industri
-    const tabMap = {
-      'Teknologi': 'teknologi',
-      'Bisnis': 'bisnis',
-      'Marketing': 'marketing',
-      'Kreatif': 'kreatif'
-    };
-    
-    const targetTab = tabMap[activeTab] || activeTab.toLowerCase().trim();
-    const courseCategory = (course.category || '').toLowerCase().trim();
-    const courseStatus = (course.status || '').toLowerCase().trim();
-    
-    return courseCategory === targetTab || courseStatus === targetTab;
+    // 1. Filter Kategori Tab
+    let matchCategory = true;
+    if (activeTab !== 'Semua') {
+      const tabMap = {
+        'Teknologi': 'teknologi',
+        'Bisnis': 'bisnis',
+        'Marketing': 'marketing',
+        'Kreatif': 'kreatif'
+      };
+      const targetTab = tabMap[activeTab] || activeTab.toLowerCase().trim();
+      const courseCategory = (course.category || '').toLowerCase().trim();
+      const courseStatus = (course.status || '').toLowerCase().trim();
+      matchCategory = (courseCategory === targetTab || courseStatus === targetTab);
+    }
+
+    // 2. Filter Teks Pencarian (Search)
+    let matchSearch = true;
+    if (searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase().trim();
+      const title = (course.title || '').toLowerCase();
+      const desc = (course.description || '').toLowerCase();
+      const cat = (course.category || '').toLowerCase();
+      
+      // Kelas lolos jika judul, deskripsi, atau kategori mengandung kata yang diketik
+      matchSearch = title.includes(query) || desc.includes(query) || cat.includes(query);
+    }
+
+    // Kembalikan kelas yang lolos KEDUA filter tersebut
+    return matchCategory && matchSearch;
   });
 
   return (
@@ -82,8 +110,12 @@ export default function CourseList() {
         <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="relative flex-grow md:flex-grow-0">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            
+            {/*KOTAK PENCARIAN DI DALAM HALAMAN DIHUBUNGKAN KE STATE */}
             <input 
               type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari materi belajar..." 
               className="w-full md:w-64 pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all shadow-sm font-medium placeholder:text-slate-400"
             />
@@ -232,11 +264,28 @@ export default function CourseList() {
           );
         })}
 
-        {/* Empty State */}
+        {/*TAMPILAN JIKA PENCARIAN KOSONG */}
         {filteredCourses.length === 0 && (
           <div className="col-span-full text-center py-20 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
-            <p className="text-slate-500 font-bold text-lg">Tidak ada kelas yang tersedia.</p>
-            <p className="text-slate-400 text-sm mt-1">Silakan pilih tab kategori materi atau filter pencarian lainnya.</p>
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center">
+                <Search size={32} className="text-slate-400" />
+              </div>
+            </div>
+            <p className="text-slate-600 font-bold text-xl">
+              {searchQuery ? `Tidak menemukan kelas untuk "${searchQuery}"` : 'Tidak ada kelas yang tersedia.'}
+            </p>
+            <p className="text-slate-400 text-sm mt-2 max-w-sm mx-auto">
+              Coba gunakan kata kunci lain atau pilih kategori yang berbeda dari menu di atas.
+            </p>
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="mt-6 px-6 py-2 bg-white border border-slate-200 text-indigo-600 font-bold rounded-xl shadow-sm hover:bg-slate-50 transition-colors"
+              >
+                Hapus Pencarian
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -1,22 +1,62 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronRight, CheckCircle2, Sparkles, History, Target, BookOpen } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom'; // Tambahkan useLocation
+import { ChevronRight, CheckCircle2, Sparkles, History, Target, BookOpen, Search } from 'lucide-react'; // Tambahkan ikon Search
 import { useAppContext } from '../../context/AppContext';
 
 export default function AssessmentList() {
   const navigate = useNavigate();
+  const location = useLocation(); // 🔥 Membaca URL
   const { progress, availableAssessments } = useAppContext();
+
+  // 1. AMBIL KATA KUNCI DARI URL (JIKA MENCARI DARI HEADER)
+  const searchParams = new URLSearchParams(location.search);
+  const urlSearchQuery = searchParams.get('search') || '';
+
+  //  2. STATE UNTUK KOTAK SEARCH LOKAL
+  const [searchQuery, setSearchQuery] = useState(urlSearchQuery);
+
+  // Jika URL berubah (mencari lagi dari Header), perbarui state
+  useEffect(() => {
+    setSearchQuery(urlSearchQuery);
+  }, [urlSearchQuery]);
 
   const pastAssessments = progress?.assessments || [];
   const hasCompletedAssessments = pastAssessments.length > 0;
 
+  // 3. LOGIKA FILTER UNTUK DAFTAR UJIAN
+  const filteredAssessments = (availableAssessments || []).filter(assessment => {
+    if (!searchQuery.trim()) return true;
+
+    const query = searchQuery.toLowerCase().trim();
+    const title = (assessment.title || '').toLowerCase();
+    const desc = (assessment.description || '').toLowerCase();
+    const cat = (assessment.category || '').toLowerCase();
+
+    // Akan tampil jika judul, deskripsi, atau kategorinya mengandung kata yang diketik
+    return title.includes(query) || desc.includes(query) || cat.includes(query);
+  });
+
   return (
     <div className="space-y-10 p-4 md:p-8 animate-in fade-in duration-500 max-w-7xl mx-auto w-full">
       
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Assessments</h1>
-        <p className="text-slate-500 mt-2 text-sm">Ukur kemampuan Anda dan pantau perkembangan karir dari waktu ke waktu.</p>
+      {/* Header & Search Bar */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Assessments</h1>
+          <p className="text-slate-500 mt-2 text-sm">Ukur kemampuan Anda dan pantau perkembangan karir dari waktu ke waktu.</p>
+        </div>
+
+        {/*  KOTAK SEARCH LOKAL */}
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <input 
+            type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Cari ujian atau kategori..." 
+            className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all shadow-sm font-medium placeholder:text-slate-400"
+          />
+        </div>
       </div>
 
       {/* Available Assessments Section */}
@@ -28,9 +68,9 @@ export default function AssessmentList() {
           <h2 className="text-xl font-bold text-slate-800">Daftar Ujian Tersedia</h2>
         </div>
 
-        {availableAssessments && availableAssessments.length > 0 ? (
+        {filteredAssessments && filteredAssessments.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {availableAssessments.map((assessment) => (
+            {filteredAssessments.map((assessment) => (
               <div 
                 key={assessment.id} 
                 onClick={() => navigate(`/dashboard/assessments/${assessment.id}`)}
@@ -66,13 +106,29 @@ export default function AssessmentList() {
             ))}
           </div>
         ) : (
-          <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-10 text-center">
-            <p className="text-slate-500 font-medium">Belum ada ujian yang ditambahkan oleh admin.</p>
+          <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] p-10 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mb-4">
+              <Search size={28} className="text-slate-400" />
+            </div>
+            <h3 className="text-slate-700 font-bold mb-1 text-lg">
+              {searchQuery ? `Ujian "${searchQuery}" tidak ditemukan` : 'Belum ada ujian yang tersedia'}
+            </h3>
+            <p className="text-slate-500 text-sm max-w-sm">
+              {searchQuery ? 'Coba gunakan kata kunci lain untuk mencari ujian.' : 'Admin belum menambahkan soal ujian apa pun ke dalam sistem.'}
+            </p>
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="mt-6 px-6 py-2 bg-white border border-slate-200 text-indigo-600 font-bold rounded-xl shadow-sm hover:bg-slate-50 transition-colors text-sm"
+              >
+                Hapus Pencarian
+              </button>
+            )}
           </div>
         )}
       </section>
 
-      {/* Past Results Section */}
+      {/* Past Results Section (Tidak di-filter oleh pencarian) */}
       <section>
         <div className="flex items-center gap-3 mb-6 mt-4">
           <div className="p-2.5 bg-slate-800 rounded-xl shadow-md flex items-center justify-center shrink-0">
@@ -82,7 +138,7 @@ export default function AssessmentList() {
         </div>
 
         {!hasCompletedAssessments ? (
-          <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-16 flex flex-col items-center justify-center text-center">
+          <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] p-16 flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-5 shadow-lg border border-slate-700">
               <History className="text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]" size={32} />
             </div>
