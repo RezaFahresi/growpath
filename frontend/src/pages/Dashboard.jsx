@@ -15,6 +15,8 @@ export default function Dashboard() {
     achievements: 0
   });
 
+  //  State baru untuk menyimpan data Roadmap dari Database
+  const [dbRoadmaps, setDbRoadmaps] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,7 +26,12 @@ export default function Dashboard() {
       setLoading(true);
 
       try {
-        const progressRes = await API.get('/progress');
+        //  Menarik data Progress & Roadmap dari backend secara bersamaan
+        const [progressRes, roadmapsRes] = await Promise.all([
+          API.get('/progress'),
+          API.get('/roadmaps').catch(() => ({ data: [] })) // Fallback jika gagal
+        ]);
+
         const progressData = progressRes.data;
 
         if (progressData?.stats) {
@@ -38,6 +45,10 @@ export default function Dashboard() {
           }));
         }
 
+        if (roadmapsRes.data) {
+          setDbRoadmaps(roadmapsRes.data);
+        }
+
       } catch (error) {
         console.error("Gagal mengambil data dashboard:", error);
       } finally {
@@ -48,17 +59,15 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [user?.id, setProgress]);
 
+  // Menggunakan data Roadmap Asli dari Database
   const roadmapSteps = useMemo(() => {
-    const availableRoadmaps = [
-      { id: 'web-dev-101', title: 'Fullstack Web Development' },
-      { id: 'marketing-101', title: 'Digital Marketing Specialist' },
-      { id: 'ui-ux-101', title: 'UI/UX Design Masterclass' },
-      { id: 'business-101', title: 'Business & Data Analytics' }
-    ];
+    // Ambil maksimal 4 roadmap untuk ditampilkan di Tracker Dashboard agar desain tidak rusak
+    const displayRoadmaps = dbRoadmaps.slice(0, 4);
 
-    return availableRoadmaps.map((roadmap, index) => {
+    return displayRoadmaps.map((roadmap, index) => {
+      const totalModules = (roadmap.items || []).length || 1; // Menghindari dibagi 0
       const completedItems = progress?.roadmapChecklist?.[roadmap.id]?.length || 0;
-      const progressPercentage = Math.round((completedItems / 5) * 100);
+      const progressPercentage = Math.round((completedItems / totalModules) * 100);
 
       let status = 'Locked';
 
@@ -74,7 +83,7 @@ export default function Dashboard() {
         status
       };
     });
-  }, [progress?.roadmapChecklist]);
+  }, [dbRoadmaps, progress?.roadmapChecklist]);
 
   const stats = [
     { title: 'Current Streak', value: `${dashboardStats.streak} Days`, icon: Calendar, color: 'text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]', bg: 'bg-slate-800 shadow-md', border: 'border-slate-100' },
@@ -207,7 +216,7 @@ export default function Dashboard() {
               })
             ) : (
               <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] p-10 flex flex-col items-center justify-center text-center">
-                <div className="w-16 h-16 bg-slate-800 rounded-2xl shadow-lg flex items-center justify-center mb-4">
+                <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center shadow-lg mb-4">
                   <BookOpen size={28} className="text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]" />
                 </div>
                 <h3 className="text-slate-700 font-bold mb-1">Belum ada kelas aktif</h3>
@@ -235,52 +244,56 @@ export default function Dashboard() {
             <div className="space-y-0 relative ml-2">
               <div className="absolute left-[13px] top-4 bottom-4 w-[2px] bg-slate-100 -z-10"></div>
 
-              {roadmapSteps.map((step) => (
-                <div key={step.id} className="flex gap-5 items-start relative pb-8 last:pb-0">
-                  <div className="relative z-10 bg-white py-1">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-colors ${
-                      step.status === 'Done'
-                        ? 'bg-emerald-500 border-emerald-500 text-white'
-                        : step.status === 'Active'
-                          ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200'
-                          : 'bg-slate-50 border-slate-200 text-slate-300'
-                    }`}>
-                      {step.status === 'Done' ? (
-                        <CheckCircle2 size={16} />
-                      ) : step.status === 'Locked' ? (
-                        <Lock size={12} />
-                      ) : (
-                        <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
-                      )}
+              {roadmapSteps.length === 0 ? (
+                <p className="text-sm text-slate-500 font-medium py-4 text-center">Belum ada roadmap yang dibuat oleh Admin.</p>
+              ) : (
+                roadmapSteps.map((step) => (
+                  <div key={step.id} className="flex gap-5 items-start relative pb-8 last:pb-0">
+                    <div className="relative z-10 bg-white py-1">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-colors ${
+                        step.status === 'Done'
+                          ? 'bg-emerald-500 border-emerald-500 text-white'
+                          : step.status === 'Active'
+                            ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200'
+                            : 'bg-slate-50 border-slate-200 text-slate-300'
+                      }`}>
+                        {step.status === 'Done' ? (
+                          <CheckCircle2 size={16} />
+                        ) : step.status === 'Locked' ? (
+                          <Lock size={12} />
+                        ) : (
+                          <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="pt-1.5 flex-1">
+                      <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${
+                        step.status === 'Done'
+                          ? 'text-emerald-500'
+                          : step.status === 'Active'
+                            ? 'text-indigo-600'
+                            : 'text-slate-400'
+                      }`}>
+                        {step.status === 'Done' ? 'Selesai' : step.status === 'Active' ? 'Fase Aktif' : 'Terkunci'}
+                      </p>
+
+                      <span className={`text-sm font-bold transition-colors ${
+                        step.status === 'Locked' ? 'text-slate-400' : 'text-slate-800'
+                      }`}>
+                        {step.title}
+                      </span>
                     </div>
                   </div>
-                  
-                  <div className="pt-1.5 flex-1">
-                    <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${
-                      step.status === 'Done'
-                        ? 'text-emerald-500'
-                        : step.status === 'Active'
-                          ? 'text-indigo-600'
-                          : 'text-slate-400'
-                    }`}>
-                      {step.status === 'Done' ? 'Selesai' : step.status === 'Active' ? 'Fase Aktif' : 'Terkunci'}
-                    </p>
-
-                    <span className={`text-sm font-bold transition-colors ${
-                      step.status === 'Locked' ? 'text-slate-400' : 'text-slate-800'
-                    }`}>
-                      {step.title}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
             <button 
               onClick={() => navigate('/dashboard/roadmap')} 
               className="w-full mt-10 py-3.5 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-xl hover:bg-indigo-100 hover:shadow-sm text-sm transition-all flex items-center justify-center gap-2 group"
             >
-              Lihat Detail Roadmap <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              Lihat Semua Roadmap <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
         </div>
