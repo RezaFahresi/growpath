@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Clock, BookOpen, Zap, CheckCircle2, PlayCircle, ExternalLink, Sparkles } from 'lucide-react';
+import { ChevronLeft, Clock, BookOpen, Zap, CheckCircle2, PlayCircle, ExternalLink, Sparkles, X } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import API from '../api/axios'; 
 import Swal from 'sweetalert2';
@@ -13,22 +13,20 @@ export default function RoadmapDetail() {
   
   const [loading, setLoading] = useState(true);
   const [moduleData, setModuleData] = useState(null);
+  
+  // State Baru: Untuk menyimpan ID video yang sedang diputar di pop-up
+  const [activeVideo, setActiveVideo] = useState(null);
 
-  // Mengambil Roadmap spesifik dari API (dari data yang dimasukkan Admin)
   useEffect(() => {
     const fetchRoadmapDetail = async () => {
       try {
         setLoading(true);
-        // Menarik semua roadmap dari database
         const res = await API.get('/roadmaps');
-        
-        // Cari roadmap yang ID-nya cocok dengan parameter di URL
         const currentRoadmap = res.data.find(r => String(r.id) === String(id));
         
         if (currentRoadmap) {
           setModuleData(currentRoadmap);
         } else {
-          // Jika roadmap tidak ada (mungkin dihapus admin)
           Swal.fire('Tidak Ditemukan', 'Roadmap ini tidak tersedia.', 'error');
           navigate('/dashboard/roadmap');
         }
@@ -42,9 +40,24 @@ export default function RoadmapDetail() {
     fetchRoadmapDetail();
   }, [id, navigate]);
 
+  // Fungsi Cerdas: Mengekstrak ID YouTube dari link panjang
+  const getYoutubeId = (url) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
   const handleOpenMaterial = (link) => {
     if (!link) return;
-    if (link.startsWith('http')) {
+    
+    // Cek apakah ini link YouTube
+    const ytId = getYoutubeId(link);
+    
+    if (ytId) {
+      // Jika iya, buka di pop-up internal
+      setActiveVideo(ytId);
+    } else if (link.startsWith('http')) {
+      // Jika bukan YouTube (misal link GDrive), buka di tab baru
       window.open(link, '_blank', 'noopener,noreferrer');
     } else {
       navigate(link);
@@ -53,32 +66,15 @@ export default function RoadmapDetail() {
 
   const handleToggleTask = async (itemId) => {
     const stringItemId = String(itemId);
-    
     toggleRoadmapItem(id, stringItemId);
 
     if (user) {
       try {
-        await API.post('/roadmaps/progress', {
-          phaseId: id,
-          taskId: stringItemId
-        });
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Progress Disimpan',
-          text: 'Progress roadmap berhasil diperbarui.',
-          timer: 1200,
-          showConfirmButton: false
-        });
-
+        await API.post('/roadmaps/progress', { phaseId: id, taskId: stringItemId });
+        Swal.fire({ icon: 'success', title: 'Progress Disimpan', text: 'Progress roadmap berhasil diperbarui.', timer: 1200, showConfirmButton: false });
       } catch (error) {
-        toggleRoadmapItem(id, stringItemId); // Revert jika gagal
-
-        Swal.fire({
-          icon: 'error',
-          title: 'Gagal Menyimpan Progress',
-          text: error.response?.data?.message || 'Progress gagal disimpan ke server.'
-        });
+        toggleRoadmapItem(id, stringItemId); 
+        Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Progress', text: error.response?.data?.message || 'Progress gagal disimpan ke server.' });
       }
     }
   };
@@ -97,7 +93,7 @@ export default function RoadmapDetail() {
   const isCompleted = currentPhaseChecklist.length === moduleItems.length && moduleItems.length > 0;
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="w-full max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
       
       <button 
         onClick={() => navigate('/dashboard/roadmap')} 
@@ -234,6 +230,35 @@ export default function RoadmapDetail() {
           })}
         </div>
       </div>
+
+      {/* 🔥 MODAL PEMUTAR VIDEO YOUTUBE INLINE */}
+      {activeVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden relative">
+            <div className="flex justify-between items-center p-4 border-b border-slate-700">
+              <h3 className="text-white font-bold flex items-center gap-2">
+                <PlayCircle size={18} className="text-indigo-400" /> Pemutar Video
+              </h3>
+              <button 
+                onClick={() => setActiveVideo(null)} 
+                className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="aspect-video w-full bg-black flex items-center justify-center">
+              <iframe
+                className="w-full h-full"
+                src={`https://www.youtube.com/embed/${activeVideo}?autoplay=1`}
+                title="YouTube video player"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
