@@ -2,10 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Map, Plus, Trash2, Edit, X, BookOpen, Clock, Target, List, Video, AlertCircle } from 'lucide-react';
 import API from '../../api/axios'; 
 import Swal from 'sweetalert2';
+// 1. IMPORT USEAPPCONTEXT
+import { useAppContext } from '../../context/AppContext'; 
 
 export default function ManageRoadmaps() {
   const [roadmaps, setRoadmaps] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  //  2. AMBIL DATA USER DAN CEK ROLE
+  const { user } = useAppContext(); 
+  const isSuperAdmin = user?.role?.toLowerCase() === 'superadmin';
 
   // State Modal Roadmap
   const [isRoadmapModalOpen, setIsRoadmapModalOpen] = useState(false);
@@ -17,7 +23,7 @@ export default function ManageRoadmaps() {
   // State Modal Modul
   const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
   const [selectedRoadmapId, setSelectedRoadmapId] = useState(null);
-  const [editingModuleId, setEditingModuleId] = useState(null); // State baru untuk melacak modul yang diedit
+  const [editingModuleId, setEditingModuleId] = useState(null);
   const [moduleForm, setModuleForm] = useState({
     title: '', subtitle: '', video_link: '', step_order: 1
   });
@@ -81,11 +87,9 @@ export default function ManageRoadmaps() {
     e.preventDefault();
     try {
       if (editingModuleId) {
-        // Mode Edit
         await API.put(`/roadmaps/modules/${editingModuleId}`, moduleForm);
         Swal.fire({ ...darkSwal, icon: 'success', title: 'Berhasil', text: 'Modul diperbarui!', timer: 1500, showConfirmButton: false });
       } else {
-        // Mode Tambah Baru
         await API.post(`/roadmaps/${selectedRoadmapId}/modules`, moduleForm);
         Swal.fire({ ...darkSwal, icon: 'success', title: 'Berhasil', text: 'Modul ditambahkan!', timer: 1500, showConfirmButton: false });
       }
@@ -176,9 +180,12 @@ export default function ManageRoadmaps() {
                   </div>
                 </div>
                 <div className="flex items-start shrink-0">
-                  <button onClick={() => handleDeleteRoadmap(roadmap.id)} className="p-2 text-red-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors tooltip" title="Hapus Roadmap">
-                    <Trash2 size={20} />
-                  </button>
+                  {/* 3. SEMBUNYIKAN TOMBOL HAPUS ROADMAP */}
+                  {isSuperAdmin && (
+                    <button onClick={() => handleDeleteRoadmap(roadmap.id)} className="p-2 text-red-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors tooltip" title="Hapus Roadmap">
+                      <Trash2 size={20} />
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -216,18 +223,20 @@ export default function ManageRoadmaps() {
                           <p className="text-xs font-medium text-slate-400 mt-0.5">{modul.subtitle}</p>
                         </div>
                         
-                        {/* Tombol Aksi Edit & Hapus Modul */}
                         <div className="flex items-center gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                           <button 
                             onClick={() => handleEditModuleClick(roadmap.id, modul)}
                             className="p-2 text-indigo-400 hover:bg-indigo-500/20 rounded-lg transition-colors" title="Edit Modul">
                             <Edit size={16} />
                           </button>
-                          <button 
-                            onClick={() => handleDeleteModule(modul.id)}
-                            className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors" title="Hapus Modul">
-                            <Trash2 size={16} />
-                          </button>
+                          {/* 🔥 4. SEMBUNYIKAN TOMBOL HAPUS MODUL */}
+                          {isSuperAdmin && (
+                            <button 
+                              onClick={() => handleDeleteModule(modul.id)}
+                              className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors" title="Hapus Modul">
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -240,7 +249,7 @@ export default function ManageRoadmaps() {
         </div>
       )}
 
-      {/* Modal Roadmap disembunyikan agar kode tidak kepanjangan (Sama seperti sebelumnya) */}
+      {/* Modal Roadmap */}
       {isRoadmapModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#071226]/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[#0F1B33] border border-[#1E2A45] rounded-[2rem] w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
@@ -252,7 +261,7 @@ export default function ManageRoadmaps() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Judul Roadmap</label>
-                  <input type="text" required value={roadmapForm.title} onChange={e => setRoadmapForm({...roadmapForm, title: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-[#1E2A45] bg-[#071226] focus:bg-[#0F1B33] focus:border-indigo-500 outline-none transition-all text-sm font-medium text-white placeholder:text-slate-600" />
+                  <input type="text" required value={roadmapForm.title} onChange={e => setRoadmapForm({...roadmapForm, title: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-[#1E2A45] bg-[#071226] focus:bg-[#0F1B33] focus:border-indigo-500 outline-none transition-all text-sm font-medium text-white" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Kategori</label>
@@ -268,12 +277,12 @@ export default function ManageRoadmaps() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Estimasi Waktu</label>
-                  <input type="text" required value={roadmapForm.est_time} onChange={e => setRoadmapForm({...roadmapForm, est_time: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-[#1E2A45] bg-[#071226] focus:bg-[#0F1B33] focus:border-indigo-500 outline-none text-sm font-medium text-white placeholder:text-slate-600" />
+                  <input type="text" required value={roadmapForm.est_time} onChange={e => setRoadmapForm({...roadmapForm, est_time: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-[#1E2A45] bg-[#071226] focus:bg-[#0F1B33] focus:border-indigo-500 outline-none text-sm font-medium text-white" />
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Deskripsi</label>
-                <textarea required rows="3" value={roadmapForm.description} onChange={e => setRoadmapForm({...roadmapForm, description: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-[#1E2A45] bg-[#071226] focus:bg-[#0F1B33] focus:border-indigo-500 outline-none transition-all text-sm font-medium text-white placeholder:text-slate-600 resize-none"></textarea>
+                <textarea required rows="3" value={roadmapForm.description} onChange={e => setRoadmapForm({...roadmapForm, description: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-[#1E2A45] bg-[#071226] focus:bg-[#0F1B33] focus:border-indigo-500 outline-none transition-all text-sm font-medium text-white resize-none"></textarea>
               </div>
               <div className="flex justify-end gap-3 pt-4 border-t border-[#1E2A45]">
                 <button type="button" onClick={() => setIsRoadmapModalOpen(false)} className="px-6 py-3 rounded-xl text-slate-300 font-bold hover:bg-[#162544] transition-colors text-sm border border-transparent hover:border-[#1E2A45]">Batal</button>
@@ -284,7 +293,7 @@ export default function ManageRoadmaps() {
         </div>
       )}
 
-      {/* MODAL TAMBAH/EDIT MODUL */}
+      {/* Modal Tambah/Edit Modul */}
       {isModuleModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#071226]/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[#0F1B33] border border-[#1E2A45] rounded-[2rem] w-full max-w-lg shadow-2xl">
@@ -305,18 +314,15 @@ export default function ManageRoadmaps() {
                   <input type="text" required value={moduleForm.title} onChange={e => setModuleForm({...moduleForm, title: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-[#1E2A45] bg-[#071226] focus:bg-[#0F1B33] focus:border-indigo-500 outline-none text-sm font-medium text-white" />
                 </div>
               </div>
-
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Sub Judul (Singkat)</label>
                 <input type="text" required value={moduleForm.subtitle} onChange={e => setModuleForm({...moduleForm, subtitle: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-[#1E2A45] bg-[#071226] focus:bg-[#0F1B33] focus:border-indigo-500 outline-none text-sm font-medium text-white" />
               </div>
-
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1"><Video size={14}/> Link Materi / Video</label>
                 <input type="url" value={moduleForm.video_link} onChange={e => setModuleForm({...moduleForm, video_link: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-[#1E2A45] bg-[#071226] focus:bg-[#0F1B33] focus:border-indigo-500 outline-none text-sm font-medium text-indigo-400" />
                 <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1"><AlertCircle size={12}/> Kosongkan jika materi berbentuk teks mandiri.</p>
               </div>
-
               <div className="flex justify-end gap-3 pt-4 border-t border-[#1E2A45]">
                 <button type="button" onClick={() => setIsModuleModalOpen(false)} className="px-6 py-3 rounded-xl text-slate-300 font-bold hover:bg-[#162544] border border-transparent hover:border-[#1E2A45] transition-colors text-sm">Batal</button>
                 <button type="submit" className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-md transition-all active:scale-95 text-sm">

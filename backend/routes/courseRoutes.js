@@ -1,15 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const courseController = require('../controllers/courseController');
-const authMiddleware = require('../middleware/authMiddleware'); // Wajib Import
+const authMiddleware = require('../middleware/authMiddleware'); 
+// IMPORT MIDDLEWARE SUPERADMIN
+const { requireSuperadmin } = require('../middleware/roleMiddleware');
 
-// PERBAIKAN: Gunakan authMiddleware pada seluruh rute
 router.get('/', authMiddleware, courseController.getCourses);
+
+// Admin biasa boleh membuat dan mengedit kelas
 router.post('/', authMiddleware, courseController.createCourse);
 router.put('/:id', authMiddleware, courseController.updateCourse);
-router.delete('/:id', authMiddleware, courseController.deleteCourse);
 
-// Rute untuk menyimpan progress saat tombol "Selesai" diklik
+// HANYA SUPERADMIN yang boleh menghapus kelas
+router.delete('/:id', authMiddleware, requireSuperadmin, courseController.deleteCourse);
+
+// Rute progress user
 router.post('/:id/complete', authMiddleware, courseController.completeCourse);
 
 module.exports = router;

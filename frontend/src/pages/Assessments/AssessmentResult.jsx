@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, AlertTriangle, TrendingUp, Target, Code, PenTool, Megaphone, ArrowRight, Sparkles, CheckCircle2, Lightbulb } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, TrendingUp, Target, Code2, PenTool, Megaphone, ArrowRight, Sparkles, CheckCircle2, Lightbulb, Palette, BookOpen, Zap, Monitor, Briefcase, Layout, Globe, Smartphone, Server } from 'lucide-react';
 import API from '../../api/axios';
+
+// Pemetaan Ikon agar sesuai dengan nama ikon dari Database
+const IconMap = {
+  Code2, Megaphone, Palette, TrendingUp, BookOpen, Target, Zap, Monitor, Briefcase, PenTool, Layout, Globe, Smartphone, Server
+};
 
 export default function AssessmentResult() {
   const { id } = useParams();
@@ -12,6 +17,9 @@ export default function AssessmentResult() {
   
   const [selectedPath, setSelectedPath] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // State baru untuk daftar Roadmap dari Database
+  const [dbRoadmaps, setDbRoadmaps] = useState([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -21,6 +29,7 @@ export default function AssessmentResult() {
         setLoading(true);
         setError(null);
 
+        // 1. Tarik hasil Assessment
         const response = await API.get(`/assessments/results/${id}`, {
           signal: controller.signal
         });
@@ -44,6 +53,10 @@ export default function AssessmentResult() {
             ? 'Kerja bagus! Pemahaman dasar Anda sudah cukup baik. Anda hanya perlu sedikit penyesuaian di beberapa studi kasus sebelum melangkah ke level manajerial.'
             : 'Setiap profesional dimulai dari pemula. Kami merekomendasikan Anda untuk memulai dari materi fundamental agar fondasi pemahaman teori Anda kokoh.',
         });
+
+        // 🔥 2. Tarik daftar Roadmap dari Database
+        const roadmapsRes = await API.get('/roadmaps');
+        setDbRoadmaps(roadmapsRes.data || []);
 
       } catch (err) {
         if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
@@ -86,6 +99,7 @@ export default function AssessmentResult() {
     if (!selectedPath) return;
     setIsSubmitting(true);
     setTimeout(() => {
+      //  Akan mengarah ke ID angka yang benar di Database
       navigate(`/dashboard/roadmap/${selectedPath}`);
     }, 1200);
   };
@@ -206,49 +220,60 @@ export default function AssessmentResult() {
             <p className="text-slate-500 text-sm md:text-base">Berdasarkan hasil analisa di atas, kami telah merangkum spesialisasi yang paling ideal. Pilih satu jalur untuk memulai program kurikulum Anda!</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-10">
-            
-            {/* OPSI 1: DIGITAL MARKETING */}
-            <div onClick={() => handleSelectPath('marketing-101')} className={`cursor-pointer rounded-3xl border-2 p-8 transition-all duration-300 flex flex-col h-full ${selectedPath === 'marketing-101' ? 'border-indigo-600 bg-indigo-50/50 shadow-lg transform md:-translate-y-1' : 'border-slate-100 hover:border-indigo-200 hover:bg-slate-50 hover:shadow-md'}`}>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-4 rounded-2xl bg-slate-800 shadow-md"><Megaphone size={28} className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" /></div>
-                <h4 className="font-bold text-slate-800 text-xl">Digital Marketing</h4>
-              </div>
-              <p className="text-sm text-slate-500 leading-relaxed mb-4 flex-grow">Pelajari taktik strategi pasar, SEO, periklanan media sosial, dan analisis data pelanggan. Pilihan tepat untuk Anda yang komunikatif dan analitis.</p>
-              <div className={`text-sm font-bold flex items-center gap-2 ${selectedPath === 'marketing-101' ? 'text-indigo-600' : 'text-slate-400'}`}>
-                {selectedPath === 'marketing-101' ? 'Spesialisasi Dipilih' : 'Pilih Spesialisasi Ini'} <ArrowRight size={16} />
-              </div>
+          {/* KOTAK PILIHAN ROADMAP DIAMBIL DARI DATABASE */}
+          {dbRoadmaps.length === 0 ? (
+            <div className="text-center py-10">
+              <p className="text-slate-500">Memuat pilihan kurikulum...</p>
             </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-10">
+              {dbRoadmaps.slice(0, 3).map((roadmap) => {
+                const IconCmp = IconMap[roadmap.icon_name] || BookOpen;
+                const isSelected = selectedPath === roadmap.id;
 
-            {/* OPSI 2: UI/UX DESIGN */}
-            <div onClick={() => handleSelectPath('ui-ux-101')} className={`cursor-pointer rounded-3xl border-2 p-8 transition-all duration-300 flex flex-col h-full ${selectedPath === 'ui-ux-101' ? 'border-indigo-600 bg-indigo-50/50 shadow-lg transform md:-translate-y-1' : 'border-slate-100 hover:border-indigo-200 hover:bg-slate-50 hover:shadow-md'}`}>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-4 rounded-2xl bg-slate-800 shadow-md"><PenTool size={28} className="text-pink-400 drop-shadow-[0_0_8px_rgba(244,114,182,0.6)]" /></div>
-                <h4 className="font-bold text-slate-800 text-xl">UI/UX Design</h4>
-              </div>
-              <p className="text-sm text-slate-500 leading-relaxed mb-4 flex-grow">Kembangkan empati visual Anda. Pahami riset pengguna dan rancang antarmuka digital yang memukau menggunakan figma.</p>
-              <div className={`text-sm font-bold flex items-center gap-2 ${selectedPath === 'ui-ux-101' ? 'text-indigo-600' : 'text-slate-400'}`}>
-                {selectedPath === 'ui-ux-101' ? 'Spesialisasi Dipilih' : 'Pilih Spesialisasi Ini'} <ArrowRight size={16} />
-              </div>
+                return (
+                  <div 
+                    key={roadmap.id} 
+                    onClick={() => handleSelectPath(roadmap.id)} 
+                    className={`cursor-pointer rounded-3xl border-2 p-8 transition-all duration-300 flex flex-col h-full ${
+                      isSelected 
+                        ? 'border-indigo-600 bg-indigo-50/50 shadow-lg transform md:-translate-y-1' 
+                        : 'border-slate-100 hover:border-indigo-200 hover:bg-slate-50 hover:shadow-md'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="p-4 rounded-2xl bg-slate-800 shadow-md">
+                        <IconCmp size={28} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
+                      </div>
+                      <h4 className="font-bold text-slate-800 text-xl">{roadmap.title}</h4>
+                    </div>
+                    <p className="text-sm text-slate-500 leading-relaxed mb-4 flex-grow line-clamp-3">
+                      {roadmap.description}
+                    </p>
+                    <div className={`text-sm font-bold flex items-center gap-2 ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`}>
+                      {isSelected ? 'Spesialisasi Dipilih' : 'Pilih Spesialisasi Ini'} <ArrowRight size={16} />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-
-            {/* OPSI 3: WEB DEVELOPMENT */}
-            <div onClick={() => handleSelectPath('web-dev-101')} className={`cursor-pointer rounded-3xl border-2 p-8 transition-all duration-300 flex flex-col h-full ${selectedPath === 'web-dev-101' ? 'border-indigo-600 bg-indigo-50/50 shadow-lg transform md:-translate-y-1' : 'border-slate-100 hover:border-indigo-200 hover:bg-slate-50 hover:shadow-md'}`}>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-4 rounded-2xl bg-slate-800 shadow-md"><Code size={28} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" /></div>
-                <h4 className="font-bold text-slate-800 text-xl">Web Development</h4>
-              </div>
-              <p className="text-sm text-slate-500 leading-relaxed mb-4 flex-grow">Kuasai logika arsitektur sistem. Pelajari pondasi HTML, CSS, JavaScript hingga membangun aplikasi interaktif dengan Node.js.</p>
-              <div className={`text-sm font-bold flex items-center gap-2 ${selectedPath === 'web-dev-101' ? 'text-indigo-600' : 'text-slate-400'}`}>
-                {selectedPath === 'web-dev-101' ? 'Spesialisasi Dipilih' : 'Pilih Spesialisasi Ini'} <ArrowRight size={16} />
-              </div>
-            </div>
-
-          </div>
+          )}
 
           <div className="flex justify-center border-t border-slate-100 pt-10">
-            <button onClick={handleConfirmSelection} disabled={!selectedPath || isSubmitting} className={`flex items-center gap-3 px-10 py-4 rounded-2xl font-bold text-lg transition-all ${selectedPath && !isSubmitting ? 'bg-slate-900 text-white shadow-xl shadow-slate-900/20 hover:bg-slate-800 hover:scale-105' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}>
-              {isSubmitting ? <>Menyiapkan Program... <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div></> : <>Konfirmasi Jalur Karir <ArrowRight size={20} /></>}
+            <button 
+              onClick={handleConfirmSelection} 
+              disabled={!selectedPath || isSubmitting} 
+              className={`flex items-center gap-3 px-10 py-4 rounded-2xl font-bold text-lg transition-all ${
+                selectedPath && !isSubmitting 
+                  ? 'bg-slate-900 text-white shadow-xl shadow-slate-900/20 hover:bg-slate-800 hover:scale-105' 
+                  : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+              }`}
+            >
+              {isSubmitting ? (
+                <>Menyiapkan Program... <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div></>
+              ) : (
+                <>Konfirmasi Jalur Karir <ArrowRight size={20} /></>
+              )}
             </button>
           </div>
         </div>

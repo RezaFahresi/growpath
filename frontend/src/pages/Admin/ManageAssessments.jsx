@@ -12,8 +12,8 @@ export default function ManageAssessments() {
   const [loading, setLoading] = useState(false);
 
   const defaultCategory = user?.role === 'Admin' ? (user?.interest || '') : '';
+  const isSuperAdmin = user?.role?.toLowerCase() === 'superadmin';
 
-  // 🔥 STATE DITAMBAH: Menyimpan daftar pertanyaan
   const [assessmentData, setAssessmentData] = useState({
     title: '', category: defaultCategory, duration: '', description: '', questions: []
   });
@@ -27,7 +27,6 @@ export default function ManageAssessments() {
 
   const openEditForm = async (item) => {
     const itemId = item.id || item._id;
-    // Mengambil data lengkap beserta pertanyaannya dari backend
     try {
       const res = await API.get(`/assessments/${itemId}`);
       setAssessmentData({
@@ -47,7 +46,6 @@ export default function ManageAssessments() {
     setIsFormOpen(false); setIsEditing(false); setEditId(null);
   };
 
-  // 🔥 Fungsi Tambah Pertanyaan Lokal (belum di-save ke DB)
   const handleAddQuestion = () => {
     setAssessmentData(prev => ({
       ...prev,
@@ -58,14 +56,12 @@ export default function ManageAssessments() {
     }));
   };
 
-  // 🔥 Fungsi Update Pertanyaan Spesifik
   const handleQuestionChange = (index, field, value) => {
     const updatedQuestions = [...assessmentData.questions];
     updatedQuestions[index][field] = value;
     setAssessmentData({ ...assessmentData, questions: updatedQuestions });
   };
 
-  // 🔥 Fungsi Hapus Pertanyaan
   const handleRemoveQuestion = (index) => {
     const updatedQuestions = assessmentData.questions.filter((_, i) => i !== index);
     setAssessmentData({ ...assessmentData, questions: updatedQuestions });
@@ -132,7 +128,6 @@ export default function ManageAssessments() {
             <button onClick={closeForm} className="p-2.5 text-slate-400 hover:text-white bg-[#0F1B33] rounded-xl border border-[#1E2A45]"><X size={18} /></button>
           </div>
           
-          {/* Form Informasi Utama */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 border-b border-[#1E2A45] pb-8">
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-400 uppercase">Judul Ujian</label>
@@ -152,7 +147,6 @@ export default function ManageAssessments() {
             </div>
           </div>
 
-          {/* 🔥 FORM PERTANYAAN (DINAMIS) */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-white">Daftar Pertanyaan ({assessmentData.questions.length})</h3>
@@ -200,7 +194,6 @@ export default function ManageAssessments() {
         </div>
       )}
 
-      {/* Tabel Ujian Tetap Sama */}
       <div className="bg-[#0B172E] rounded-[2rem] border border-[#1E2A45] shadow-xl overflow-hidden min-h-[400px]">
         <div className="p-6 border-b border-[#1E2A45] flex items-center justify-between bg-[#0F1B33]">
           <h2 className="font-bold text-white flex items-center gap-3">
@@ -231,7 +224,10 @@ export default function ManageAssessments() {
                   <td className="px-8 py-5">
                     <div className="flex items-center justify-end gap-2">
                       <button onClick={() => openEditForm(item)} className="p-2.5 bg-[#0F1B33] text-slate-400 hover:text-blue-400 rounded-xl border border-[#1E2A45]"><Edit2 size={16}/></button>
-                      <button onClick={() => handleDelete(item.id)} className="p-2.5 bg-[#0F1B33] text-slate-400 hover:text-red-400 rounded-xl border border-[#1E2A45]"><Trash2 size={16}/></button>
+                      
+                      {isSuperAdmin && (
+                        <button onClick={() => handleDelete(item.id)} className="p-2.5 bg-[#0F1B33] text-slate-400 hover:text-red-400 rounded-xl border border-[#1E2A45]"><Trash2 size={16}/></button>
+                      )}
                     </div>
                   </td>
                 </tr>

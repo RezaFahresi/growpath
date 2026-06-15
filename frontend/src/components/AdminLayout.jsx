@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, ClipboardCheck, BarChart,
-  Settings, Network, Route as RouteIcon, Map, //Tambah icon Map di sini
+  Settings, Network, Route as RouteIcon, Map,
   ChevronDown, LogOut, Menu, X 
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
@@ -15,20 +15,30 @@ export default function AdminLayout() {
 
   const userName = user?.name || 'Administrator';
   const userRole = user?.role || 'Admin';
-  // PERBAIKAN: Ambil gambar atau gunakan fallback UI Avatar
   const userImage = user?.image || `https://ui-avatars.com/api/?name=${userName}&background=2563eb&color=fff`;
 
-  const navItems = [
-    { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'User Insights', path: '/admin/users', icon: Users },
-    { name: 'Talent Mapping', path: '/admin/talent-mapping', icon: Network },
-    //MENU BARU: MANAGE ROADMAPS
-    { name: 'Roadmaps', path: '/admin/roadmaps', icon: Map }, 
-    { name: 'Career Paths', path: '/admin/courses', icon: RouteIcon },
-    { name: 'Assessments', path: '/admin/assessments', icon: ClipboardCheck },
-    { name: 'Reports', path: '/admin/reports', icon: BarChart },
-    { name: 'Settings', path: '/admin/settings', icon: Settings },
+  // Cek apakah user yang login adalah superadmin
+  const isSuperAdmin = userRole.toLowerCase() === 'superadmin';
+
+  // Tambahkan properti requireSuperadmin pada setiap menu
+  const allNavItems = [
+    { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard, requireSuperadmin: false },
+    { name: 'User Insights', path: '/admin/users', icon: Users, requireSuperadmin: true }, // Hanya Superadmin
+    { name: 'Talent Mapping', path: '/admin/talent-mapping', icon: Network, requireSuperadmin: false },
+    { name: 'Roadmaps', path: '/admin/roadmaps', icon: Map, requireSuperadmin: false }, 
+    { name: 'Career Paths', path: '/admin/courses', icon: RouteIcon, requireSuperadmin: false },
+    { name: 'Assessments', path: '/admin/assessments', icon: ClipboardCheck, requireSuperadmin: false },
+    { name: 'Reports', path: '/admin/reports', icon: BarChart, requireSuperadmin: false },
+    { name: 'Settings', path: '/admin/settings', icon: Settings, requireSuperadmin: true }, // Hanya Superadmin
   ];
+
+  // Saring menu: jika butuh superadmin tapi user bukan superadmin, sembunyikan.
+  const visibleNavItems = allNavItems.filter(item => {
+    if (item.requireSuperadmin && !isSuperAdmin) {
+      return false;
+    }
+    return true;
+  });
 
   const handleNavClick = () => {
     setIsSidebarOpen(false);
@@ -68,7 +78,8 @@ export default function AdminLayout() {
         <nav className="flex-1 px-4 py-6 overflow-y-auto">
           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4 px-3">Menu</p>
           <div className="space-y-1.5">
-            {navItems.map((item) => (
+            {/* Render menggunakan array yang sudah disaring (visibleNavItems) */}
+            {visibleNavItems.map((item) => (
               <NavLink
                 key={item.name}
                 to={item.path}
@@ -118,7 +129,6 @@ export default function AdminLayout() {
             {/* Profil Dropdown */}
             <div className="relative">
               <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-2 lg:gap-3 cursor-pointer hover:bg-[#0F1B33] p-1 lg:p-1.5 lg:pr-3 rounded-full transition-all">
-                {/*PERBAIKAN: Menampilkan foto User */}
                 <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full overflow-hidden border border-slate-700 shrink-0">
                   <img src={userImage} alt={userName} className="w-full h-full object-cover" />
                 </div>
@@ -134,9 +144,12 @@ export default function AdminLayout() {
                       <p className="text-xs text-blue-400 uppercase tracking-wider font-semibold mt-1">{userRole}</p>
                     </div>
                     <div className="px-2">
-                      <NavLink to="/admin/settings" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:bg-[#162544] hover:text-white rounded-xl transition-colors">
-                        <Settings size={16} className="text-slate-400" /> Pengaturan
-                      </NavLink>
+                      {/* Sembunyikan menu Pengaturan dari dropdown jika bukan Superadmin */}
+                      {isSuperAdmin && (
+                        <NavLink to="/admin/settings" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:bg-[#162544] hover:text-white rounded-xl transition-colors">
+                          <Settings size={16} className="text-slate-400" /> Pengaturan
+                        </NavLink>
+                      )}
                       <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-400 hover:bg-red-500/10 rounded-xl transition-colors text-left mt-1">
                         <LogOut size={16} /> Keluar
                       </button>
