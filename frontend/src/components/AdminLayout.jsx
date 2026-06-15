@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, ClipboardCheck, BarChart,
-  Settings, Network, Route as RouteIcon,
+  Settings, Network, Route as RouteIcon, Map, //Tambah icon Map di sini
   ChevronDown, LogOut, Menu, X 
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
@@ -22,6 +22,8 @@ export default function AdminLayout() {
     { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
     { name: 'User Insights', path: '/admin/users', icon: Users },
     { name: 'Talent Mapping', path: '/admin/talent-mapping', icon: Network },
+    //MENU BARU: MANAGE ROADMAPS
+    { name: 'Roadmaps', path: '/admin/roadmaps', icon: Map }, 
     { name: 'Career Paths', path: '/admin/courses', icon: RouteIcon },
     { name: 'Assessments', path: '/admin/assessments', icon: ClipboardCheck },
     { name: 'Reports', path: '/admin/reports', icon: BarChart },
