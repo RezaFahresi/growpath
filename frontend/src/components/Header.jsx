@@ -1,12 +1,106 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, User, Settings, LogOut, Menu, Search, Bell } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom'; //Tambahkan useLocation
+import { ChevronDown, User, Settings, LogOut, Menu, Search, Bell, Zap, BookOpen, Award, CheckCircle2 } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 
+// =========================================================
+// KOMPONEN NOTIFIKASI
+// =========================================================
+function NotificationBell() {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Tutup popup jika diklik di luar area dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Data Notifikasi Statis
+  const dummyNotifs = [
+    { 
+      id: 1, 
+      title: 'XP Bertambah!', 
+      desc: 'Anda mendapatkan +10 XP dari menyelesaikan modul pembelajaran.', 
+      icon: Zap, color: 'text-amber-500', bg: 'bg-amber-100', 
+      time: 'Baru saja' 
+    },
+    { 
+      id: 2, 
+      title: 'Roadmap Baru Tersedia', 
+      desc: 'Admin telah menambahkan kurikulum Frontend Developer terbaru.', 
+      icon: BookOpen, color: 'text-[#5D5FEF]', bg: 'bg-indigo-100', 
+      time: '2 jam yang lalu' 
+    },
+    { 
+      id: 3, 
+      title: 'Sistem Rekomendasi Aktif', 
+      desc: 'Hasil Talent Mapping Anda sudah keluar. Cek profil karir Anda sekarang!', 
+      icon: Award, color: 'text-emerald-500', bg: 'bg-emerald-100', 
+      time: '1 hari yang lalu' 
+    },
+  ];
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative p-2 text-slate-400 hover:text-[#5D5FEF] hover:bg-indigo-50 rounded-full transition-all focus:outline-none"
+      >
+        <Bell size={20} />
+        <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-[-40px] sm:right-0 mt-3 w-80 sm:w-96 bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-200/60 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-50">
+            <h3 className="font-extrabold text-slate-800">Notifikasi</h3>
+            <span className="text-[10px] font-bold text-[#5D5FEF] bg-indigo-50 px-2.5 py-1 rounded-md">
+              3 Baru
+            </span>
+          </div>
+
+          <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
+            {dummyNotifs.map((notif) => (
+              <div key={notif.id} className="flex gap-4 p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 cursor-pointer">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${notif.bg}`}>
+                  <notif.icon size={18} className={notif.color} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800 mb-0.5">{notif.title}</h4>
+                  <p className="text-xs text-slate-500 leading-relaxed mb-1.5">{notif.desc}</p>
+                  <p className="text-[10px] text-slate-400 font-medium">{notif.time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-2 border-t border-slate-50 text-center bg-slate-50 rounded-b-2xl">
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-xs font-bold text-slate-500 hover:text-[#5D5FEF] flex items-center justify-center gap-1.5 w-full py-2 transition-colors"
+            >
+              <CheckCircle2 size={14} /> Tandai semua dibaca
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =========================================================
+// HEADER UTAMA
+// =========================================================
 export default function Header({ onOpenSidebar }) {
   const { user, logout } = useAppContext();
   const navigate = useNavigate();
-  const location = useLocation(); //Untuk membaca posisi halaman saat ini
+  const location = useLocation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -22,7 +116,6 @@ export default function Header({ onOpenSidebar }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // FUNGSI SEARCH PINTAR (CONTEXT-AWARE)
   const handleSearch = (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -30,13 +123,11 @@ export default function Header({ onOpenSidebar }) {
     const currentPath = location.pathname;
     const encodedQuery = encodeURIComponent(searchQuery);
 
-    // Cek pengguna sedang berada di halaman mana
     if (currentPath.includes('/dashboard/assessments')) {
       navigate(`/dashboard/assessments?search=${encodedQuery}`);
     } else if (currentPath.includes('/dashboard/roadmap')) {
       navigate(`/dashboard/roadmap?search=${encodedQuery}`);
     } else {
-      // Default: Lempar ke halaman Courses
       navigate(`/dashboard/courses?search=${encodedQuery}`);
     }
   };
@@ -68,10 +159,8 @@ export default function Header({ onOpenSidebar }) {
           <Search size={20} />
         </button>
 
-        <button className="relative p-2 text-slate-400 hover:text-[#5D5FEF] hover:bg-indigo-50 rounded-full transition-all">
-          <Bell size={20} />
-          <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-        </button>
+        {/* MENGGUNAKAN KOMPONEN NOTIFIKASI DI SINI */}
+        <NotificationBell />
         
         <div className="w-px h-8 bg-slate-200 hidden sm:block"></div>
 
