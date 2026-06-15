@@ -40,6 +40,22 @@ exports.deleteRoadmap = async (id) => {
   await db.query('DELETE FROM roadmaps WHERE id = $1', [id]);
 };
 
+// PERBAIKAN: Fungsi Update & Delete Modul DIPINDAHKAN KELUAR agar setara dengan fungsi lainnya
+exports.updateModule = async (moduleId, data) => {
+  const { title, subtitle, video_link, step_order } = data;
+  const result = await db.query(
+    `UPDATE roadmap_modules 
+    SET title = $1, subtitle = $2, video_link = $3, step_order = $4 
+    WHERE id = $5 RETURNING *`,
+    [title, subtitle, video_link, step_order, moduleId]
+  );
+  return result.rows[0];
+};
+
+exports.deleteModule = async (moduleId) => {
+  await db.query('DELETE FROM roadmap_modules WHERE id = $1', [moduleId]);
+};
+
 // FUNGSI BAWAAN USER PROGRESS (TIDAK DIUBAH)
 exports.toggleRoadmapProgress = async (userId, phaseId, taskId) => {
   await db.query('BEGIN');
@@ -76,22 +92,4 @@ exports.toggleRoadmapProgress = async (userId, phaseId, taskId) => {
     await db.query('ROLLBACK');
     throw error;
   }
-
-    // Mengedit modul
-  exports.updateModule = async (moduleId, data) => {
-    const { title, subtitle, video_link, step_order } = data;
-    const result = await db.query(
-      `UPDATE roadmap_modules 
-      SET title = $1, subtitle = $2, video_link = $3, step_order = $4 
-      WHERE id = $5 RETURNING *`,
-      [title, subtitle, video_link, step_order, moduleId]
-    );
-    return result.rows[0];
-  };
-
-  // Menghapus modul
-  exports.deleteModule = async (moduleId) => {
-    await db.query('DELETE FROM roadmap_modules WHERE id = $1', [moduleId]);
-  };
-
 };
