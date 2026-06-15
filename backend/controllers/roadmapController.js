@@ -64,4 +64,24 @@ exports.toggleProgress = async (req, res) => {
     console.error("Error toggle roadmap progress:", error);
     res.status(500).json({ message: 'Gagal menyimpan progress roadmap' });
   }
+
+    exports.updateModule = async (req, res) => {
+    try {
+      const { moduleId } = req.params;
+      const updatedModule = await RoadmapModel.updateModule(moduleId, req.body);
+      res.json({ message: 'Modul berhasil diubah', data: updatedModule });
+    } catch (error) {
+      res.status(500).json({ message: 'Gagal mengubah modul' });
+    }
+  };
+
+  exports.deleteModule = async (req, res) => {
+    try {
+      const { moduleId } = req.params;
+      await RoadmapModel.deleteModule(moduleId);
+      res.json({ message: 'Modul berhasil dihapus' });
+    } catch (error) {
+      res.status(500).json({ message: 'Gagal menghapus modul' });
+    }
+  };
 };

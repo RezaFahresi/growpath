@@ -14,5 +14,8 @@ router.post('/toggle-progress', authMiddleware, roadmapController.toggleProgress
 router.post('/', authMiddleware, roadmapController.createRoadmap); // Tambah Roadmap
 router.post('/:roadmapId/modules', authMiddleware, roadmapController.addModule); // Tambah Modul ke Roadmap tertentu
 router.delete('/:id', authMiddleware, roadmapController.deleteRoadmap); // Hapus Roadmap
+// Tambahkan 2 rute ini di bawah rute modul sebelumnya
+router.put('/modules/:moduleId', authMiddleware, roadmapController.updateModule);
+router.delete('/modules/:moduleId', authMiddleware, roadmapController.deleteModule);
 
 module.exports = router;
