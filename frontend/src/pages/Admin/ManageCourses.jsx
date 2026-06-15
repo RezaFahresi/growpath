@@ -4,14 +4,15 @@ import { Trash2, Plus, Edit2, X, BookOpen, Clock, Layers, Search, PlaySquare } f
 import API from '../../api/axios';
 
 export default function ManageCourses() {
-  const { courses, addCourse, deleteCourse, updateCourse } = useAppContext();
+  const { courses, addCourse, deleteCourse, updateCourse, user } = useAppContext();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // PERBAIKAN: Tambahkan video_id ke state awal
+  const isSuperAdmin = user?.role?.toLowerCase() === 'superadmin';
+
   const [courseData, setCourseData] = useState({
     title: '',
     description: '',
@@ -27,7 +28,6 @@ export default function ManageCourses() {
     : [];
 
   const openAddForm = () => {
-    // PERBAIKAN: Reset video_id saat tambah baru
     setCourseData({ 
       title: '', 
       description: '', 
@@ -43,7 +43,6 @@ export default function ManageCourses() {
   };
 
   const openEditForm = (course) => {
-    // PERBAIKAN: Masukkan video_id saat mau mengedit
     setCourseData({
       title: course.title || '',
       description: course.description || '',
@@ -87,7 +86,6 @@ export default function ManageCourses() {
   const handleDelete = async (id) => {
     if (!window.confirm("Yakin ingin menghapus kelas ini?")) return;
     try {
-      // Pastikan untuk menghapus di backend juga
       await API.delete(`/courses/${id}`);
       deleteCourse(id);
     } catch (error) {
@@ -98,7 +96,6 @@ export default function ManageCourses() {
   return (
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
       
-      {/* ================= HEADER ================= */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Manage Courses</h1>
@@ -115,7 +112,6 @@ export default function ManageCourses() {
         )}
       </div>
 
-      {/* ================= FORM PANEL ================= */}
       {isFormOpen && (
         <div className="bg-[#0B172E] p-8 rounded-[2rem] border border-[#1E2A45] shadow-2xl relative overflow-hidden animate-in slide-in-from-top-4">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
@@ -133,7 +129,6 @@ export default function ManageCourses() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* Input Kiri / Atas */}
             <div className="space-y-6">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Judul Kelas</label>
@@ -187,11 +182,9 @@ export default function ManageCourses() {
               </div>
             </div>
 
-            {/* Input Kanan / Bawah */}
             <div className="space-y-6 flex flex-col">
               
               <div className="grid grid-cols-1 gap-6">
-                 {/* Input Thumbnail */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">URL Thumbnail</label>
                   <input 
@@ -203,7 +196,6 @@ export default function ManageCourses() {
                   />
                 </div>
 
-                {/* PERBAIKAN: Input ID Video YouTube diganti ikonnya ke PlaySquare */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
                     <span>ID Video YouTube</span>
@@ -246,10 +238,8 @@ export default function ManageCourses() {
         </div>
       )}
 
-      {/* ================= TABLE LIST ================= */}
       <div className="bg-[#0B172E] rounded-[2rem] border border-[#1E2A45] shadow-xl overflow-hidden min-h-[400px]">
         
-        {/* Table Header Wrapper */}
         <div className="p-6 border-b border-[#1E2A45] flex items-center justify-between bg-[#0F1B33]">
           <h2 className="font-bold text-white flex items-center gap-3">
             <div className="p-2 bg-[#071226] border border-[#1E2A45] rounded-lg shadow-sm">
@@ -268,7 +258,6 @@ export default function ManageCourses() {
               <tr>
                 <th className="px-8 py-5 font-bold text-slate-400 uppercase text-xs tracking-wider border-b border-[#1E2A45]">Informasi Kelas</th>
                 <th className="px-6 py-5 font-bold text-slate-400 uppercase text-xs tracking-wider border-b border-[#1E2A45]">Kategori</th>
-                {/* Info Video ID ditambahkan ke tabel */}
                 <th className="px-6 py-5 font-bold text-slate-400 uppercase text-xs tracking-wider border-b border-[#1E2A45]">Media</th> 
                 <th className="px-6 py-5 font-bold text-slate-400 uppercase text-xs tracking-wider border-b border-[#1E2A45]">Struktur</th>
                 <th className="px-8 py-5 font-bold text-slate-400 uppercase text-xs tracking-wider text-right border-b border-[#1E2A45]">Aksi</th>
@@ -301,7 +290,6 @@ export default function ManageCourses() {
                       </span>
                     </td>
 
-                    {/* Info Video ID diganti ikonnya ke PlaySquare */}
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-2">
                         {c.video_id ? (
@@ -335,13 +323,16 @@ export default function ManageCourses() {
                         >
                           <Edit2 size={16}/>
                         </button>
-                        <button 
-                          onClick={() => handleDelete(c.id || c._id)} 
-                          className="p-2.5 bg-[#0F1B33] text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all border border-[#1E2A45] hover:border-red-500/30"
-                          title="Hapus Kelas"
-                        >
-                          <Trash2 size={16}/>
-                        </button>
+                        
+                        {isSuperAdmin && (
+                          <button 
+                            onClick={() => handleDelete(c.id || c._id)} 
+                            className="p-2.5 bg-[#0F1B33] text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all border border-[#1E2A45] hover:border-red-500/30"
+                            title="Hapus Kelas"
+                          >
+                            <Trash2 size={16}/>
+                          </button>
+                        )}
                       </div>
                     </td>
 
