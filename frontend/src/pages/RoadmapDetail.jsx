@@ -14,77 +14,36 @@ export default function RoadmapDetail() {
   const [loading, setLoading] = useState(true);
   const [moduleData, setModuleData] = useState(null);
 
+  // Mengambil Roadmap spesifik dari API (dari data yang dimasukkan Admin)
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      
-      const allRoadmaps = {
-        'web-dev-101': {
-          phase: "TEKNOLOGI",
-          title: "Fullstack Web Development",
-          description: "Kuasai fondasi utama web secara menyeluruh. Dari desain antarmuka, interaksi klien, hingga membangun server arsitektur di belakang layar.",
-          estTime: "12 Minggu",
-          topicsCount: 5,
-          items: [
-            { id: "wd1", title: "HTML5 & CSS3: Semantic & Styling", subtitle: "Fondasi Struktur Web", link: "https://www.youtube.com/watch?v=NBZ0YisXG_M" },
-            { id: "wd2", title: "Modern JavaScript (ES6+)", subtitle: "Logika Pemrograman", link: "https://www.youtube.com/watch?v=PkZNo7MFNFg" },
-            { id: "wd3", title: "React.js & Hooks", subtitle: "Membangun UI Interaktif", link: "https://www.youtube.com/watch?v=hQAHSlTtcmY" },
-            { id: "wd4", title: "Node.js & Express API", subtitle: "Backend Server", link: "https://www.youtube.com/watch?v=Oe421EPjeBE" },
-            { id: "wd5", title: "PostgreSQL & Database Design", subtitle: "Manajemen Basis Data", link: "https://www.youtube.com/watch?v=qw--VYLpxG4" },
-          ]
-        },
-        'marketing-101': {
-          phase: "MARKETING",
-          title: "Digital Marketing Specialist",
-          description: "Pelajari cara menjangkau jutaan pelanggan secara online, memaksimalkan mesin pencari, dan merancang kampanye iklan yang terukur.",
-          estTime: "8 Minggu",
-          topicsCount: 5,
-          items: [
-            { id: "mk1", title: "Digital Marketing Fundamentals", subtitle: "Pengantar Pemasaran Online", link: "https://www.youtube.com/watch?v=bixR-KIJKYM" },
-            { id: "mk2", title: "Search Engine Optimization (SEO)", subtitle: "Optimasi Mesin Pencari", link: "https://www.youtube.com/watch?v=DvwHLJQEGME" },
-            { id: "mk3", title: "Social Media Strategy", subtitle: "Manajemen Merek Digital", link: "https://www.youtube.com/watch?v=P_bB29tJ-vM" },
-            { id: "mk4", title: "Copywriting & Content Creation", subtitle: "Seni Menulis Menjual", link: "https://www.youtube.com/watch?v=fK1K0_Wj1o4" },
-            { id: "mk5", title: "Google Analytics & Data Tracking", subtitle: "Evaluasi Performa Kampanye", link: "https://www.youtube.com/watch?v=mQyBvIq4t5g" },
-          ]
-        },
-        'ui-ux-101': {
-          phase: "KREATIF",
-          title: "UI/UX Design Masterclass",
-          description: "Asah empati Anda. Pelajari riset pengguna, wireframing, dan desain prototipe visual menggunakan standar industri modern.",
-          estTime: "6 Minggu",
-          topicsCount: 5,
-          items: [
-            { id: "ux1", title: "UX Research & Empathy Mapping", subtitle: "Memahami Pengguna", link: "https://www.youtube.com/watch?v=c9Wg6Cb_YlU" },
-            { id: "ux2", title: "Wireframing & Information Architecture", subtitle: "Kerangka Dasar Aplikasi", link: "https://www.youtube.com/watch?v=fS3HIdN_uIc" },
-            { id: "ux3", title: "Figma Fundamentals", subtitle: "Alat Desain UI Modern", link: "https://www.youtube.com/watch?v=FTFaQW9z764" },
-            { id: "ux4", title: "Design Systems & Visual Hierarchy", subtitle: "Konsistensi Komponen", link: "https://www.youtube.com/watch?v=7_50O5Xv_90" },
-            { id: "ux5", title: "Prototyping & Usability Testing", subtitle: "Simulasi Interaksi", link: "https://www.youtube.com/watch?v=T_8N_8XN-uI" },
-          ]
-        },
-        'business-101': {
-          phase: "BISNIS",
-          title: "Business & Data Analytics",
-          description: "Pelajari manajemen perusahaan tingkat tinggi, pemodelan proyeksi keuangan, serta visualisasi data untuk keputusan strategis.",
-          estTime: "10 Minggu",
-          topicsCount: 5,
-          items: [
-            { id: "bs1", title: "Business Strategy Fundamentals", subtitle: "Administrasi & Strategi", link: "https://www.youtube.com/watch?v=8ZtInClXe1Q" },
-            { id: "bs2", title: "Financial Modeling Basics", subtitle: "Keuangan Perusahaan", link: "https://www.youtube.com/watch?v=_a5IEA-O-IA" },
-            { id: "bs3", title: "Project Management (Agile/Scrum)", subtitle: "Manajemen Tim", link: "https://www.youtube.com/watch?v=50RVL71m5B4" },
-            { id: "bs4", title: "Data Analysis with Excel/SQL", subtitle: "Pengolahan Data Kasar", link: "https://www.youtube.com/watch?v=OvoFCEFkglw" },
-            { id: "bs5", title: "Data Visualization (Tableau/PowerBI)", subtitle: "Presentasi Bisnis", link: "https://www.youtube.com/watch?v=TPzE_V32jLQ" },
-          ]
+    const fetchRoadmapDetail = async () => {
+      try {
+        setLoading(true);
+        // Menarik semua roadmap dari database
+        const res = await API.get('/roadmaps');
+        
+        // Cari roadmap yang ID-nya cocok dengan parameter di URL
+        const currentRoadmap = res.data.find(r => String(r.id) === String(id));
+        
+        if (currentRoadmap) {
+          setModuleData(currentRoadmap);
+        } else {
+          // Jika roadmap tidak ada (mungkin dihapus admin)
+          Swal.fire('Tidak Ditemukan', 'Roadmap ini tidak tersedia.', 'error');
+          navigate('/dashboard/roadmap');
         }
-      };
-
-      setModuleData(allRoadmaps[id]);
-      setTimeout(() => setLoading(false), 500);
+      } catch (error) {
+        console.error("Gagal menarik detail roadmap:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchData();
-  }, [id]);
+    fetchRoadmapDetail();
+  }, [id, navigate]);
 
   const handleOpenMaterial = (link) => {
+    if (!link) return;
     if (link.startsWith('http')) {
       window.open(link, '_blank', 'noopener,noreferrer');
     } else {
@@ -113,9 +72,7 @@ export default function RoadmapDetail() {
         });
 
       } catch (error) {
-        console.error("Gagal sinkronisasi progress roadmap:", error.response?.data?.message || error.message);
-
-        toggleRoadmapItem(id, stringItemId);
+        toggleRoadmapItem(id, stringItemId); // Revert jika gagal
 
         Swal.fire({
           icon: 'error',
@@ -130,13 +87,14 @@ export default function RoadmapDetail() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] bg-slate-50/50">
         <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-        <p className="font-bold text-slate-500 animate-pulse tracking-widest text-sm uppercase">Menyiapkan Kurikulum...</p>
+        <p className="font-bold text-slate-500 animate-pulse tracking-widest text-sm uppercase mt-4">Menyiapkan Kurikulum...</p>
       </div>
     );
   }
 
   const currentPhaseChecklist = progress?.roadmapChecklist?.[id] || [];
-  const isCompleted = currentPhaseChecklist.length === moduleData.items.length;
+  const moduleItems = moduleData.items || [];
+  const isCompleted = currentPhaseChecklist.length === moduleItems.length && moduleItems.length > 0;
 
   return (
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -159,7 +117,7 @@ export default function RoadmapDetail() {
         <div className="relative z-10">
           <div className="flex flex-wrap items-center gap-3 mb-6">
             <span className="bg-indigo-500/30 text-indigo-200 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest border border-indigo-400/30 backdrop-blur-sm">
-              KATEGORI: {moduleData.phase}
+              KATEGORI: {moduleData.category || 'General'}
             </span>
             {isCompleted && (
               <span className="bg-emerald-500/20 text-emerald-300 text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1.5 border border-emerald-400/20">
@@ -181,13 +139,13 @@ export default function RoadmapDetail() {
               <div className="p-1.5 bg-slate-800 rounded-lg shadow-md">
                 <Clock size={16} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]" />
               </div>
-              <span>Estimasi Waktu: {moduleData.estTime}</span>
+              <span>Estimasi Waktu: {moduleData.est_time || 'Mandiri'}</span>
             </div>
             <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 text-white text-sm font-semibold shadow-inner">
               <div className="p-1.5 bg-slate-800 rounded-lg shadow-md">
                 <BookOpen size={16} className="text-pink-400 drop-shadow-[0_0_5px_rgba(244,114,182,0.8)]" />
               </div>
-              <span>{moduleData.topicsCount} Topik Pembelajaran</span>
+              <span>{moduleItems.length} Topik Pembelajaran</span>
             </div>
           </div>
         </div>
@@ -206,7 +164,11 @@ export default function RoadmapDetail() {
         </div>
         
         <div className="space-y-4">
-          {moduleData.items.map((item, index) => {
+          {moduleItems.length === 0 ? (
+             <div className="text-center py-10 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
+               <p className="text-slate-500 font-bold">Modul belum ditambahkan oleh Admin.</p>
+             </div>
+          ) : moduleItems.map((item, index) => {
             const isChecked = currentPhaseChecklist.includes(String(item.id));
 
             return (
@@ -238,7 +200,7 @@ export default function RoadmapDetail() {
                     <h4 className={`font-bold text-lg md:text-xl transition-colors mb-1 ${
                       isChecked ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-800 group-hover:text-indigo-900'
                     }`}>
-                      {index + 1}. {item.title}
+                      {item.step_order || index + 1}. {item.title}
                     </h4>
                     <p className={`text-sm font-medium ${isChecked ? 'text-slate-400' : 'text-slate-500'}`}>
                       {item.subtitle}
@@ -248,19 +210,22 @@ export default function RoadmapDetail() {
 
                 <div className="w-full md:w-auto pl-12 md:pl-0">
                   <button 
-                    onClick={() => handleOpenMaterial(item.link)}
+                    onClick={() => handleOpenMaterial(item.video_link)}
+                    disabled={!item.video_link}
                     className={`w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
-                      isChecked
-                        ? 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                        : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white hover:shadow-md'
+                      !item.video_link 
+                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-none'
+                        : isChecked
+                          ? 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                          : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white hover:shadow-md'
                     }`}
                   >
-                    {item.link.includes('youtube.com') || item.link.includes('youtu.be') ? (
+                    {item.video_link && (item.video_link.includes('youtube.com') || item.video_link.includes('youtu.be')) ? (
                       <PlayCircle size={18} />
                     ) : (
                       <ExternalLink size={18} />
                     )}
-                    Buka Modul Belajar
+                    {item.video_link ? 'Buka Modul Belajar' : 'Tidak Ada Tautan'}
                   </button>
                 </div>
 
