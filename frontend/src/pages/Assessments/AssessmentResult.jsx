@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertTriangle, TrendingUp, Target, Code2, PenTool, Megaphone, ArrowRight, Sparkles, CheckCircle2, Lightbulb, Palette, BookOpen, Zap, Monitor, Briefcase, Layout, Globe, Smartphone, Server } from 'lucide-react';
 import API from '../../api/axios';
+// MENGAMBIL CONTEXT UNTUK NOTIFIKASI
+import { useAppContext } from '../../context/AppContext';
 
-// Pemetaan Ikon agar sesuai dengan nama ikon dari Database
 const IconMap = {
   Code2, Megaphone, Palette, TrendingUp, BookOpen, Target, Zap, Monitor, Briefcase, PenTool, Layout, Globe, Smartphone, Server
 };
@@ -11,6 +12,8 @@ const IconMap = {
 export default function AssessmentResult() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addNotification } = useAppContext(); // 🔥 DEKLARASI addNotification
+
   const [assessment, setAssessment] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,7 +21,6 @@ export default function AssessmentResult() {
   const [selectedPath, setSelectedPath] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // State baru untuk daftar Roadmap dari Database
   const [dbRoadmaps, setDbRoadmaps] = useState([]);
 
   useEffect(() => {
@@ -29,7 +31,6 @@ export default function AssessmentResult() {
         setLoading(true);
         setError(null);
 
-        // 1. Tarik hasil Assessment
         const response = await API.get(`/assessments/results/${id}`, {
           signal: controller.signal
         });
@@ -54,7 +55,6 @@ export default function AssessmentResult() {
             : 'Setiap profesional dimulai dari pemula. Kami merekomendasikan Anda untuk memulai dari materi fundamental agar fondasi pemahaman teori Anda kokoh.',
         });
 
-        // 🔥 2. Tarik daftar Roadmap dari Database
         const roadmapsRes = await API.get('/roadmaps');
         setDbRoadmaps(roadmapsRes.data || []);
 
@@ -98,8 +98,15 @@ export default function AssessmentResult() {
   const handleConfirmSelection = () => {
     if (!selectedPath) return;
     setIsSubmitting(true);
+
+    // TEMBAKKAN NOTIFIKASI REAL-TIME DI SINI
+    addNotification(
+      'Jalur Karir Ditetapkan', 
+      'Kurikulum spesialisasi Anda siap dipelajari. Selamat belajar!', 
+      'info'
+    );
+
     setTimeout(() => {
-      //  Akan mengarah ke ID angka yang benar di Database
       navigate(`/dashboard/roadmap/${selectedPath}`);
     }, 1200);
   };
@@ -220,7 +227,6 @@ export default function AssessmentResult() {
             <p className="text-slate-500 text-sm md:text-base">Berdasarkan hasil analisa di atas, kami telah merangkum spesialisasi yang paling ideal. Pilih satu jalur untuk memulai program kurikulum Anda!</p>
           </div>
 
-          {/* KOTAK PILIHAN ROADMAP DIAMBIL DARI DATABASE */}
           {dbRoadmaps.length === 0 ? (
             <div className="text-center py-10">
               <p className="text-slate-500">Memuat pilihan kurikulum...</p>

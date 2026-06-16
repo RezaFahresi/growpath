@@ -9,12 +9,12 @@ export default function RoadmapDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   
-  const { user, progress, toggleRoadmapItem } = useAppContext();
+  // MENGAMBIL FUNGSI addNotification DARI CONTEXT
+  const { user, progress, toggleRoadmapItem, addNotification } = useAppContext();
   
   const [loading, setLoading] = useState(true);
   const [moduleData, setModuleData] = useState(null);
   
-  // State Baru: Untuk menyimpan ID video yang sedang diputar di pop-up
   const [activeVideo, setActiveVideo] = useState(null);
 
   useEffect(() => {
@@ -40,7 +40,6 @@ export default function RoadmapDetail() {
     fetchRoadmapDetail();
   }, [id, navigate]);
 
-  // Fungsi Cerdas: Mengekstrak ID YouTube dari link panjang
   const getYoutubeId = (url) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
@@ -50,23 +49,35 @@ export default function RoadmapDetail() {
   const handleOpenMaterial = (link) => {
     if (!link) return;
     
-    // Cek apakah ini link YouTube
     const ytId = getYoutubeId(link);
     
     if (ytId) {
-      // Jika iya, buka di pop-up internal
       setActiveVideo(ytId);
     } else if (link.startsWith('http')) {
-      // Jika bukan YouTube (misal link GDrive), buka di tab baru
       window.open(link, '_blank', 'noopener,noreferrer');
     } else {
       navigate(link);
     }
   };
 
+  const currentPhaseChecklist = progress?.roadmapChecklist?.[id] || [];
+
   const handleToggleTask = async (itemId) => {
     const stringItemId = String(itemId);
+    
+    // Cek apakah item ini baru saja diselesaikan (sebelumnya belum ada di checklist)
+    const isNewlyChecked = !currentPhaseChecklist.includes(stringItemId);
+
     toggleRoadmapItem(id, stringItemId);
+
+    // TEMBAKKAN NOTIFIKASI HANYA JIKA DICENTANG SELESAI
+    if (isNewlyChecked) {
+      addNotification(
+        'XP Bertambah!', 
+        'Bagus sekali! Anda mendapatkan +10 XP dari penyelesaian modul ini.', 
+        'success'
+      );
+    }
 
     if (user) {
       try {
@@ -88,7 +99,6 @@ export default function RoadmapDetail() {
     );
   }
 
-  const currentPhaseChecklist = progress?.roadmapChecklist?.[id] || [];
   const moduleItems = moduleData.items || [];
   const isCompleted = currentPhaseChecklist.length === moduleItems.length && moduleItems.length > 0;
 
@@ -231,7 +241,6 @@ export default function RoadmapDetail() {
         </div>
       </div>
 
-      {/* 🔥 MODAL PEMUTAR VIDEO YOUTUBE INLINE */}
       {activeVideo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden relative">

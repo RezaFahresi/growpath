@@ -7,11 +7,19 @@ export default function TestOverview() {
   const navigate = useNavigate();
   const { id } = useParams(); 
   
-  const { availableAssessments } = useAppContext();
+  // MENGAMBIL FUNGSI addNotification DARI CONTEXT
+  const { availableAssessments, addNotification } = useAppContext();
   
   const assessmentData = availableAssessments?.find(a => String(a.id) === String(id)) || {};
 
   const handleStartTest = () => {
+    // TEMBAKKAN NOTIFIKASI PENYEMANGAT
+    addNotification(
+      'Ujian Dimulai!', 
+      'Waktu berjalan. Fokus dan kerjakan sebaik mungkin. Semoga berhasil!', 
+      'info'
+    );
+
     navigate(`/dashboard/assessments/take/${id}`);
   };
 
