@@ -8,7 +8,7 @@ const defaultProgress = {
   activeCourses: [], 
   roadmapChecklist: {}, 
   assessments: [] 
- };
+};
 
 export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
@@ -21,9 +21,32 @@ export const AppProvider = ({ children }) => {
   const [courses, setCourses] = useState([]);
   const [availableAssessments, setAvailableAssessments] = useState([]);
   const [talentMappings, setTalentMappings] = useState([]);
-  
-  // 🌟 STATE BARU: Menyimpan data talent mapping khusus milik user yang sedang login
   const [userTalent, setUserTalent] = useState(null);
+
+  // ==========================================
+  // SISTEM NOTIFIKASI REAL-TIME
+  // ==========================================
+  const [notifications, setNotifications] = useState([
+    { 
+      id: 'welcome-1', 
+      title: 'Selamat Datang!', 
+      desc: 'Mulai perjalanan karir Anda bersama GrowPath hari ini.', 
+      time: 'Sistem', 
+      type: 'info' 
+    }
+  ]);
+
+  const addNotification = (title, desc, type = 'success') => {
+    const newNotif = {
+      id: Date.now().toString(),
+      title,
+      desc,
+      time: 'Baru saja',
+      type
+    };
+    // Masukkan notifikasi baru di urutan paling atas
+    setNotifications(prev => [newNotif, ...prev]);
+  };
 
   // ==========================================
   // 1. FUNGSI REFRESH PROGRESS
@@ -54,12 +77,11 @@ export const AppProvider = ({ children }) => {
       }
 
       try {
-        // 🌟 PERBAIKAN: Ikut sertakan endpoint /talent-mapping dalam Promise.all
         const [authRes, assessRes, courseRes, talentRes] = await Promise.all([
           API.get('/auth/check-auth'),
           API.get('/assessments'),
           API.get('/courses'),
-          API.get('/talent-mapping').catch(() => ({ data: [] })) // Fallback jika route backend belum siap
+          API.get('/talent-mapping').catch(() => ({ data: [] }))
         ]);
 
         if (authRes.data?.user) {
@@ -71,7 +93,6 @@ export const AppProvider = ({ children }) => {
           const mappings = Array.isArray(talentRes.data) ? talentRes.data : (talentRes.data.mappings || []);
           setTalentMappings(mappings);
 
-          // 🌟 LOGIKA PATOKAN: Cari apakah email user ini punya data penilaian dari admin
           const myStats = mappings.find(t => t.email === currentUser.email);
           setUserTalent(myStats || null);
 
@@ -170,7 +191,6 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('growpath_user', JSON.stringify(userData));
     
     try {
-      // 🌟 PERBAIKAN: Tarik data talent mapping juga saat user baru berhasil login
       const [assessRes, courseRes, talentRes] = await Promise.all([
         API.get('/assessments'),
         API.get('/courses'),
@@ -198,8 +218,9 @@ export const AppProvider = ({ children }) => {
     setProgress(defaultProgress); 
     setCourses([]); 
     setAvailableAssessments([]); 
-    setTalentMappings([]); // Clear state saat keluar
-    setUserTalent(null);   // Clear patokan stat saat keluar
+    setTalentMappings([]); 
+    setUserTalent(null);
+    setNotifications([]); // Bersihkan notifikasi saat keluar
     window.location.href = '/login'; 
   };
 
@@ -222,8 +243,9 @@ export const AppProvider = ({ children }) => {
         courses, addCourse, updateCourse, deleteCourse,
         availableAssessments, addAssessment, updateAssessment, deleteAssessment,
         talentMappings, addTalentMapping, updateTalentMapping, deleteTalentMapping,
-        // 🌟 EXPOSE DATA PATOKAN: Sekarang bisa dipakai di Dashboard.jsx atau Roadmap.jsx
-        userTalent 
+        userTalent, 
+        // EXPOSE STATE DAN FUNGSI NOTIFIKASI DI SINI
+        notifications, addNotification, setNotifications
       }}
     >
       {!loading ? children : (

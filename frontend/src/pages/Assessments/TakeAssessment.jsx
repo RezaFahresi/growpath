@@ -3,12 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronRight, HelpCircle, Sparkles } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import API from '../../api/axios';
-import Swal from 'sweetalert2'; // IMPORT SWEETALERT
+import Swal from 'sweetalert2';
 
 export default function TakeAssessment() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { saveAssessment } = useAppContext();
+  
+  // MENGAMBIL FUNGSI addNotification DARI CONTEXT
+  const { saveAssessment, addNotification } = useAppContext();
 
   const [assessmentData, setAssessmentData] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -23,11 +25,9 @@ export default function TakeAssessment() {
       try {
         setLoading(true);
 
-        // Cek riwayat ujian terlebih dahulu
         try {
           const historyRes = await API.get(`/assessments/history/${id}`);
           if (historyRes.data && historyRes.data.hasCompleted) {
-            // NOTIFIKASI INFO (Sudah Dikerjakan)
             await Swal.fire({
               title: 'Sudah Dikerjakan',
               text: 'Anda sudah pernah menyelesaikan ujian ini. Sistem akan mengalihkan ke hasil laporan.',
@@ -43,7 +43,6 @@ export default function TakeAssessment() {
           console.log("Memulai ujian baru.");
         }
 
-        // Ambil data soal
         const response = await API.get(`/assessments/${id}`);
         const data = response.data;
         
@@ -63,7 +62,6 @@ export default function TakeAssessment() {
         }
       } catch (err) {
         console.error(err);
-        // NOTIFIKASI ERROR GAGAL TARIK DATA
         await Swal.fire({
           title: 'Data Tidak Ditemukan',
           text: 'Gagal mengambil data soal ujian. Silakan kembali ke daftar ujian.',
@@ -92,13 +90,11 @@ export default function TakeAssessment() {
   const handleNext = async () => {
     const isLast = currentQuestion === questions.length - 1;
 
-    // Jika belum nomor terakhir, lanjut ke soal berikutnya
     if (!isLast) {
       setCurrentQuestion((prev) => prev + 1);
       return;
     }
 
-    // NOTIFIKASI KONFIRMASI (Sebelum Submit)
     const confirmSubmit = await Swal.fire({
       title: 'Kirim Jawaban?',
       text: "Pastikan semua jawaban sudah benar. Anda tidak dapat mengulangi ujian ini.",
@@ -112,7 +108,7 @@ export default function TakeAssessment() {
     });
 
     if (!confirmSubmit.isConfirmed) {
-      return; // Berhenti jika user klik Batal
+      return;
     }
 
     const correctCount = questions.reduce((acc, q, idx) => {
@@ -143,7 +139,13 @@ export default function TakeAssessment() {
 
       saveAssessment(finalResult);
 
-      // NOTIFIKASI SUKSES (Jawaban Terkirim)
+      //  TEMBAKKAN NOTIFIKASI REAL-TIME DI SINI
+      addNotification(
+        'Ujian Selesai!', 
+        'Hasil jawaban Anda telah tersimpan dan berhasil dianalisis.', 
+        'success'
+      );
+
       await Swal.fire({
         title: 'Berhasil!',
         text: 'Jawaban Anda telah tersimpan dan sedang dianalisis.',
@@ -157,7 +159,6 @@ export default function TakeAssessment() {
 
     } catch (err) {
       console.error(err);
-      // NOTIFIKASI ERROR (Gagal Simpan)
       Swal.fire({
         title: 'Gagal Menyimpan',
         text: err.response?.data?.message || 'Gagal menyimpan hasil ujian. Periksa koneksi internet Anda.',

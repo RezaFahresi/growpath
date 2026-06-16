@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Play, Lock, CheckCircle } from 'lucide-react'; // Menambah ikon Lock & Check
+import { ChevronLeft, Play, Lock, CheckCircle } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import API from '../../api/axios';
 import Swal from 'sweetalert2';
@@ -8,13 +8,15 @@ import Swal from 'sweetalert2';
 export default function CourseDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { courses, markCourseCompleted } = useAppContext();
+  
+  // MENGAMBIL FUNGSI addNotification DARI CONTEXT
+  const { courses, markCourseCompleted, addNotification } = useAppContext();
 
   const course = courses?.find(c => String(c.id) === String(id) || String(c._id) === String(id));
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isVideoFinished, setIsVideoFinished] = useState(false); // 🔥 State baru
+  const [isVideoFinished, setIsVideoFinished] = useState(false);
   const playerRef = useRef(null);
 
   const currentVideoId = course?.video_id || 'mU6anWqZJcc'; 
@@ -44,6 +46,14 @@ export default function CourseDetail() {
         onStateChange: (e) => {
           if (e.data === 0) {
             setIsVideoFinished(true);
+            
+            // NOTIFIKASI SAAT VIDEO SELESAI
+            addNotification(
+              'Materi Video Selesai!', 
+              'Bagus sekali! Tombol "Selesaikan Kelas" sekarang sudah terbuka.', 
+              'info'
+            );
+
             Swal.fire({
                 title: 'Video Selesai!',
                 text: 'Sekarang Anda bisa menyelesaikan kelas ini.',
@@ -70,6 +80,13 @@ export default function CourseDetail() {
       await API.post(`/courses/${course.id || course._id}/complete`);
       if (markCourseCompleted) markCourseCompleted(course.id || course._id);
       
+      // OTIFIKASI KETIKA KELAS BERHASIL DISELESAIKAN
+      addNotification(
+        'Kelas Diselesaikan!', 
+        `Selamat! Anda telah menyelesaikan materi "${course.title}".`, 
+        'success'
+      );
+
       await Swal.fire({
         title: 'Luar Biasa!',
         text: 'Anda telah berhasil menyelesaikan kelas ini.',

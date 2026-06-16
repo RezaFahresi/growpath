@@ -10,6 +10,9 @@ function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
+  // Tarik data notifikasi dari Context
+  const { notifications, setNotifications } = useAppContext();
+
   // Tutup popup jika diklik di luar area dropdown
   useEffect(() => {
     function handleClickOutside(event) {
@@ -21,30 +24,16 @@ function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Data Notifikasi Statis
-  const dummyNotifs = [
-    { 
-      id: 1, 
-      title: 'XP Bertambah!', 
-      desc: 'Anda mendapatkan +10 XP dari menyelesaikan modul pembelajaran.', 
-      icon: Zap, color: 'text-amber-500', bg: 'bg-amber-100', 
-      time: 'Baru saja' 
-    },
-    { 
-      id: 2, 
-      title: 'Roadmap Baru Tersedia', 
-      desc: 'Admin telah menambahkan kurikulum Frontend Developer terbaru.', 
-      icon: BookOpen, color: 'text-[#5D5FEF]', bg: 'bg-indigo-100', 
-      time: '2 jam yang lalu' 
-    },
-    { 
-      id: 3, 
-      title: 'Sistem Rekomendasi Aktif', 
-      desc: 'Hasil Talent Mapping Anda sudah keluar. Cek profil karir Anda sekarang!', 
-      icon: Award, color: 'text-emerald-500', bg: 'bg-emerald-100', 
-      time: '1 hari yang lalu' 
-    },
-  ];
+  // Menentukan ikon dan warna berdasarkan tipe notifikasi
+  const getStyle = (type) => {
+    switch(type) {
+      case 'success': return { icon: Zap, color: 'text-amber-500', bg: 'bg-amber-100' };
+      case 'info': return { icon: BookOpen, color: 'text-[#5D5FEF]', bg: 'bg-indigo-100' };
+      default: return { icon: Bell, color: 'text-slate-500', bg: 'bg-slate-100' };
+    }
+  };
+
+  const unreadCount = notifications?.length || 0;
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -53,7 +42,10 @@ function NotificationBell() {
         className="relative p-2 text-slate-400 hover:text-[#5D5FEF] hover:bg-indigo-50 rounded-full transition-all focus:outline-none"
       >
         <Bell size={20} />
-        <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+        {/* Titik merah hanya muncul jika ada notifikasi */}
+        {unreadCount > 0 && (
+          <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+        )}
       </button>
 
       {isOpen && (
@@ -61,31 +53,44 @@ function NotificationBell() {
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-50">
             <h3 className="font-extrabold text-slate-800">Notifikasi</h3>
             <span className="text-[10px] font-bold text-[#5D5FEF] bg-indigo-50 px-2.5 py-1 rounded-md">
-              3 Baru
+              {unreadCount} Baru
             </span>
           </div>
 
           <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
-            {dummyNotifs.map((notif) => (
-              <div key={notif.id} className="flex gap-4 p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 cursor-pointer">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${notif.bg}`}>
-                  <notif.icon size={18} className={notif.color} />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-800 mb-0.5">{notif.title}</h4>
-                  <p className="text-xs text-slate-500 leading-relaxed mb-1.5">{notif.desc}</p>
-                  <p className="text-[10px] text-slate-400 font-medium">{notif.time}</p>
-                </div>
+            {unreadCount === 0 ? (
+              <div className="py-10 text-center text-slate-400 flex flex-col items-center gap-2">
+                <Bell size={24} className="text-slate-200" />
+                <p className="text-sm font-medium">Belum ada notifikasi baru.</p>
               </div>
-            ))}
+            ) : (
+              notifications.map((notif) => {
+                const style = getStyle(notif.type);
+                return (
+                  <div key={notif.id} className="flex gap-4 p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 cursor-pointer">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${style.bg}`}>
+                      <style.icon size={18} className={style.color} />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-800 mb-0.5">{notif.title}</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed mb-1.5">{notif.desc}</p>
+                      <p className="text-[10px] text-slate-400 font-medium">{notif.time}</p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
 
           <div className="p-2 border-t border-slate-50 text-center bg-slate-50 rounded-b-2xl">
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                setNotifications([]); // Menghapus semua notifikasi saat tombol ini diklik
+                setIsOpen(false);
+              }}
               className="text-xs font-bold text-slate-500 hover:text-[#5D5FEF] flex items-center justify-center gap-1.5 w-full py-2 transition-colors"
             >
-              <CheckCircle2 size={14} /> Tandai semua dibaca
+              <CheckCircle2 size={14} /> Bersihkan Notifikasi
             </button>
           </div>
         </div>
@@ -159,7 +164,7 @@ export default function Header({ onOpenSidebar }) {
           <Search size={20} />
         </button>
 
-        {/* MENGGUNAKAN KOMPONEN NOTIFIKASI DI SINI */}
+        {/* KOMPONEN NOTIFIKASI */}
         <NotificationBell />
         
         <div className="w-px h-8 bg-slate-200 hidden sm:block"></div>
